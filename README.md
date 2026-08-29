@@ -6,7 +6,7 @@
 
 Eclipin Tab 是一款浏览器新标签页扩展，以 Zen Shelf（灵感白板）和 Focus Spaces（多重空间）为核心，让新标签页同时承担灵感记录、网址整理、小组件看板与个性化桌面的角色。
 
-本项目是 [EclipseTab](https://github.com/ENCRE0520/EclipseTab) 的修改与延伸版本，自 2026 年起由 left4d 继续维护和扩展。上游项目由 ENCRE0520 创建并以 GNU GPL v3.0 发布；Eclipin Tab 继续按 GNU GPL v3.0（`GPL-3.0-only`）发布。
+本项目是 [EclipseTab](https://github.com/ENCRE0520/EclipseTab) 的修改与延伸版本，上游项目由 ENCRE0520 创建并以 GNU GPL v3.0 发布；Eclipin Tab 继续按 GNU GPL v3.0（`GPL-3.0-only`）发布。
 
 ## 快速开始
 
