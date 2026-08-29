@@ -2,7 +2,7 @@
 
 export type WorkerMessage = {
     id: string;
-    type: 'compressIcon' | 'compressStickerImage' | 'compressStickerImageToBlob';
+    type: 'compressIcon' | 'compressStickerImage' | 'compressStickerImageToBlob' | 'rasterizeSvgStickerPreview';
     payload: any;
 };
 
@@ -68,6 +68,20 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
                 }
                 bitmap.close();
             };
+        } else if (type === 'rasterizeSvgStickerPreview') {
+            const { blob, width, height } = payload as { blob: Blob; width: number; height: number };
+            const bitmap = await createImageBitmap(blob, {
+                resizeWidth: width,
+                resizeHeight: height,
+                resizeQuality: 'high',
+            });
+            const canvas = new OffscreenCanvas(width, height);
+            const ctx = canvas.getContext('2d');
+            if (!ctx) throw new Error('getContext("2d") failed');
+            ctx.drawImage(bitmap, 0, 0, width, height);
+            const previewBlob = await canvas.convertToBlob({ type: 'image/png' });
+            bitmap.close();
+            self.postMessage({ id, result: previewBlob });
         } else if (type === 'compressStickerImageToBlob') {
             const blob = payload as Blob;
             const bitmap = await createImageBitmap(blob);

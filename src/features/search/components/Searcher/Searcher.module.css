@@ -47,7 +47,7 @@
 
 /* 焦点状态 - 蓝色边框（移除默认 outline） */
 .innerContainer:focus-within {
-  box-shadow: 0 0 0 2px var(--blue-focus), var(--shadow-small);
+  box-shadow: 0 0 0 2px var(--fusion-focus-ring), var(--shadow-small);
 }
 
 /* 输入框焦点时隐藏 outline */
@@ -176,4 +176,305 @@
   color: var(--color-text-primary);
   white-space: nowrap;
   margin: 0;
+}
+
+/* 柔和面板：中性、低风格化的通用容器；三种主题使用不同材质而保持同一结构 */
+:global([data-container-style="frame"]) .searcher {
+  --search-soft-panel: linear-gradient(180deg,rgba(31,34,40,.96),rgba(25,28,33,.96));
+  --search-soft-border: rgba(255,255,255,.11);
+  --search-soft-highlight: rgba(255,255,255,.03);
+  --search-soft-text: rgba(255,255,255,.95);
+  --search-soft-muted: rgba(255,255,255,.54);
+  --search-soft-control: rgba(255,255,255,.07);
+  --search-soft-control-hover: rgba(255,255,255,.12);
+  --search-soft-shadow: 0 12px 30px rgba(0,0,0,.19),0 2px 7px rgba(0,0,0,.1);
+  --search-soft-halo: transparent;
+  isolation:isolate;
+  overflow:visible;
+  border:0;
+  border-radius:24px;
+  padding:0;
+  background:transparent;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+
+:global([data-container-style="frame"]) .searcher::before {
+  content:'';
+  position:absolute;
+  z-index:-1;
+  inset:-8px;
+  border-radius:30px;
+  background:var(--search-soft-halo);
+  filter:blur(18px);
+  opacity:.72;
+  pointer-events:none;
+}
+
+:global([data-container-style="frame"]) .searcher::after { display:none; }
+
+:global([data-container-style="frame"]) .innerContainer {
+  border:1px solid var(--search-soft-border);
+  border-radius:24px;
+  padding:10px 12px;
+  background:var(--search-soft-panel);
+  color:var(--search-soft-text);
+  box-shadow:inset 0 1px var(--search-soft-highlight),var(--search-soft-shadow);
+  clip-path:none;
+  transform:none;
+  transition:transform 170ms ease,border-color 170ms ease,box-shadow 170ms ease,background 170ms ease;
+}
+
+:global([data-container-style="frame"]) .innerContainer:hover {
+  transform:none;
+  border-color:color-mix(in srgb,var(--fusion-accent) 14%,var(--search-soft-border));
+  box-shadow:inset 0 1px var(--search-soft-highlight),0 13px 32px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.09);
+}
+
+:global([data-container-style="frame"]) .innerContainer:focus-within {
+  transform:none;
+  border-color:color-mix(in srgb,var(--fusion-accent) 44%,var(--search-soft-border));
+  box-shadow:inset 0 1px var(--search-soft-highlight),0 0 0 3px var(--fusion-focus-ring),var(--search-soft-shadow);
+}
+
+:global([data-container-style="frame"]) :is(.label,.searchEngine,.searchInput,.searchButtonLabel) { color:var(--search-soft-text); }
+:global([data-container-style="frame"]) .label,
+:global([data-container-style="frame"]) .searchInput::placeholder { color:var(--search-soft-muted); }
+
+:global([data-container-style="frame"]) .iconContainer {
+  border:1px solid color-mix(in srgb,var(--search-soft-border) 78%,transparent);
+  border-radius:14px;
+  background:var(--search-soft-control);
+  color:var(--search-soft-text);
+  box-shadow:inset 0 1px rgba(255,255,255,.035);
+  clip-path:none;
+  transition:transform 150ms ease,background 150ms ease,border-color 150ms ease;
+}
+
+:global([data-container-style="frame"]) .iconContainer:hover {
+  transform:translateY(-1px);
+  border-color:color-mix(in srgb,var(--fusion-accent) 22%,var(--search-soft-border));
+  background:var(--search-soft-control-hover);
+}
+
+/* 浅色：暖白浮层，轻微纸张温度与宽松阴影。 */
+:global([data-theme="light"][data-container-style="frame"]) .searcher {
+  --search-soft-panel:linear-gradient(180deg,rgba(249,248,245,.96),rgba(244,242,238,.95));
+  --search-soft-border:rgba(50,45,39,.11);
+  --search-soft-highlight:rgba(255,255,255,.42);
+  --search-soft-text:#2c2b29;
+  --search-soft-muted:rgba(44,43,41,.5);
+  --search-soft-control:rgba(45,42,37,.052);
+  --search-soft-control-hover:rgba(45,42,37,.09);
+  --search-soft-shadow:0 11px 28px rgba(66,58,48,.1),0 2px 7px rgba(66,58,48,.06);
+  --search-soft-halo:transparent;
+}
+
+/* 深色：柔黑哑光，边界更收敛、阴影更贴近背景。 */
+:global([data-theme="dark"][data-container-style="frame"]) .searcher {
+  --search-soft-panel:linear-gradient(180deg,rgba(36,38,43,.97),rgba(30,32,36,.97));
+  --search-soft-border:rgba(255,255,255,.09);
+  --search-soft-highlight:rgba(255,255,255,.025);
+  --search-soft-text:rgba(255,255,255,.94);
+  --search-soft-muted:rgba(255,255,255,.5);
+  --search-soft-control:rgba(255,255,255,.055);
+  --search-soft-control-hover:rgba(255,255,255,.1);
+  --search-soft-shadow:0 12px 30px rgba(0,0,0,.28),0 2px 7px rgba(0,0,0,.16);
+  --search-soft-halo:transparent;
+}
+
+/* 渐变/壁纸：烟灰中性面板，用很弱的环境色晕与背景建立联系。 */
+:global([data-theme="default"][data-container-style="frame"]) .searcher {
+  --search-soft-panel:linear-gradient(180deg,rgba(35,37,42,.95),rgba(28,30,34,.96));
+  --search-soft-border:color-mix(in srgb,var(--fusion-accent) 13%,rgba(255,255,255,.13));
+  --search-soft-highlight:rgba(255,255,255,.028);
+  --search-soft-text:rgba(255,255,255,.96);
+  --search-soft-muted:rgba(255,255,255,.54);
+  --search-soft-control:rgba(255,255,255,.065);
+  --search-soft-control-hover:rgba(255,255,255,.115);
+  --search-soft-shadow:0 13px 32px rgba(8,10,16,.25),0 2px 8px rgba(8,10,16,.14);
+  --search-soft-halo:transparent;
+}
+
+
+.searchEngine {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.searchEngine:focus-visible,
+.iconContainer:focus-visible {
+  outline: 2px solid var(--fusion-focus-ring);
+  outline-offset: 2px;
+}
+
+/* 环境仓：全新“静默底座”语言。无悬浮卡片、无装饰光晕，只给内容一个低对比的平面承托。 */
+:global([data-container-style="ambient"]) .searcher {
+  --ambient-surface: color-mix(in srgb,var(--color-bg-secondary) 84%,transparent);
+  --ambient-control: color-mix(in srgb,var(--color-bg-primary) 72%,transparent);
+  --ambient-control-hover: color-mix(in srgb,var(--color-bg-primary) 88%,transparent);
+  --ambient-divider: color-mix(in srgb,var(--color-text-primary) 10%,transparent);
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:global([data-container-style="ambient"]) .searcher::before,
+:global([data-container-style="ambient"]) .searcher::after {
+  display: none;
+}
+
+:global([data-container-style="ambient"]) .innerContainer {
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: var(--ambient-surface);
+  box-shadow:
+    inset 3px 0 color-mix(in srgb,var(--fusion-accent) 22%,transparent),
+    inset 0 1px var(--ambient-divider);
+  backdrop-filter: blur(10px) saturate(108%);
+  -webkit-backdrop-filter: blur(10px) saturate(108%);
+  transform: none;
+  transition: background 160ms ease, box-shadow 160ms ease;
+}
+
+:global([data-container-style="ambient"]) .innerContainer:hover {
+  transform: none;
+  background: color-mix(in srgb,var(--color-bg-secondary) 91%,transparent);
+  box-shadow:
+    inset 3px 0 color-mix(in srgb,var(--fusion-accent) 30%,transparent),
+    inset 0 1px var(--ambient-divider);
+}
+
+:global([data-container-style="ambient"]) .innerContainer:focus-within {
+  transform: none;
+  background: color-mix(in srgb,var(--color-bg-secondary) 94%,transparent);
+  box-shadow:
+    inset 3px 0 var(--fusion-accent),
+    0 0 0 2px var(--fusion-focus-ring);
+}
+
+:global([data-container-style="ambient"]) .iconContainer {
+  border: 0;
+  border-radius: 8px;
+  background: var(--ambient-control);
+  color: var(--color-text-primary);
+  box-shadow: none;
+}
+
+:global([data-container-style="ambient"]) .iconContainer:hover {
+  transform: none;
+  background: var(--ambient-control-hover);
+}
+
+/* 雾面薄片：全新“无框薄层”语言。弱化容器边界，仅用微量模糊和细轮廓保证复杂壁纸上的可读性。 */
+:global([data-container-style="veil"]) .searcher {
+  --veil-fill: color-mix(in srgb,var(--color-bg-primary) 22%,transparent);
+  --veil-line: color-mix(in srgb,var(--color-text-primary) 13%,transparent);
+  --veil-control: color-mix(in srgb,var(--color-bg-primary) 18%,transparent);
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:global([data-container-style="veil"]) .searcher::before,
+:global([data-container-style="veil"]) .searcher::after {
+  display: none;
+}
+
+:global([data-container-style="veil"]) .innerContainer {
+  border: 1px solid var(--veil-line);
+  border-radius: 6px;
+  padding: 9px 11px;
+  background: var(--veil-fill);
+  box-shadow: none;
+  backdrop-filter: blur(16px) saturate(92%);
+  -webkit-backdrop-filter: blur(16px) saturate(92%);
+  transform: none;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+:global([data-container-style="veil"]) .innerContainer:hover {
+  transform: none;
+  border-color: color-mix(in srgb,var(--color-text-primary) 18%,transparent);
+  background: color-mix(in srgb,var(--color-bg-primary) 27%,transparent);
+}
+
+:global([data-container-style="veil"]) .innerContainer:focus-within {
+  transform: none;
+  border-color: color-mix(in srgb,var(--fusion-accent) 45%,var(--veil-line));
+  background: color-mix(in srgb,var(--color-bg-primary) 30%,transparent);
+  box-shadow: 0 0 0 2px var(--fusion-focus-ring);
+}
+
+:global([data-container-style="veil"]) .iconContainer {
+  border: 1px solid var(--veil-line);
+  border-radius: 6px;
+  background: var(--veil-control);
+  color: var(--color-text-primary);
+  box-shadow: none;
+}
+
+:global([data-container-style="veil"]) .iconContainer:hover {
+  transform: none;
+  background: color-mix(in srgb,var(--color-bg-primary) 28%,transparent);
+}
+
+.advancedSearchButton {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.advancedSearchButton:hover,
+.advancedSearchButtonActive {
+  border-color: var(--fusion-accent);
+  background: var(--fusion-accent-soft);
+  color: var(--fusion-accent-strong);
+}
+
+.advancedSearchButton:focus-visible {
+  outline: 2px solid var(--fusion-focus-ring);
+  outline-offset: 2px;
+}
+
+:global([data-container-style="frame"]) .advancedSearchButton {
+  border-color: color-mix(in srgb,var(--fusion-accent) 18%,var(--color-border-subtle));
+  background: color-mix(in srgb,var(--color-bg-primary) 72%,transparent);
+}
+
+:global([data-container-style="ambient"]) .advancedSearchButton {
+  border: 0;
+  border-radius: 7px;
+  background: color-mix(in srgb,var(--color-bg-primary) 72%,transparent);
+}
+
+:global([data-container-style="veil"]) .advancedSearchButton {
+  border-color: color-mix(in srgb,var(--color-text-primary) 13%,transparent);
+  border-radius: 4px;
+  background: transparent;
 }

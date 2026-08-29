@@ -4,8 +4,10 @@
  */
 
 import { Space, DockItem } from '@/shared/types';
+import { createId } from '@/shared/utils/id';
 import { compressIcon, compressIconsInItems } from '@/features/theme/utils/imageCompression';
 import { isFaviconRef, getDomainFromRef, resolveIconUrl } from '@/features/dock/utils/iconCache';
+import { isNavigationAction, parseNavigationAction, type NavigationAction } from '@/shared/navigation';
 
 // ============================================================================
 // 类型定义
@@ -16,7 +18,7 @@ import { isFaviconRef, getDomainFromRef, resolveIconUrl } from '@/features/dock/
  */
 export interface SpaceExportData {
     version: string;
-    type: 'eclipse-space-export';
+    type: 'eclipin-space-export' | 'eclipse-space-export';
     data: {
         name: string;
         iconType: Space['iconType'];
@@ -30,7 +32,7 @@ export interface SpaceExportData {
  */
 export interface MultiSpaceExportData {
     version: string;
-    type: 'eclipse-multi-space-export';
+    type: 'eclipin-multi-space-export' | 'eclipse-multi-space-export';
     data: {
         spaces: Array<{
             name: string;
@@ -46,6 +48,8 @@ export interface MultiSpaceExportData {
  */
 interface ExportedDockItem {
     title: string;
+    /** 结构化导航数据；url 仅保留给旧版导入器兼容外链。 */
+    action?: NavigationAction;
     url?: string;
     icon?: string;
     type: 'app' | 'folder';
@@ -65,8 +69,16 @@ async function convertToExportItemAsync(item: DockItem): Promise<ExportedDockIte
         type: item.type,
     };
 
-    if (item.url) {
-        exported.url = item.url;
+    if (isNavigationAction(item.action)) {
+        exported.action = item.action;
+        if (item.action.type === 'url') exported.url = item.action.url;
+    } else if (item.url) {
+        // 仅兼容尚未经过持久化迁移的旧数据；导出时立即结构化。
+        const action = parseNavigationAction(item.url);
+        if (action) {
+            exported.action = action;
+            if (action.type === 'url') exported.url = action.url;
+        }
     }
 
     // 压缩图标到 500x500 WebP
@@ -121,7 +133,7 @@ export async function exportSpaceToFile(space: Space): Promise<void> {
     // 构建导出数据
     const exportData: SpaceExportData = {
         version: '1.0',
-        type: 'eclipse-space-export',
+        type: 'eclipin-space-export',
         data: {
             name: space.name,
             iconType: space.iconType,
@@ -134,10 +146,10 @@ export async function exportSpaceToFile(space: Space): Promise<void> {
     const jsonString = JSON.stringify(exportData, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
 
-    // 生成文件名: eclipse-space-{name}-{date}.json
+    // 生成文件名: eclipin-space-{name}-{date}.json
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const safeName = space.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    const filename = `eclipse-space-${safeName}-${date}.json`;
+    const filename = `eclipin-space-${safeName}-${date}.json`;
 
     // 触发下载
     const url = URL.createObjectURL(blob);
@@ -173,7 +185,7 @@ export async function exportAllSpacesToFile(spaces: Space[]): Promise<void> {
     // 构建导出数据
     const exportData: MultiSpaceExportData = {
         version: '1.0',
-        type: 'eclipse-multi-space-export',
+        type: 'eclipin-multi-space-export',
         data: {
             spaces: spacesData,
         },
@@ -183,9 +195,9 @@ export async function exportAllSpacesToFile(spaces: Space[]): Promise<void> {
     const jsonString = JSON.stringify(exportData, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
 
-    // 生成文件名: eclipse-all-spaces-{date}.json
+    // 生成文件名: eclipin-all-spaces-{date}.json
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const filename = `eclipse-all-spaces-${date}.json`;
+    const filename = `eclipin-all-spaces-${date}.json`;
 
     // 触发下载
     const url = URL.createObjectURL(blob);
@@ -213,7 +225,7 @@ function validateExportData(data: unknown): data is SpaceExportData {
     const obj = data as Record<string, unknown>;
 
     // 检查必要字段
-    if (obj.type !== 'eclipse-space-export') {
+    if (obj.type !== 'eclipin-space-export' && obj.type !== 'eclipse-space-export') {
         return false;
     }
 
@@ -245,7 +257,7 @@ function validateMultiSpaceExportData(data: unknown): data is MultiSpaceExportDa
     const obj = data as Record<string, unknown>;
 
     // 检查必要字段
-    if (obj.type !== 'eclipse-multi-space-export') {
+    if (obj.type !== 'eclipin-multi-space-export' && obj.type !== 'eclipse-multi-space-export') {
         return false;
     }
 
@@ -358,13 +370,17 @@ export async function parseAndValidateSpaceFile(file: File): Promise<SpaceExport
  */
 function convertFromExportItem(item: ExportedDockItem): DockItem {
     const dockItem: DockItem = {
-        id: crypto.randomUUID(),
+        id: createId(),
         name: item.title,
         type: item.type,
     };
 
-    if (item.url) {
-        dockItem.url = item.url;
+    const action = isNavigationAction(item.action)
+        ? item.action
+        : parseNavigationAction(item.url ?? '');
+    if (action) {
+        dockItem.action = action;
+        if (action.type === 'url') dockItem.url = action.url;
     }
 
     if (item.icon) {
@@ -413,7 +429,7 @@ export async function createSpaceFromImport(
     const compressedApps = await compressIconsInItems(convertedApps);
 
     return {
-        id: crypto.randomUUID(),
+        id: createId(),
         name: uniqueName,
         iconType: data.data.iconType || 'text',
         iconValue: data.data.iconValue,
@@ -443,7 +459,7 @@ export async function createSpacesFromMultiImport(
         const compressedApps = await compressIconsInItems(convertedApps);
 
         newSpaces.push({
-            id: crypto.randomUUID(),
+            id: createId(),
             name: uniqueName,
             iconType: spaceData.iconType || 'text',
             iconValue: spaceData.iconValue,

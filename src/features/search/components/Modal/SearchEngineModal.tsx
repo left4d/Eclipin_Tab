@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { SearchEngine } from '@/shared/types';
 import { Modal } from '@/shared/components/Modal/Modal';
 import { useLanguage } from '@/shared/context/LanguageContext';
+import { useThemeData } from '@/features/theme/context/ThemeContext';
 import styles from './SearchEngineModal.module.css';
 
 interface SearchEngineModalProps {
@@ -22,6 +23,7 @@ export const SearchEngineModal: React.FC<SearchEngineModalProps> = ({
   anchorRect,
 }) => {
   const { t } = useLanguage();
+  const { dockPosition } = useThemeData();
   const [activeIndex, setActiveIndex] = useState(() => Math.max(0, engines.findIndex(e => e.id === selectedEngine.id)));
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -59,7 +61,7 @@ export const SearchEngineModal: React.FC<SearchEngineModalProps> = ({
   }, [activeIndex, engines, isOpen, handleSelect, onClose]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={undefined} hideHeader anchorRect={anchorRect} offset={12}>
+    <Modal isOpen={isOpen} onClose={onClose} title={undefined} hideHeader anchorRect={anchorRect} offset={12} popoverPlacement={dockPosition === 'top' ? 'bottom' : 'top'}>
       <div
         ref={listRef}
         className={styles.list}

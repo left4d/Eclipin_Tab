@@ -1,20 +1,27 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { storage } from '@/shared/utils/storage';
 import { useSystemTheme } from '@/features/theme/hooks/useSystemTheme';
 import { useWallpaperStorage } from '@/features/theme/hooks/useWallpaperStorage';
-import { db } from '@/shared/utils/db';
+import { db, isWeSceneWallpaperItem, type WallpaperType } from '@/shared/utils/db';
 import { GRADIENT_PRESETS } from '@/features/theme/constants/gradients';
 import { generateTextureDataUrl, getTextureSize, type TextureId } from '@/features/theme/constants/textures';
 import { getTextureColorFromBackground } from '@/features/theme/utils/colorUtils';
+import { DEFAULT_APPEARANCE_PALETTE, isAppearancePalette, type AppearancePalette } from '@/features/theme/constants/palettes';
+import { isBackgroundLight } from '@/features/theme/utils/backgroundLightness';
+import { classifyWallpaperUpload, maxWallpaperUploadSize } from '@/features/theme/utils/wallpaperUpload';
+import { useVideoWallpaperRetention } from '@/features/theme/hooks/useVideoWallpaperRetention';
 
 export type Theme = 'default' | 'light' | 'dark';
 export type Texture = TextureId;
-export type DockPosition = 'center' | 'bottom';
+export type DockPosition = 'top' | 'center' | 'bottom';
 export type IconSize = 'large' | 'small';
+export type ContainerStyle = 'classic' | 'frame' | 'ambient' | 'veil';
+export type PageScrollMode = 'continuous' | 'paged';
+export type PageSlideDirection = 'vertical' | 'horizontal';
 
 export const DEFAULT_THEME_COLORS = {
     light: '#f1f1f1',
-    dark: '#2C2C2E',
+    dark: '#202225',
 };
 
 // ============================================================================
@@ -24,7 +31,7 @@ interface ThemeDataContextType {
     theme: Theme;
     followSystem: boolean;
     wallpaper: string | null;
-    wallpaperType: 'image' | 'video';
+    wallpaperType: WallpaperType;
     gradientId: string | null;
     solidId: string | null;
     texture: Texture;
@@ -35,8 +42,13 @@ interface ThemeDataContextType {
     backgroundTextureTileSize: string;
     backgroundBlendMode: string;
     dockPosition: DockPosition;
+    quickLinksBarEnabled: boolean;
     iconSize: IconSize;
     openInNewTab: boolean;
+    appearancePalette: AppearancePalette;
+    containerStyle: ContainerStyle;
+    pageScrollMode: PageScrollMode;
+    pageSlideDirection: PageSlideDirection;
 }
 
 const ThemeDataContext = createContext<ThemeDataContextType | undefined>(undefined);
@@ -54,8 +66,13 @@ interface ThemeActionsContextType {
     setTexture: (texture: Texture) => void;
     setWallpaperId: (id: string) => Promise<void>;
     setDockPosition: (position: DockPosition) => void;
+    setQuickLinksBarEnabled: (enabled: boolean) => void;
     setIconSize: (size: IconSize) => void;
     setOpenInNewTab: (openInNewTab: boolean) => void;
+    setAppearancePalette: (palette: AppearancePalette) => void;
+    setContainerStyle: (style: ContainerStyle) => void;
+    setPageScrollMode: (mode: PageScrollMode) => void;
+    setPageSlideDirection: (direction: PageSlideDirection) => void;
 }
 
 const ThemeActionsContext = createContext<ThemeActionsContextType | undefined>(undefined);
@@ -65,95 +82,17 @@ const ThemeActionsContext = createContext<ThemeActionsContextType | undefined>(u
 // ============================================================================
 type ThemeContextType = ThemeDataContextType & ThemeActionsContextType;
 
-const MAX_IMAGE_SIZE = 20 * 1024 * 1024; // 20MB 图片限制
-const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB 视频限制
-
-const lightnessCache = new Map<string, boolean>();
-
-/**
- * 判断背景颜色/渐变是浅色还是深色
- * 如果背景是浅色（需要深色文字），返回 true
- */
-const isBackgroundLight = (backgroundValue: string): boolean => {
-    // 检查缓存
-    if (lightnessCache.has(backgroundValue)) {
-        return lightnessCache.get(backgroundValue)!;
-    }
-
-    // 提取实际的底色层（跳过可能存在的纹理层）
-    // 背景值可能是 "url(data:...), #ffffff" 或 "url(blob:...), #ffffff"
-    const layers = backgroundValue.split(',').map(l => l.trim());
-    const baseLayer = layers[layers.length - 1];
-
-    // 如果最后层是 blob URL (壁纸)，由于无法分析图像，默认返回浅色以使用深色文字
-    if (baseLayer.startsWith('url(blob:')) {
-        return true;
-    }
-
-    // 提取字符串中的所有颜色
-    const colors: string[] = [];
-    const hexRegex = /#[0-9A-Fa-f]{6}/g;
-    const rgbRegex = /rgba?\([^)]+\)/g;
-
-    const hexMatches = backgroundValue.match(hexRegex);
-    if (hexMatches) colors.push(...hexMatches);
-
-    const rgbMatches = backgroundValue.match(rgbRegex);
-    if (rgbMatches) colors.push(...rgbMatches);
-
-    if (colors.length === 0) return false;
-
-    // 计算每种颜色的亮度
-    let totalLuminance = 0;
-    let maxLuminance = 0;
-
-    colors.forEach(color => {
-        let r = 0, g = 0, b = 0;
-
-        if (color.startsWith('#')) {
-            const hex = color.substring(1);
-            r = parseInt(hex.substring(0, 2), 16);
-            g = parseInt(hex.substring(2, 4), 16);
-            b = parseInt(hex.substring(4, 6), 16);
-        } else if (color.startsWith('rgb')) {
-            const match = color.match(/\d+/g);
-            if (match && match.length >= 3) {
-                r = parseInt(match[0]);
-                g = parseInt(match[1]);
-                b = parseInt(match[2]);
-            }
-        }
-
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        totalLuminance += luminance;
-        if (luminance > maxLuminance) {
-            maxLuminance = luminance;
-        }
-    });
-
-    const averageLuminance = totalLuminance / colors.length;
-
-    // 使用组合评分：平均值 (整体亮度) + 最大值 (最亮点)
-    // 这有助于检测淡入浅色的渐变，确保在浅色部分的可读性
-    const score = (averageLuminance + maxLuminance) / 2;
-
-    const result = score > 0.4;
-
-    // 防止缓存过大
-    if (lightnessCache.size > 50) {
-        const firstKey = lightnessCache.keys().next().value;
-        if (firstKey) lightnessCache.delete(firstKey);
-    }
-    lightnessCache.set(backgroundValue, result);
-
-    return result;
-};
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const systemTheme = useSystemTheme();
 
     // 壁纸存储钩子
-    const { saveWallpaper: saveToDb, createWallpaperUrl } = useWallpaperStorage();
+    const {
+        saveWallpaper: saveToDb,
+        saveWallpaperEngineZip: saveWeSceneZipToDb,
+        createWallpaperUrl,
+        revokeWallpaperUrl
+    } = useWallpaperStorage();
 
     // 核心主题状态
     const [manualTheme, setManualTheme] = useState<Theme>(() => {
@@ -169,7 +108,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [wallpaper, setWallpaperState] = useState<string | null>(null);
 
     // Current wallpaper type
-    const [wallpaperType, setWallpaperType] = useState<'image' | 'video'>('image');
+    const [wallpaperType, setWallpaperType] = useState<WallpaperType>('image');
 
     // Current wallpaper ID (for IndexedDB)
     const [wallpaperId, setWallpaperIdState] = useState<string | null>(() => {
@@ -198,6 +137,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return storage.getDockPosition();
     });
 
+    const [quickLinksBarEnabled, setQuickLinksBarEnabledState] = useState<boolean>(() => {
+        return storage.getConfig().quickLinksBarEnabled !== false;
+    });
+
     const [iconSize, setIconSizeState] = useState<IconSize>(() => {
         return storage.getIconSize();
     });
@@ -206,23 +149,87 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return storage.getOpenInNewTab();
     });
 
+    const [appearancePalette, setAppearancePaletteState] = useState<AppearancePalette>(() => {
+        const saved = storage.getAppearancePalette();
+        return isAppearancePalette(saved) ? saved : DEFAULT_APPEARANCE_PALETTE;
+    });
+
+    const [containerStyle, setContainerStyleState] = useState<ContainerStyle>(() => storage.getContainerStyle());
+    const [pageSlideDirection, setPageSlideDirectionState] = useState<PageSlideDirection>(() => storage.getPageSlideDirection());
+    const [pageScrollMode, setPageScrollModeState] = useState<PageScrollMode>(() => (
+        storage.getPageSlideDirection() === 'horizontal' ? 'paged' : storage.getPageScrollMode()
+    ));
+
     // 计算主题：如果启用了 followSystem，则使用系统主题
     const theme = followSystem ? systemTheme : manualTheme;
     const isDefaultTheme = manualTheme === 'default' && !followSystem;
 
-    // 如果 ID 存在，从数据库加载壁纸
-    useEffect(() => {
-        if (wallpaperId) {
-            // 需要获取完整的 WallpaperItem 以读取 type
-            db.get(wallpaperId).then(item => {
-                if (item) {
-                    const url = createWallpaperUrl(item.data);
-                    setWallpaperState(url);
-                    setWallpaperType(item.type || 'image');
-                }
-            });
+    // Blob URL 生命周期必须与当前壁纸一致；旧实现会在每次切换时累积 URL。
+    const wallpaperUrlRef = useRef<string | null>(null);
+    const wallpaperLoadTokenRef = useRef(0);
+
+    const releaseCurrentWallpaper = useCallback(() => {
+        wallpaperLoadTokenRef.current += 1;
+        const currentUrl = wallpaperUrlRef.current;
+        wallpaperUrlRef.current = null;
+        if (currentUrl) revokeWallpaperUrl(currentUrl);
+        setWallpaperState(null);
+    }, [revokeWallpaperUrl]);
+
+    const loadWallpaperById = useCallback(async (id: string) => {
+        const token = ++wallpaperLoadTokenRef.current;
+        const item = await db.get(id);
+        if (token !== wallpaperLoadTokenRef.current || !item) return;
+
+        if (isWeSceneWallpaperItem(item)) {
+            // weScene is a multi-resource wallpaper. Do not manufacture a Blob URL
+            // or pass it through the legacy image/video background path. Phase 4
+            // will load the scene + referenced resources in a dedicated renderer.
+            const previousUrl = wallpaperUrlRef.current;
+            wallpaperUrlRef.current = null;
+            if (previousUrl) revokeWallpaperUrl(previousUrl);
+            setWallpaperType('weScene');
+            setWallpaperState(null);
+            return;
         }
-    }, [wallpaperId, createWallpaperUrl]);
+
+        const nextUrl = createWallpaperUrl(item.data);
+        if (token !== wallpaperLoadTokenRef.current) {
+            revokeWallpaperUrl(nextUrl);
+            return;
+        }
+
+        const previousUrl = wallpaperUrlRef.current;
+        wallpaperUrlRef.current = nextUrl;
+        if (previousUrl && previousUrl !== nextUrl) revokeWallpaperUrl(previousUrl);
+        setWallpaperType(item.type || 'image');
+        setWallpaperState(nextUrl);
+    }, [createWallpaperUrl, revokeWallpaperUrl]);
+
+    // 初次打开/切换壁纸时按需创建 URL；后台标签页不预加载视频。
+    useEffect(() => {
+        if (!wallpaperId) {
+            releaseCurrentWallpaper();
+            return;
+        }
+        if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+        void loadWallpaperById(wallpaperId);
+    }, [loadWallpaperById, releaseCurrentWallpaper, wallpaperId]);
+
+    useVideoWallpaperRetention({
+        wallpaperId,
+        wallpaperType,
+        wallpaperUrlRef,
+        loadWallpaperById,
+        releaseCurrentWallpaper,
+    });
+
+    useEffect(() => () => {
+        wallpaperLoadTokenRef.current += 1;
+        const url = wallpaperUrlRef.current;
+        wallpaperUrlRef.current = null;
+        if (url) revokeWallpaperUrl(url);
+    }, [revokeWallpaperUrl]);
 
     // 更新手动主题
     const setTheme = useCallback((newTheme: Theme) => {
@@ -241,52 +248,45 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         storage.saveFollowSystem(follow);
     }, []);
 
-    // 更新壁纸
+    // 更新壁纸。当前 UI 主要用 null 清除壁纸；非空值保留兼容能力。
     const setWallpaper = useCallback((wp: string | null) => {
-        setWallpaperState(wp);
         if (!wp) {
             setWallpaperIdState(null);
             storage.saveWallpaperId(null);
+            releaseCurrentWallpaper();
+            return;
         }
-    }, []);
+        releaseCurrentWallpaper();
+        setWallpaperState(wp);
+    }, [releaseCurrentWallpaper]);
 
-    // 通过 ID 设置壁纸 (从画廊)
+    // 通过 ID 设置壁纸 (从画廊)。真正加载统一由上方 effect 完成，避免同一壁纸创建两次 Blob URL。
     const setWallpaperId = useCallback(async (id: string) => {
         setWallpaperIdState(id);
         storage.saveWallpaperId(id);
-        // 需要获取完整的 WallpaperItem 以读取 type
-        const item = await db.get(id);
-        if (item) {
-            const url = createWallpaperUrl(item.data);
-            setWallpaperState(url);
-            setWallpaperType(item.type || 'image');
-        }
-    }, [createWallpaperUrl]);
+    }, []);
 
     // 上传壁纸文件
     const uploadWallpaper = useCallback(async (file: File) => {
-        const isVideo = file.type.startsWith('video/');
-        const isImage = file.type.startsWith('image/');
+        const kind = classifyWallpaperUpload(file);
+        if (!kind) throw new Error('请选择图片、视频或 Wallpaper Engine RePKG 解包后的 ZIP 文件');
 
-        // 验证文件类型
-        if (!isImage && !isVideo) {
-            throw new Error('请选择图片或视频文件');
-        }
-
-        // 验证文件大小
-        const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
-        if (file.size > maxSize) {
-            throw new Error(`文件大小不能超过 ${maxSize / 1024 / 1024}MB`);
-        }
+        const maxSize = maxWallpaperUploadSize(kind);
+        if (file.size > maxSize) throw new Error(`文件大小不能超过 ${maxSize / 1024 / 1024}MB`);
 
         try {
+            if (kind === 'weScene') {
+                const ids = await saveWeSceneZipToDb(file);
+                await setWallpaperId(ids[0]);
+                return;
+            }
             const id = await saveToDb(file);
             await setWallpaperId(id);
         } catch (error) {
             console.error('Failed to upload wallpaper:', error);
             throw error;
         }
-    }, [saveToDb, setWallpaperId]);
+    }, [saveToDb, saveWeSceneZipToDb, setWallpaperId]);
 
     // 更新渐变 (Default 模式使用)
     const setGradientId = useCallback((id: string | null) => {
@@ -313,6 +313,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         storage.saveDockPosition(position);
     }, []);
 
+    const setQuickLinksBarEnabled = useCallback((enabled: boolean) => {
+        setQuickLinksBarEnabledState(enabled);
+        storage.updateConfig({ quickLinksBarEnabled: enabled });
+    }, []);
+
     // 更新图标大小
     const setIconSize = useCallback((size: IconSize) => {
         setIconSizeState(size);
@@ -325,10 +330,36 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         storage.saveOpenInNewTab(open);
     }, []);
 
+    const setAppearancePalette = useCallback((palette: AppearancePalette) => {
+        setAppearancePaletteState(palette);
+        storage.saveAppearancePalette(palette);
+    }, []);
+
+    const setContainerStyle = useCallback((style: ContainerStyle) => {
+        setContainerStyleState(style);
+        storage.saveContainerStyle(style);
+    }, []);
+
+    const setPageScrollMode = useCallback((mode: PageScrollMode) => {
+        const effectiveMode: PageScrollMode = pageSlideDirection === 'horizontal' ? 'paged' : mode;
+        setPageScrollModeState(effectiveMode);
+        storage.savePageScrollMode(effectiveMode);
+    }, [pageSlideDirection]);
+
+    const setPageSlideDirection = useCallback((direction: PageSlideDirection) => {
+        setPageSlideDirectionState(direction);
+        storage.savePageSlideDirection(direction);
+        if (direction === 'horizontal') {
+            setPageScrollModeState('paged');
+        }
+    }, []);
+
     // 将主题应用到文档
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
-    }, [theme]);
+        document.documentElement.setAttribute('data-theme-palette', appearancePalette);
+        document.documentElement.setAttribute('data-container-style', containerStyle);
+    }, [theme, appearancePalette, containerStyle]);
 
     // 将壁纸或渐变/纯色/纹理应用到 body 背景
     // 计算背景值和混合模式
@@ -338,6 +369,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         let textureValue: string | null = null;
         let textureTileSize = 'cover';
         let blendMode = 'normal';
+        const hasWeSceneWallpaper = wallpaperType === 'weScene' && wallpaperId !== null;
 
         if (wallpaper) {
             baseValue = `url(${wallpaper})`;
@@ -380,7 +412,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             fullBgValue = baseValue;
 
             // 如果启用，应用纹理图案 (不在默认主题且不为 'none')
-            if (!isDefaultTheme && texture !== 'none') {
+            if (!hasWeSceneWallpaper && !isDefaultTheme && texture !== 'none') {
                 // 从基础背景计算动态颜色
                 const textureColor = getTextureColorFromBackground(baseValue);
 
@@ -398,7 +430,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             backgroundTextureTileSize: textureTileSize,
             backgroundBlendMode: blendMode
         };
-    }, [wallpaper, gradientId, solidId, texture, isDefaultTheme, theme, followSystem, systemTheme]);
+    }, [wallpaper, wallpaperId, wallpaperType, gradientId, solidId, texture, isDefaultTheme, theme, followSystem, systemTheme]);
 
     // 将主题应用到文档，并设置 CSS 变量以保持向后兼容
     useEffect(() => {
@@ -419,7 +451,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         root.style.setProperty('--background-custom', backgroundValue);
 
         // 配置背景大小和位置
-        const hasTexture = !isDefaultTheme && texture !== 'none' && !wallpaper;
+        const hasTexture = !isDefaultTheme && texture !== 'none' && !wallpaper && wallpaperType !== 'weScene';
         if (hasTexture) {
             // 纹理图案层 + 纯色/渐变层
             const textureSize = getTextureSize(texture);
@@ -450,7 +482,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 ? (supportsSuperellipse ? '18px' : '12px')
                 : (supportsSuperellipse ? '24px' : '16px')
         );
-    }, [backgroundValue, backgroundBaseValue, backgroundBlendMode, isDefaultTheme, iconSize, texture, wallpaper]);
+    }, [backgroundValue, backgroundBaseValue, backgroundBlendMode, isDefaultTheme, iconSize, texture, wallpaper, wallpaperType]);
 
     // ========================================================================
     // 性能优化: 分离 data 和 actions context values
@@ -470,9 +502,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         backgroundTextureTileSize,
         backgroundBlendMode,
         dockPosition,
+        quickLinksBarEnabled,
         iconSize,
         openInNewTab,
-    }), [theme, followSystem, wallpaper, wallpaperType, gradientId, solidId, texture, wallpaperId, backgroundValue, backgroundBaseValue, backgroundTextureValue, backgroundTextureTileSize, backgroundBlendMode, dockPosition, iconSize, openInNewTab]);
+        appearancePalette,
+        containerStyle,
+        pageScrollMode,
+        pageSlideDirection,
+    }), [theme, followSystem, wallpaper, wallpaperType, gradientId, solidId, texture, wallpaperId, backgroundValue, backgroundBaseValue, backgroundTextureValue, backgroundTextureTileSize, backgroundBlendMode, dockPosition, quickLinksBarEnabled, iconSize, openInNewTab, appearancePalette, containerStyle, pageScrollMode, pageSlideDirection]);
 
     const actionsValue: ThemeActionsContextType = useMemo(() => ({
         setTheme,
@@ -484,9 +521,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setTexture,
         setWallpaperId,
         setDockPosition,
+        setQuickLinksBarEnabled,
         setIconSize,
         setOpenInNewTab,
-    }), [setTheme, setFollowSystem, setWallpaper, uploadWallpaper, setGradientId, setSolidId, setTexture, setWallpaperId, setDockPosition, setIconSize, setOpenInNewTab]);
+        setAppearancePalette,
+        setContainerStyle,
+        setPageScrollMode,
+        setPageSlideDirection,
+    }), [setTheme, setFollowSystem, setWallpaper, uploadWallpaper, setGradientId, setSolidId, setTexture, setWallpaperId, setDockPosition, setQuickLinksBarEnabled, setIconSize, setOpenInNewTab, setAppearancePalette, setContainerStyle, setPageScrollMode, setPageSlideDirection]);
 
     return (
         <ThemeDataContext.Provider value={dataValue}>

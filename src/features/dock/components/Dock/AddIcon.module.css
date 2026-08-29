@@ -37,3 +37,26 @@
     height: 32px;
     color: var(--color-text-primary);
 }
+/* Web × Pegboard 强调色 */
+.addIcon {
+    border: 1px solid var(--fusion-border-accent);
+    background: var(--fusion-accent-soft);
+}
+
+.addIcon:hover {
+    color: var(--fusion-accent);
+    box-shadow: 0 0 0 3px var(--fusion-focus-ring), var(--fusion-shadow-sm);
+}
+
+.addIcon {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 0;
+    color: var(--color-text-primary);
+    font: inherit;
+}
+
+.addIcon:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--fusion-focus-ring), var(--shadow-small);
+}

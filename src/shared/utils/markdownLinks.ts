@@ -48,11 +48,10 @@ export function splitTextWithLinks(text: string): Array<{ type: 'text' | 'link';
             });
         }
 
-        fragments.push({
-            type: 'link',
-            content: link.text,
-            url: normalizeUrl(link.url),
-        });
+        const normalizedUrl = normalizeUrl(link.url);
+        fragments.push(normalizedUrl
+            ? { type: 'link', content: link.text, url: normalizedUrl }
+            : { type: 'text', content: link.text });
 
         lastIndex = link.endIndex;
     }
@@ -164,12 +163,17 @@ function convertPlainUrlsToMarkdown(text: string): string {
 
     return text.replace(urlRegex, (_match, prefix: string, rawUrl: string) => {
         const normalizedUrl = normalizeUrl(rawUrl);
-        return `${prefix}[${rawUrl}](${normalizedUrl})`;
+        return normalizedUrl ? `${prefix}[${rawUrl}](${normalizedUrl})` : `${prefix}${rawUrl}`;
     });
 }
 
 function normalizeEditableLinksToMarkdown(text: string): string {
+    const normalizeLink = (_match: string, linkText: string, linkUrl: string) => {
+        const normalizedUrl = normalizeUrl(linkUrl);
+        return normalizedUrl ? `[${linkText}](${normalizedUrl})` : linkText;
+    };
+
     return text
-        .replace(EDITABLE_LINK_REGEX, (_match, linkText: string, linkUrl: string) => `[${linkText}](${normalizeUrl(linkUrl)})`)
-        .replace(STORED_MARKDOWN_LINK_REGEX, (_match, linkText: string, linkUrl: string) => `[${linkText}](${normalizeUrl(linkUrl)})`);
+        .replace(EDITABLE_LINK_REGEX, normalizeLink)
+        .replace(STORED_MARKDOWN_LINK_REGEX, normalizeLink);
 }

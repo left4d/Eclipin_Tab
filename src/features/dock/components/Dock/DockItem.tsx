@@ -4,6 +4,7 @@ import { Tooltip } from '@/shared/components/Tooltip/Tooltip';
 import { isFaviconRef, isRemoteIconUrl, getDomainFromRef, resolveIconUrl, resolveRemoteIconUrl, getCachedIconUrlSync, getCachedRemoteIconUrlSync } from '@/features/dock/utils/iconCache';
 import styles from './DockItem.module.css';
 import editIcon from '@/assets/icons/edit.svg';
+import { generateTextIcon } from '@/features/dock/utils/iconFetcher';
 
 // 占位符 SVG（半透明圆角矩形）
 const PLACEHOLDER_ICON = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTYiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4yKSIvPjwvc3ZnPg==';
@@ -12,7 +13,7 @@ const PLACEHOLDER_ICON = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdo
  * 解析图标：如果是 favicon: 引用则异步加载，否则直接使用
  * 优化：如果图标已在内存缓存中，同步返回，避免占位符闪烁
  */
-function useResolvedIcon(icon: string | undefined): string {
+function useResolvedIcon(icon: string | undefined, refreshKey = 0): string {
   const [resolved, setResolved] = useState<string>(() => {
     if (!icon) return PLACEHOLDER_ICON;
     if (isFaviconRef(icon)) {
@@ -68,7 +69,7 @@ function useResolvedIcon(icon: string | undefined): string {
     });
 
     return () => { cancelled = true; };
-  }, [icon]);
+  }, [icon, refreshKey]);
 
   return resolved;
 }
@@ -86,6 +87,8 @@ interface DockItemProps {
   onLongPress?: () => void;
   onMouseDown?: (e: React.MouseEvent) => void;
   onContextMenu?: (x: number, y: number, rect: DOMRect) => void;
+  /** 强制重新从 IndexedDB 解析图标。 */
+  iconRefreshKey?: number;
 }
 
 const DockItemComponent: React.FC<DockItemProps> = ({
@@ -101,6 +104,7 @@ const DockItemComponent: React.FC<DockItemProps> = ({
   onLongPress,
   onMouseDown,
   onContextMenu,
+  iconRefreshKey = 0,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -108,7 +112,7 @@ const DockItemComponent: React.FC<DockItemProps> = ({
   const isLongPressTriggered = useRef(false);
 
   // 解析图标 URL（处理 favicon: 引用的异步加载）
-  const resolvedIcon = useResolvedIcon(item.icon);
+  const resolvedIcon = useResolvedIcon(item.icon, iconRefreshKey);
 
   const handleClick = () => {
     if (isLongPressTriggered.current) {
@@ -215,12 +219,17 @@ const DockItemComponent: React.FC<DockItemProps> = ({
           </div>
         )}
         {item.type === 'folder' ? (
-          <FolderIconGrid items={item.items} />
+          <FolderIconGrid items={item.items} iconRefreshKey={iconRefreshKey} />
         ) : (
           <img
             src={resolvedIcon}
             alt={item.name}
             className={`${styles.icon} ${item.iconSmall ? styles.iconSmall : ''}`}
+            onError={(event) => {
+              if (event.currentTarget.dataset.fallbackApplied === 'true') return;
+              event.currentTarget.dataset.fallbackApplied = 'true';
+              event.currentTarget.src = generateTextIcon(item.name || item.url || '');
+            }}
           />
         )}
       </div>
@@ -243,24 +252,32 @@ const DockItemComponent: React.FC<DockItemProps> = ({
 /**
  * 文件夹图标网格：子项图标也需要异步解析
  */
-const FolderIconGrid: React.FC<{ items?: DockItemType[] }> = ({ items }) => {
+const FolderIconGrid: React.FC<{ items?: DockItemType[]; iconRefreshKey?: number }> = ({ items, iconRefreshKey = 0 }) => {
   return (
     <div className={styles.folderIcon}>
       {items && items.slice(0, 4).map((subItem) => (
-        <FolderIconTile key={subItem.id} subItem={subItem} />
+        <FolderIconTile key={subItem.id} subItem={subItem} iconRefreshKey={iconRefreshKey} />
       ))}
     </div>
   );
 };
 
-const FolderIconTile: React.FC<{ subItem: DockItemType }> = ({ subItem }) => {
-  const resolvedIcon = useResolvedIcon(subItem.icon);
+const FolderIconTile: React.FC<{ subItem: DockItemType; iconRefreshKey?: number }> = ({ subItem, iconRefreshKey = 0 }) => {
+  const resolvedIcon = useResolvedIcon(subItem.icon, iconRefreshKey);
   const isPlaceholder = resolvedIcon === PLACEHOLDER_ICON;
 
   return (
     <div className={styles.folderIconTile}>
       {!isPlaceholder ? (
-        <img src={resolvedIcon} alt={subItem.name} />
+        <img
+          src={resolvedIcon}
+          alt={subItem.name}
+          onError={(event) => {
+            if (event.currentTarget.dataset.fallbackApplied === 'true') return;
+            event.currentTarget.dataset.fallbackApplied = 'true';
+            event.currentTarget.src = generateTextIcon(subItem.name || subItem.url || '');
+          }}
+        />
       ) : (
         <div className={styles.fallbackIcon} />
       )}
@@ -279,7 +296,8 @@ const arePropsEqual = (prev: DockItemProps, next: DockItemProps) => {
     prev.isDragging !== next.isDragging ||
     prev.isDropTarget !== next.isDropTarget ||
     prev.isMergeTarget !== next.isMergeTarget ||
-    prev.staggerIndex !== next.staggerIndex
+    prev.staggerIndex !== next.staggerIndex ||
+    prev.iconRefreshKey !== next.iconRefreshKey
   ) {
     return false;
   }

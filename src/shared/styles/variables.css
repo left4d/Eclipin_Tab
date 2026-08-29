@@ -77,6 +77,7 @@
   --color-bg-white: var(--white);
   --color-border: var(--white-alpha-36);
   --color-border-light: transparent;
+  --color-border-subtle: color-mix(in srgb, var(--color-border) 62%, transparent);
   --color-text-primary: var(--white);
   --color-text-secondary: var(--white-alpha-85);
   --color-text-tertiary: var(--gray-600);
@@ -94,7 +95,9 @@
   /* ===== 字体变量 ===== */
   /* 定义统一的字体族、字重、字号和行高 */
   --font-family: 'Bricolage Grotesque', sans-serif;
+  --font-weight-regular: 400;
   --font-weight-medium: 500;
+  --font-weight-bold: 700;
   --font-size-small: 12px;
   --font-size-medium: 16px;
   --line-height-none: 1;
@@ -185,7 +188,7 @@
   --color-bg-tertiary: var(--gray-700);
   --color-bg-white: var(--white);
   --color-border: var(--gray-750);
-  --color-border-light: var(transparent);
+  --color-border-light: transparent;
   --color-text-primary: var(--gray-100);
   --color-text-secondary: var(--gray-300);
   --color-text-tertiary: var(--gray-300);
@@ -348,4 +351,387 @@ body {
     opacity: 1;
     filter: blur(var(--blur-amount-subtle));
   }
+}
+/* ===== 小组件统一视觉变量 ===== */
+/* 默认与浅色卡片保持一致；透明快捷链接文字继续跟随页面主文字颜色。 */
+:root {
+  --widget-surface: linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 255, 0.66));
+  --widget-surface-solid: rgba(248, 250, 255, 0.96);
+  --widget-surface-muted: rgba(18, 23, 34, 0.06);
+  --widget-surface-hover: rgba(18, 23, 34, 0.1);
+  --widget-control-surface: rgba(255, 255, 255, 0.58);
+  --widget-control-hover: rgba(255, 255, 255, 0.84);
+  --widget-border: rgba(255, 255, 255, 0.56);
+  --widget-border-subtle: rgba(18, 23, 34, 0.1);
+  --widget-text-primary: rgba(18, 23, 34, 0.92);
+  --widget-text-secondary: rgba(18, 23, 34, 0.66);
+  --widget-text-tertiary: rgba(18, 23, 34, 0.44);
+  --widget-floating-text: var(--color-text-primary);
+  --widget-shadow: 0 18px 42px rgba(0, 0, 0, 0.16), inset 0 1px rgba(255, 255, 255, 0.72);
+  --widget-shadow-hover: 0 22px 52px rgba(0, 0, 0, 0.2), inset 0 1px rgba(255, 255, 255, 0.78);
+  --widget-popover-surface: rgba(250, 250, 252, 0.96);
+  --widget-popover-text: rgba(18, 23, 34, 0.92);
+  --widget-code-bg: rgba(18, 23, 34, 0.08);
+  --widget-ring-track: rgba(18, 23, 34, 0.1);
+  --widget-scroll-thumb: rgba(18, 23, 34, 0.18);
+  --widget-accent: var(--fusion-accent);
+  --widget-on-accent: var(--fusion-on-accent);
+  --widget-accent-soft: var(--fusion-accent-soft);
+  --widget-accent-softer: var(--fusion-accent-softer);
+  --widget-accent-hover: var(--fusion-accent-strong);
+  --widget-focus-accent: var(--fusion-accent);
+  --widget-break-accent: #34C759;
+}
+
+[data-theme="light"],
+[data-theme="default"][data-background-brightness="light"] {
+  --widget-surface: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(245, 247, 252, 0.78));
+  --widget-surface-solid: rgba(250, 250, 252, 0.97);
+  --widget-surface-muted: rgba(18, 23, 34, 0.055);
+  --widget-surface-hover: rgba(18, 23, 34, 0.095);
+  --widget-control-surface: rgba(255, 255, 255, 0.68);
+  --widget-control-hover: rgba(255, 255, 255, 0.94);
+  --widget-border: rgba(255, 255, 255, 0.78);
+  --widget-border-subtle: rgba(18, 23, 34, 0.1);
+  --widget-text-primary: rgba(18, 23, 34, 0.92);
+  --widget-text-secondary: rgba(18, 23, 34, 0.64);
+  --widget-text-tertiary: rgba(18, 23, 34, 0.42);
+  --widget-shadow: 0 16px 38px rgba(38, 48, 68, 0.14), inset 0 1px rgba(255, 255, 255, 0.86);
+  --widget-shadow-hover: 0 22px 52px rgba(38, 48, 68, 0.18), inset 0 1px rgba(255, 255, 255, 0.92);
+  --widget-popover-surface: rgba(250, 250, 252, 0.97);
+  --widget-popover-text: rgba(18, 23, 34, 0.92);
+  --widget-code-bg: rgba(18, 23, 34, 0.075);
+  --widget-ring-track: rgba(18, 23, 34, 0.1);
+  --widget-scroll-thumb: rgba(18, 23, 34, 0.18);
+}
+
+[data-theme="dark"],
+[data-theme="default"][data-background-brightness="dark"] {
+  --widget-surface: linear-gradient(145deg, rgba(49, 49, 52, 0.92), rgba(28, 28, 30, 0.76));
+  --widget-surface-solid: rgba(38, 38, 41, 0.97);
+  --widget-surface-muted: rgba(255, 255, 255, 0.075);
+  --widget-surface-hover: rgba(255, 255, 255, 0.12);
+  --widget-control-surface: rgba(255, 255, 255, 0.08);
+  --widget-control-hover: rgba(255, 255, 255, 0.14);
+  --widget-border: rgba(255, 255, 255, 0.12);
+  --widget-border-subtle: rgba(255, 255, 255, 0.1);
+  --widget-text-primary: rgba(255, 255, 255, 0.94);
+  --widget-text-secondary: rgba(255, 255, 255, 0.68);
+  --widget-text-tertiary: rgba(255, 255, 255, 0.44);
+  --widget-shadow: 0 20px 48px rgba(0, 0, 0, 0.36), inset 0 1px rgba(255, 255, 255, 0.08);
+  --widget-shadow-hover: 0 26px 60px rgba(0, 0, 0, 0.44), inset 0 1px rgba(255, 255, 255, 0.11);
+  --widget-popover-surface: rgba(34, 34, 37, 0.97);
+  --widget-popover-text: rgba(255, 255, 255, 0.94);
+  --widget-code-bg: rgba(255, 255, 255, 0.1);
+  --widget-ring-track: rgba(255, 255, 255, 0.11);
+  --widget-scroll-thumb: rgba(255, 255, 255, 0.2);
+  --widget-accent-soft: var(--fusion-accent-soft);
+}
+
+/* ========================================================================== */
+/* Web × Pegboard 主题融合层                                                   */
+/* ========================================================================== */
+/*
+ * 该层只提供外围界面所需的语义色。现有 --color-*、--widget-* 变量不被覆盖，
+ * 因此搜索框、贴纸与小组件卡片继续保持原始结构、材质和对比关系。
+ */
+:root {
+  --fusion-palette-bg: #f4f6f2;
+  --fusion-palette-surface: #ffffff;
+  --fusion-accent: #78916c;
+  --fusion-on-accent: #ffffff;
+  --fusion-accent-soft: color-mix(in srgb, var(--fusion-accent) 16%, transparent);
+  --fusion-accent-softer: color-mix(in srgb, var(--fusion-accent) 9%, transparent);
+  --fusion-accent-strong: color-mix(in srgb, var(--fusion-accent) 72%, var(--color-text-primary));
+  --fusion-surface-tint: color-mix(in srgb, var(--color-bg-secondary) 92%, var(--fusion-accent) 8%);
+  --fusion-surface-raised: color-mix(in srgb, var(--color-bg-secondary) 84%, var(--fusion-palette-surface) 16%);
+  --fusion-border-accent: color-mix(in srgb, var(--color-border) 72%, var(--fusion-accent) 28%);
+  --fusion-focus-ring: color-mix(in srgb, var(--fusion-accent) 34%, transparent);
+  --fusion-shadow-sm: 0 1px 2px rgba(26, 34, 45, 0.05), 0 8px 24px rgba(26, 34, 45, 0.08);
+  --fusion-shadow-md: 0 16px 44px rgba(26, 34, 45, 0.14);
+  --fusion-shadow-lg: 0 28px 80px rgba(26, 34, 45, 0.18);
+}
+
+:root[data-theme-palette='blue'] {
+  --fusion-palette-bg: #f4f7fc;
+  --fusion-palette-surface: #ffffff;
+  --fusion-accent: #5b7cfa;
+}
+
+:root[data-theme-palette='sand'] {
+  --fusion-palette-bg: #f7f3ec;
+  --fusion-palette-surface: #fffdf9;
+  --fusion-accent: #b7793f;
+}
+
+:root[data-theme-palette='rose'] {
+  --fusion-palette-bg: #fbf5f7;
+  --fusion-palette-surface: #ffffff;
+  --fusion-accent: #c45f7c;
+}
+
+:root[data-theme-palette='graphite'] {
+  --fusion-palette-bg: #f2f4f7;
+  --fusion-palette-surface: #ffffff;
+  --fusion-accent: #667085;
+}
+
+:root[data-theme-palette='violet'] {
+  --fusion-palette-bg: #f7f5fb;
+  --fusion-palette-surface: #ffffff;
+  --fusion-accent: #8b6ccf;
+}
+
+:root[data-theme-palette='teal'] {
+  --fusion-palette-bg: #f0f8f7;
+  --fusion-palette-surface: #ffffff;
+  --fusion-accent: #2f8f83;
+}
+
+:root[data-theme-palette='orange'] {
+  --fusion-palette-bg: #fbf5ef;
+  --fusion-palette-surface: #fffdf9;
+  --fusion-accent: #d66a32;
+}
+
+:root[data-theme='dark'],
+:root[data-theme='default'][data-background-brightness='dark'] {
+  --fusion-palette-bg: #171b18;
+  --fusion-palette-surface: #222824;
+  --fusion-accent: #91ad82;
+  --fusion-on-accent: #111711;
+  --fusion-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.18), 0 10px 28px rgba(0, 0, 0, 0.28);
+  --fusion-shadow-md: 0 18px 48px rgba(0, 0, 0, 0.38);
+  --fusion-shadow-lg: 0 30px 86px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme='dark'][data-theme-palette='blue'],
+:root[data-theme='default'][data-background-brightness='dark'][data-theme-palette='blue'] {
+  --fusion-palette-bg: #111722;
+  --fusion-palette-surface: #1a2230;
+  --fusion-accent: #75a7ff;
+}
+
+:root[data-theme='dark'][data-theme-palette='sand'],
+:root[data-theme='default'][data-background-brightness='dark'][data-theme-palette='sand'] {
+  --fusion-palette-bg: #1c1814;
+  --fusion-palette-surface: #28221c;
+  --fusion-accent: #d39a62;
+}
+
+:root[data-theme='dark'][data-theme-palette='rose'],
+:root[data-theme='default'][data-background-brightness='dark'][data-theme-palette='rose'] {
+  --fusion-palette-bg: #1c1519;
+  --fusion-palette-surface: #291f24;
+  --fusion-accent: #dd829c;
+}
+
+:root[data-theme='dark'][data-theme-palette='graphite'],
+:root[data-theme='default'][data-background-brightness='dark'][data-theme-palette='graphite'] {
+  --fusion-palette-bg: #15171a;
+  --fusion-palette-surface: #22252a;
+  --fusion-accent: #8d99aa;
+}
+
+:root[data-theme='dark'][data-theme-palette='violet'],
+:root[data-theme='default'][data-background-brightness='dark'][data-theme-palette='violet'] {
+  --fusion-palette-bg: #191620;
+  --fusion-palette-surface: #26212f;
+  --fusion-accent: #aa8be8;
+}
+
+:root[data-theme='dark'][data-theme-palette='teal'],
+:root[data-theme='default'][data-background-brightness='dark'][data-theme-palette='teal'] {
+  --fusion-palette-bg: #101b1a;
+  --fusion-palette-surface: #192827;
+  --fusion-accent: #58b8aa;
+}
+
+:root[data-theme='dark'][data-theme-palette='orange'],
+:root[data-theme='default'][data-background-brightness='dark'][data-theme-palette='orange'] {
+  --fusion-palette-bg: #1d1713;
+  --fusion-palette-surface: #2b211b;
+  --fusion-accent: #ed8b55;
+}
+
+/* ========================================================================== */
+/* Eclipin 统一界面材质系统                                                  */
+/* ========================================================================== */
+/*
+ * data-theme / data-background-brightness 负责明暗与文字对比；
+ * data-container-style 负责所有“悬浮在桌面之上”的 UI 材质。
+ *
+ * 这组变量覆盖：顶部快捷按钮、右键菜单、Popover、Modal、大页面遮罩、
+ * 表单控件和次级卡片。业务组件只消费语义变量，不再各自决定 blur/透明度。
+ */
+:root {
+  /* 浮动工具 / 顶部按钮 */
+  --ui-chrome-bg: var(--color-bg-primary);
+  --ui-chrome-border: var(--fusion-border-accent);
+  --ui-chrome-inner-bg: var(--color-bg-secondary);
+  --ui-chrome-inner-border: transparent;
+  --ui-chrome-hover-bg: var(--fusion-accent-soft);
+  --ui-chrome-shadow: var(--fusion-shadow-sm);
+  --ui-chrome-inner-shadow: var(--shadow-small);
+  --ui-chrome-blur: 40px;
+  --ui-chrome-radius: var(--radius-default);
+  --ui-chrome-inner-radius: var(--radius-default-in);
+
+  /* 菜单 / Popover */
+  --ui-menu-bg: var(--color-bg-primary);
+  --ui-menu-border: var(--fusion-border-accent);
+  --ui-menu-hover: color-mix(in srgb, var(--color-bg-secondary) 88%, var(--fusion-accent-softer));
+  --ui-menu-active: color-mix(in srgb, var(--color-bg-tertiary) 84%, var(--fusion-accent-soft));
+  --ui-menu-shadow: var(--fusion-shadow-md);
+  --ui-menu-blur: 24px;
+  --ui-menu-radius: 16px;
+  --ui-menu-item-radius: 10px;
+
+  /* 大面板 / Modal */
+  --ui-panel-bg: color-mix(in srgb, var(--color-bg-primary) 94%, transparent);
+  --ui-panel-inner-bg: color-mix(in srgb, var(--color-bg-secondary) 96%, transparent);
+  --ui-panel-card-bg: color-mix(in srgb, var(--color-bg-primary) 86%, transparent);
+  --ui-panel-border: var(--fusion-border-accent);
+  --ui-panel-divider: var(--color-border-subtle);
+  --ui-panel-shadow: var(--fusion-shadow-lg);
+  --ui-panel-blur: 24px;
+  --ui-panel-radius: 20px;
+  --ui-panel-inner-radius: 16px;
+
+  /* 全屏遮罩：所有“大页面”都使用同一组模糊与蒙层。 */
+  --ui-overlay-bg: rgba(7, 10, 14, 0.24);
+  --ui-overlay-blur: 14px;
+  --ui-overlay-saturate: 108%;
+
+  /* 表单与次级控件 */
+  --ui-control-bg: color-mix(in srgb, var(--color-bg-primary) 78%, transparent);
+  --ui-control-bg-hover: color-mix(in srgb, var(--color-bg-secondary) 90%, transparent);
+  --ui-control-border: var(--color-border-subtle);
+  --ui-control-focus-border: var(--fusion-accent);
+  --ui-control-focus-ring: 0 0 0 3px var(--fusion-focus-ring);
+  --ui-control-radius: 11px;
+
+  /* 统一菜单兼容变量：旧组件无需知道新视觉系统。 */
+  --context-menu-bg: var(--ui-menu-bg);
+  --context-menu-border: var(--ui-menu-border);
+  --context-menu-text: var(--color-text-primary);
+  --context-menu-muted: var(--color-text-tertiary);
+  --context-menu-hover: var(--ui-menu-hover);
+  --context-menu-active: var(--ui-menu-active);
+  --context-menu-shadow: var(--ui-menu-shadow);
+  --context-menu-blur: var(--ui-menu-blur);
+}
+
+:root[data-theme='light'],
+:root[data-theme='default'][data-background-brightness='light'] {
+  --ui-overlay-bg: rgba(30, 38, 50, 0.14);
+}
+
+:root[data-theme='dark'],
+:root[data-theme='default'][data-background-brightness='dark'] {
+  --ui-overlay-bg: rgba(0, 0, 0, 0.34);
+}
+
+/* Frame：更像“清晰边框中的实体内容”，弱化外层玻璃。 */
+:root[data-container-style='frame'] {
+  --ui-chrome-bg: transparent;
+  --ui-chrome-border: transparent;
+  --ui-chrome-inner-bg: color-mix(in srgb, var(--color-bg-secondary) 96%, transparent);
+  --ui-chrome-inner-border: var(--fusion-border-accent);
+  --ui-chrome-shadow: none;
+  --ui-chrome-inner-shadow: var(--fusion-shadow-sm);
+  --ui-chrome-blur: 8px;
+  --ui-chrome-inner-radius: 14px;
+
+  --ui-menu-bg: color-mix(in srgb, var(--color-bg-secondary) 97%, transparent);
+  --ui-menu-border: var(--fusion-border-accent);
+  --ui-menu-hover: color-mix(in srgb, var(--color-bg-primary) 82%, var(--fusion-accent-softer));
+  --ui-menu-active: color-mix(in srgb, var(--color-bg-tertiary) 78%, var(--fusion-accent-soft));
+  --ui-menu-shadow: var(--fusion-shadow-md);
+  --ui-menu-blur: 8px;
+  --ui-menu-radius: 16px;
+  --ui-menu-item-radius: 10px;
+
+  --ui-panel-bg: color-mix(in srgb, var(--color-bg-secondary) 97%, transparent);
+  --ui-panel-inner-bg: color-mix(in srgb, var(--color-bg-primary) 90%, transparent);
+  --ui-panel-card-bg: color-mix(in srgb, var(--color-bg-secondary) 92%, transparent);
+  --ui-panel-shadow: var(--fusion-shadow-md);
+  --ui-panel-blur: 8px;
+  --ui-panel-radius: 22px;
+  --ui-panel-inner-radius: 16px;
+  --ui-overlay-blur: 8px;
+
+  --ui-control-bg: color-mix(in srgb, var(--color-bg-primary) 90%, transparent);
+  --ui-control-bg-hover: color-mix(in srgb, var(--color-bg-secondary) 94%, transparent);
+  --ui-control-radius: 10px;
+}
+
+/* Ambient：内容本身更轻，靠模糊、轻阴影和强调色建立层级。 */
+:root[data-container-style='ambient'] {
+  --ui-chrome-bg: transparent;
+  --ui-chrome-border: transparent;
+  --ui-chrome-inner-bg: color-mix(in srgb, var(--color-bg-secondary) 78%, transparent);
+  --ui-chrome-inner-border: color-mix(in srgb, var(--color-border) 58%, transparent);
+  --ui-chrome-shadow: none;
+  --ui-chrome-inner-shadow: inset 3px 0 color-mix(in srgb, var(--fusion-accent) 28%, transparent), var(--fusion-shadow-sm);
+  --ui-chrome-blur: 18px;
+  --ui-chrome-inner-radius: 9px;
+
+  --ui-menu-bg: color-mix(in srgb, var(--color-bg-primary) 76%, transparent);
+  --ui-menu-border: color-mix(in srgb, var(--color-border) 60%, transparent);
+  --ui-menu-hover: color-mix(in srgb, var(--color-bg-secondary) 62%, var(--fusion-accent-softer));
+  --ui-menu-active: color-mix(in srgb, var(--color-bg-tertiary) 58%, var(--fusion-accent-soft));
+  --ui-menu-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+  --ui-menu-blur: 22px;
+  --ui-menu-radius: 11px;
+  --ui-menu-item-radius: 8px;
+
+  --ui-panel-bg: color-mix(in srgb, var(--color-bg-primary) 76%, transparent);
+  --ui-panel-inner-bg: color-mix(in srgb, var(--color-bg-secondary) 72%, transparent);
+  --ui-panel-card-bg: color-mix(in srgb, var(--color-bg-primary) 64%, transparent);
+  --ui-panel-border: color-mix(in srgb, var(--color-border) 64%, var(--fusion-accent-softer));
+  --ui-panel-shadow: 0 24px 72px rgba(0, 0, 0, 0.22);
+  --ui-panel-blur: 22px;
+  --ui-panel-radius: 14px;
+  --ui-panel-inner-radius: 11px;
+  --ui-overlay-blur: 20px;
+
+  --ui-control-bg: color-mix(in srgb, var(--color-bg-primary) 62%, transparent);
+  --ui-control-bg-hover: color-mix(in srgb, var(--color-bg-secondary) 72%, transparent);
+  --ui-control-radius: 8px;
+}
+
+/* Veil：最轻的“薄纱”表面，透明度最高、模糊最明显。 */
+:root[data-container-style='veil'] {
+  --ui-chrome-bg: transparent;
+  --ui-chrome-border: transparent;
+  --ui-chrome-inner-bg: color-mix(in srgb, var(--color-bg-primary) 28%, transparent);
+  --ui-chrome-inner-border: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
+  --ui-chrome-shadow: none;
+  --ui-chrome-inner-shadow: 0 12px 34px rgba(0, 0, 0, 0.14);
+  --ui-chrome-blur: 28px;
+  --ui-chrome-inner-radius: 6px;
+
+  --ui-menu-bg: color-mix(in srgb, var(--color-bg-primary) 52%, transparent);
+  --ui-menu-border: color-mix(in srgb, var(--color-border) 48%, transparent);
+  --ui-menu-hover: color-mix(in srgb, var(--color-bg-secondary) 46%, var(--fusion-accent-softer));
+  --ui-menu-active: color-mix(in srgb, var(--color-bg-tertiary) 42%, var(--fusion-accent-soft));
+  --ui-menu-shadow: 0 20px 56px rgba(0, 0, 0, 0.2);
+  --ui-menu-blur: 30px;
+  --ui-menu-radius: 9px;
+  --ui-menu-item-radius: 6px;
+
+  --ui-panel-bg: color-mix(in srgb, var(--color-bg-primary) 52%, transparent);
+  --ui-panel-inner-bg: color-mix(in srgb, var(--color-bg-secondary) 46%, transparent);
+  --ui-panel-card-bg: color-mix(in srgb, var(--color-bg-primary) 40%, transparent);
+  --ui-panel-border: color-mix(in srgb, var(--color-border) 52%, transparent);
+  --ui-panel-shadow: 0 22px 64px rgba(0, 0, 0, 0.18);
+  --ui-panel-blur: 30px;
+  --ui-panel-radius: 12px;
+  --ui-panel-inner-radius: 9px;
+  --ui-overlay-blur: 28px;
+
+  --ui-control-bg: color-mix(in srgb, var(--color-bg-primary) 38%, transparent);
+  --ui-control-bg-hover: color-mix(in srgb, var(--color-bg-secondary) 48%, transparent);
+  --ui-control-radius: 7px;
 }

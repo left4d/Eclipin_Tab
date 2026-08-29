@@ -26,7 +26,7 @@
     border-radius: var(--radius-large);
     padding: var(--spacing-gap-small);
     /* 右边留出空间给 Navigator (约 136px = 128px Navigator + 8px gap) */
-    padding-right: 144px;
+    padding-right: 196px;
     box-shadow: var(--shadow-small);
     display: flex;
     flex-direction: row;
@@ -221,6 +221,43 @@
     transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
+.dockNavigator.withPageDown {
+    width: 180px;
+}
+
+.pageDownButton {
+    width: 44px;
+    height: var(--icon-size, 64px);
+    border: 0;
+    border-left: 1px solid var(--color-border);
+    border-radius: var(--radius-default);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background var(--transition-fast), transform var(--transition-fast), color var(--transition-fast);
+}
+
+.pageDownButton:hover {
+    background: var(--color-bg-tertiary);
+    transform: translateY(2px);
+}
+
+.pageDownButton:active {
+    transform: translateY(4px) scale(0.96);
+}
+
+.pageNextHorizontal:hover {
+    transform: translateX(2px);
+}
+
+.pageNextHorizontal:active {
+    transform: translateX(4px) scale(0.96);
+}
+
 /* Navigator 过渡状态 - 退场/隐藏期间淡出 */
 .navigatorTransitioning {
     opacity: 0.3;
@@ -255,4 +292,159 @@
   .dock {
     border-radius: 37.5px;
   }
+}
+
+/* Web × Pegboard：仅升级 Dock 外围材质，保留尺寸、圆角与布局。 */
+.dock {
+    background:
+        linear-gradient(145deg, var(--fusion-accent-softer), transparent 54%),
+        var(--color-bg-primary);
+    border-color: var(--fusion-border-accent);
+    box-shadow: var(--fusion-shadow-sm), inset 0 1px 0 color-mix(in srgb, var(--fusion-palette-surface) 48%, transparent);
+}
+
+.dock::after {
+    content: '';
+    position: absolute;
+    top: 7px;
+    left: 28px;
+    right: 28px;
+    height: 1px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, var(--fusion-accent), transparent);
+    opacity: 0.36;
+    pointer-events: none;
+}
+
+.dockContent {
+    background:
+        linear-gradient(145deg, var(--fusion-accent-softer), transparent 62%),
+        var(--color-bg-secondary);
+}
+
+.pageDownButton:hover {
+    background: var(--fusion-accent-soft);
+    color: var(--fusion-accent);
+}
+
+/* 柔和面板同时覆盖搜索框下方的快捷网站导航栏。这里刻意取消 Dock 原有的
+   双层玻璃结构，使它与搜索框和小组件使用同一套中性单层表面。 */
+:global([data-container-style="frame"]) .dock {
+    --dock-soft-panel: linear-gradient(180deg, rgba(39, 41, 46, .98), rgba(31, 33, 38, .98));
+    --dock-soft-border: rgba(255, 255, 255, .09);
+    --dock-soft-highlight: rgba(255, 255, 255, .045);
+    --dock-soft-shadow: 0 18px 44px rgba(0, 0, 0, .3), 0 3px 10px rgba(0, 0, 0, .17);
+    overflow: visible;
+    border: 1px solid var(--dock-soft-border);
+    border-radius: 24px;
+    padding: 9px;
+    background: var(--dock-soft-panel);
+    box-shadow: inset 0 1px var(--dock-soft-highlight), var(--dock-soft-shadow);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+:global([data-container-style="frame"]) .dock::after {
+    display: none;
+}
+
+:global([data-container-style="frame"]) .dockContent {
+    border-radius: 16px;
+    background: transparent;
+    box-shadow: none;
+}
+
+:global([data-container-style="frame"]) .pageDownButton,
+:global([data-container-style="frame"]) .placeholder {
+    border-color: var(--dock-soft-border);
+    background: color-mix(in srgb, var(--dock-soft-highlight) 85%, transparent);
+}
+
+:global([data-container-style="frame"]) .pageDownButton:hover {
+    background: color-mix(in srgb, var(--fusion-accent) 11%, var(--dock-soft-highlight));
+}
+
+:global([data-theme="light"][data-container-style="frame"]) .dock {
+    --dock-soft-panel: linear-gradient(180deg, rgba(255, 255, 255, .97), rgba(248, 247, 244, .96));
+    --dock-soft-border: rgba(50, 45, 39, .11);
+    --dock-soft-highlight: rgba(255, 255, 255, .94);
+    --dock-soft-shadow: 0 18px 42px rgba(66, 58, 48, .13), 0 3px 9px rgba(66, 58, 48, .08);
+}
+
+:global([data-theme="dark"][data-container-style="frame"]) .dock {
+    --dock-soft-panel: linear-gradient(180deg, rgba(39, 41, 46, .98), rgba(31, 33, 38, .98));
+    --dock-soft-border: rgba(255, 255, 255, .09);
+    --dock-soft-highlight: rgba(255, 255, 255, .045);
+    --dock-soft-shadow: 0 18px 44px rgba(0, 0, 0, .34), 0 3px 10px rgba(0, 0, 0, .2);
+}
+
+:global([data-theme="default"][data-container-style="frame"]) .dock {
+    --dock-soft-panel:
+        radial-gradient(circle at 88% 0%, color-mix(in srgb, var(--fusion-accent) 7%, transparent), transparent 38%),
+        linear-gradient(180deg, rgba(38, 40, 46, .94), rgba(28, 30, 35, .95));
+    --dock-soft-border: color-mix(in srgb, var(--fusion-accent) 13%, rgba(255, 255, 255, .13));
+    --dock-soft-highlight: rgba(255, 255, 255, .055);
+    --dock-soft-shadow: 0 20px 48px rgba(8, 10, 16, .3), 0 4px 12px rgba(8, 10, 16, .18);
+}
+
+:global([data-container-style="ambient"]) .dock {
+    overflow: visible;
+    border: 0;
+    border-radius: 12px;
+    padding: 7px;
+    background: color-mix(in srgb, var(--color-bg-secondary) 84%, transparent);
+    box-shadow:
+        inset 3px 0 color-mix(in srgb, var(--fusion-accent) 22%, transparent),
+        inset 0 1px color-mix(in srgb, var(--color-text-primary) 10%, transparent);
+    backdrop-filter: blur(10px) saturate(108%);
+    -webkit-backdrop-filter: blur(10px) saturate(108%);
+}
+
+:global([data-container-style="ambient"]) .dock::after { display: none; }
+:global([data-container-style="ambient"]) .dockContent {
+    border-radius: 8px;
+    background: transparent;
+    box-shadow: none;
+}
+
+:global([data-container-style="ambient"]) .pageDownButton,
+:global([data-container-style="ambient"]) .placeholder {
+    border: 0;
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--color-bg-primary) 72%, transparent);
+    box-shadow: none;
+}
+
+:global([data-container-style="ambient"]) .pageDownButton:hover {
+    background: color-mix(in srgb, var(--color-bg-primary) 88%, transparent);
+}
+
+:global([data-container-style="veil"]) .dock {
+    overflow: visible;
+    border: 1px solid color-mix(in srgb, var(--color-text-primary) 13%, transparent);
+    border-radius: 6px;
+    padding: 7px;
+    background: color-mix(in srgb, var(--color-bg-primary) 22%, transparent);
+    box-shadow: none;
+    backdrop-filter: blur(16px) saturate(92%);
+    -webkit-backdrop-filter: blur(16px) saturate(92%);
+}
+
+:global([data-container-style="veil"]) .dock::after { display: none; }
+:global([data-container-style="veil"]) .dockContent {
+    border-radius: 4px;
+    background: transparent;
+    box-shadow: none;
+}
+
+:global([data-container-style="veil"]) .pageDownButton,
+:global([data-container-style="veil"]) .placeholder {
+    border: 1px solid color-mix(in srgb, var(--color-text-primary) 11%, transparent);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-bg-primary) 18%, transparent);
+    box-shadow: none;
+}
+
+:global([data-container-style="veil"]) .pageDownButton:hover {
+    background: color-mix(in srgb, var(--color-bg-primary) 28%, transparent);
 }

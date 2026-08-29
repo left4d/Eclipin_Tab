@@ -1,51 +1,23 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Sticker, IMAGE_MAX_WIDTH } from '@/shared/types';
-import { FloatingToolbar } from './FloatingToolbar';
+import { Sticker } from '@/shared/types';
 import { useThemeData } from '@/features/theme/context/ThemeContext';
-import { db } from '@/shared/utils/db';
-import { hasMarkdownLinks, splitTextWithLinks } from '@/shared/utils/markdownLinks';
-import checkIcon from '@/assets/icons/for-checkbox.svg';
 import styles from './ZenShelf.module.css';
+import { executeNavigationAction } from '@/shared/navigation';
+import {
+    normalizeStickerRotation,
+    resolveStickerZIndex,
+    STICKER_DRAGGING_Z_INDEX,
+} from '@/features/shelf/utils/stickerPresentation';
+import { isPointInsideRect, resolveStickerReleasePosition } from '@/features/shelf/utils/stickerPositioning';
+import { useStickerImageSource } from '@/features/shelf/hooks/useStickerImageSource';
+import { StickerContent } from './StickerContent';
+import { useStickerResize } from '@/features/shelf/hooks/useStickerResize';
+import { getStickerAction, getStickerLinkTarget } from '@/features/shelf/utils/stickerNavigation';
+import { VECTOR_ICON_CANONICAL_SIZE } from '@/features/vector-icons/utils/vectorIconSizing';
+import { clampStickerScale } from '@/features/shelf/utils/stickerSizing';
+import { getStickerCornerRadius, getStickerInteractionEffect, getStickerStrokeWidth } from '@/features/shelf/utils/stickerAppearance';
 
-// ============================================================================
-// 文字贴纸的主题感知颜色反转
-// ============================================================================
-const BLACK_COLOR = '#1C1C1E';
-const WHITE_COLOR = '#FFFFFF';
-
-/**
- * 在深色主题下反转黑/白颜色，以获得更好的可读性
- */
-const getThemeAwareColor = (color: string, theme: string): string => {
-    if (theme !== 'dark') return color;
-
-    const upperColor = color.toUpperCase();
-    if (upperColor === BLACK_COLOR.toUpperCase() || upperColor === '#1C1C1E') {
-        return WHITE_COLOR;
-    }
-    if (upperColor === WHITE_COLOR.toUpperCase() || upperColor === '#FFF') {
-        return BLACK_COLOR;
-    }
-    return color;
-};
-
-// ============================================================================
-// UI 边界常量 - 贴纸不应放置的区域
-// ============================================================================
-const UI_ZONES = {
-    // 底部区域 (Dock + Searcher) - 大约高度
-    BOTTOM_MARGIN: 200,
-    // 左上角设置区域
-    TOP_LEFT: { width: 48, height: 48 },
-    // 右上角编辑器区域
-    TOP_RIGHT: { width: 48, height: 48 },
-    // 距离边缘的最小边距
-    EDGE_MARGIN: 20,
-};
-
-// ============================================================================
 // StickerItem Component - 单个贴纸渲染
-// ============================================================================
 
 interface StickerItemProps {
     sticker: Sticker;
@@ -58,12 +30,14 @@ interface StickerItemProps {
     onPositionChange: (x: number, y: number) => void;
     onBatchPositionPreview?: (activeStickerId: string, dx: number, dy: number) => void;
     onBatchPositionCommit?: (activeStickerId: string, dx: number, dy: number) => void;
+    onBatchPositionCancel?: (activeStickerId: string) => void;
     onBatchDelete?: (activeStickerId: string) => void;
-    onStyleChange: (updates: Partial<Sticker['style']>) => void;
     onBringToTop: () => void;
     onScaleChange: (scale: number) => void;
     isEditMode?: boolean;
     viewportScale: number;
+    viewportWidth: number;
+    infiniteY?: boolean;
     onDoubleClick?: () => void;
     onDragStart?: () => void;
     onDragEnd?: () => void;
@@ -81,61 +55,50 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
     onPositionChange,
     onBatchPositionPreview,
     onBatchPositionCommit,
+    onBatchPositionCancel,
     onBatchDelete,
-    onStyleChange,
     onBringToTop,
     onScaleChange,
     isEditMode,
     viewportScale,
+    viewportWidth,
+    infiniteY = false,
     onDoubleClick,
     onDragStart,
     onDragEnd,
     onToggleCheckbox,
 }) => {
-    const { theme, openInNewTab } = useThemeData();
+    const { openInNewTab } = useThemeData();
     const elementRef = useRef<HTMLDivElement>(null);
+    const visualRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [isResizing, setIsResizing] = useState(false);
     const [isBouncing, setIsBouncing] = useState(false);
     const [isDropDeleting, setIsDropDeleting] = useState(false);
-    const [stickerRect, setStickerRect] = useState<DOMRect | null>(null);
     const dragStartRef = useRef<{ x: number; y: number; stickerX: number; stickerY: number } | null>(null);
-    const resizeStartRef = useRef<{ x: number; y: number; startScale: number } | null>(null);
-    const [imageNaturalWidth, setImageNaturalWidth] = useState<number>(300);
-    // 图片贴纸的解析后 Blob URL
-    const [resolvedImageUrl, setResolvedImageUrl] = useState<string | null>(null);
-    const [isSvgImage, setIsSvgImage] = useState<boolean>(false);
-
-    // 从 IndexedDB 加载图片贴纸数据
+    const dragMovedRef = useRef(false);
+    const [imageNaturalWidth, setImageNaturalWidth] = useState<number>(
+        sticker.imagePresentation === 'vectorIcon' ? VECTOR_ICON_CANONICAL_SIZE : 300
+    );
+    const { resolvedImageUrl, isSvgImage, svgText } = useStickerImageSource(sticker);
+    const { svgText: alternateSvgText } = useStickerImageSource(sticker, sticker.iconSwapContent ?? '');
+    const [showAlternateIcon, setShowAlternateIcon] = useState(false);
     useEffect(() => {
-        if (sticker.type !== 'image') return;
-
-        // 如果 content 是 base64 数据（旧格式兼容），直接使用
-        if (sticker.content.startsWith('data:')) {
-            setResolvedImageUrl(sticker.content);
-            return;
+        if (sticker.interactionEffect !== 'iconSwap' || !sticker.iconSwapContent) {
+            setShowAlternateIcon(false);
         }
+    }, [sticker.iconSwapContent, sticker.interactionEffect]);
 
-        let url: string | null = null;
-        let cancelled = false;
-
-        db.getStickerImage(sticker.content).then(item => {
-            if (cancelled) return;
-            if (item) {
-                if (item.data.type === 'image/svg+xml') {
-                    setIsSvgImage(true);
-                }
-                url = URL.createObjectURL(item.data);
-                setResolvedImageUrl(url);
-            }
-        });
-
-        return () => {
-            cancelled = true;
-            if (url) URL.revokeObjectURL(url);
-        };
-    }, [sticker.type, sticker.content]);
-
+    const { handleResizeStart } = useStickerResize({
+        disabled: Boolean(sticker.isPinned),
+        scale: sticker.scale || 1,
+        onScaleChange,
+    });
+    const isViewportFixed = sticker.positionMode === 'viewport';
+    const readEffectiveScrollY = useCallback(() => {
+        if (!infiniteY || isViewportFixed) return 0;
+        return document.querySelector<HTMLElement>('[data-widget-scroll-page="1"]')?.scrollTop ?? 0;
+    }, [infiniteY, isViewportFixed]);
+    const baseRotation = normalizeStickerRotation(sticker.rotation);
     // 物理效果 Refs
     const physicsRef = useRef({
         rotation: 0,
@@ -144,16 +107,15 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
     });
     const isDraggingRef = useRef(false);
     const rafRef = useRef<number>();
-    const cleaningTimerRef = useRef<NodeJS.Timeout>();
+    const cleaningTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-    // 选中时更新矩形
     useEffect(() => {
-        if (isSelected && elementRef.current) {
-            setStickerRect(elementRef.current.getBoundingClientRect());
-        } else {
-            setStickerRect(null);
+        if (!visualRef.current) return;
+        visualRef.current.style.setProperty('--sticker-base-rotation', `${baseRotation}deg`);
+        if (!isDraggingRef.current) {
+            visualRef.current.style.transform = `rotate(${baseRotation}deg)`;
         }
-    }, [isSelected, sticker.x, sticker.y]);
+    }, [baseRotation]);
 
     // 物理动画循环
     const updatePhysics = useCallback(() => {
@@ -165,24 +127,25 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
 
         physicsRef.current.rotation = nextRotation;
 
-        if (elementRef.current) {
-            elementRef.current.style.transform = `rotate(${nextRotation.toFixed(2)}deg)`;
+        if (visualRef.current) {
+            visualRef.current.style.transform = `rotate(${(baseRotation + nextRotation).toFixed(2)}deg)`;
         }
 
         // 如果正在拖拽或旋转尚未稳定，则继续循环
         if (isDraggingRef.current || Math.abs(diff) > 0.05 || Math.abs(nextRotation) > 0.05) {
             rafRef.current = requestAnimationFrame(updatePhysics);
         } else {
-            // 稳定在精确的 0
-            if (elementRef.current) {
-                elementRef.current.style.transform = '';
+            // 稳定后恢复持久化的基础角度
+            if (visualRef.current) {
+                visualRef.current.style.transform = `rotate(${baseRotation}deg)`;
             }
             physicsRef.current.rotation = 0;
             physicsRef.current.targetRotation = 0;
         }
-    }, []);
+    }, [baseRotation]);
 
     const handleMouseDown = (e: React.MouseEvent) => {
+        dragMovedRef.current = false;
         // Prevent if clicking delete button or resize handle
         if ((e.target as HTMLElement).closest(`.${styles.deleteButton}`)) {
             return;
@@ -194,15 +157,15 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
             return;
         }
 
-        if (e.shiftKey && sticker.type === 'text') {
+        if (isEditMode && (e.ctrlKey || e.metaKey || e.shiftKey)) {
             onToggleBatchSelect?.();
             e.preventDefault();
             e.stopPropagation();
             return;
         }
 
-        // 在创意模式下...
-        if (isCreativeMode && !isEditMode) {
+        // 编辑模式点击即选中对象，后续属性修改统一交给对象检查器。
+        if (isEditMode) {
             onSelect();
         }
 
@@ -252,6 +215,9 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
 
             const dx = e.clientX - dragStartRef.current.x;
             const dy = e.clientY - dragStartRef.current.y;
+            if (Math.hypot(dx, dy) > 4) {
+                dragMovedRef.current = true;
+            }
 
             // RAF 节流 - 保存待处理的位置更新
             // 将屏幕像素位移转换为原始坐标系
@@ -265,8 +231,8 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
                 positionRafId = requestAnimationFrame(() => {
                     positionRafId = null;
                     if (pendingPosition && elementRef.current) {
-                        elementRef.current.style.left = `${pendingPosition.x * viewportScale}px`;
-                        elementRef.current.style.top = `${pendingPosition.y * viewportScale}px`;
+                        elementRef.current.style.left = `${pendingPosition.x}px`;
+                        elementRef.current.style.top = `${pendingPosition.y}px`;
                     }
                 });
             }
@@ -286,10 +252,7 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
             if (recycleBin && pendingPosition) {
                 const binRect = recycleBin.getBoundingClientRect();
 
-                const isOverBin = e.clientX >= binRect.left &&
-                    e.clientX <= binRect.right &&
-                    e.clientY >= binRect.top &&
-                    e.clientY <= binRect.bottom;
+                const isOverBin = isPointInsideRect(e.clientX, e.clientY, binRect);
 
                 if (isOverBin) {
                     recycleBin.classList.add(styles.dragOver);
@@ -338,10 +301,7 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
             const recycleBin = document.getElementById('sticker-recycle-bin');
             if (recycleBin) {
                 const binRect = recycleBin.getBoundingClientRect();
-                const isOverBin = e.clientX >= binRect.left &&
-                    e.clientX <= binRect.right &&
-                    e.clientY >= binRect.top &&
-                    e.clientY <= binRect.bottom;
+                const isOverBin = isPointInsideRect(e.clientX, e.clientY, binRect);
 
                 if (isOverBin) {
                     // Stop physics animation immediately to freeze rotation
@@ -352,6 +312,7 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
                     setIsDragging(false);
                     isDraggingRef.current = false;
                     dragStartRef.current = null;
+                    onBatchPositionCancel?.(sticker.id);
                     onDragEnd?.();
 
                     // Actual delete after animation
@@ -366,128 +327,36 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
                 }
             }
 
-            // 从待处理或当前位置计算最终位置
-            let finalX = pendingPosition?.x ?? sticker.x;
-            let finalY = pendingPosition?.y ?? sticker.y;
-            const windowWidth = window.innerWidth;
-            const windowHeight = window.innerHeight;
-            let needsAdjustment = false;
-
-            // 获取贴纸尺寸（从当前元素近似得出）
-            const stickerRect = stickerEl.getBoundingClientRect();
-            const stickerWidth = stickerRect.width;
-            const stickerHeight = stickerRect.height;
-
-            // 计算贴纸屏幕边界
-            const screenX = finalX * viewportScale;
-            const screenY = finalY * viewportScale;
-            const stickerScreenRect = {
-                left: screenX,
-                top: screenY,
-                right: screenX + stickerWidth,
-                bottom: screenY + stickerHeight,
-            };
-
-            // 检查矩形重叠的辅助函数
-            const rectsOverlap = (r1: typeof stickerScreenRect, r2: DOMRect) => {
-                return !(r1.right < r2.left || r1.left > r2.right ||
-                    r1.bottom < r2.top || r1.top > r2.bottom);
-            };
-
-            // 检查与底部区域（Searcher + Dock 容器）的重叠
+            const stickerRect = visualRef.current?.getBoundingClientRect() ?? stickerEl.getBoundingClientRect();
+            const effectiveScrollY = readEffectiveScrollY();
             const bottomZone = document.querySelector('[data-ui-zone="bottom"]');
-            if (bottomZone) {
-                const bottomRect = bottomZone.getBoundingClientRect();
-                if (rectsOverlap(stickerScreenRect, bottomRect)) {
-                    // 计算每个方向的最小逃逸距离
-                    const escapeUp = stickerScreenRect.bottom - bottomRect.top + UI_ZONES.EDGE_MARGIN;
-                    const escapeLeft = stickerScreenRect.right - bottomRect.left + UI_ZONES.EDGE_MARGIN;
-                    const escapeRight = bottomRect.right - stickerScreenRect.left + UI_ZONES.EDGE_MARGIN;
+            const resolvedPosition = resolveStickerReleasePosition({
+                stickerType: sticker.type,
+                isPinned: Boolean(sticker.isPinned),
+                infiniteY: infiniteY && !isViewportFixed,
+                proposedPosition: {
+                    x: pendingPosition?.x ?? sticker.x,
+                    y: pendingPosition?.y ?? sticker.y,
+                },
+                stickerRect,
+                viewportScale,
+                viewportWidth,
+                viewportHeight: window.innerHeight,
+                effectiveScrollY,
+                bottomZoneRect: bottomZone?.getBoundingClientRect(),
+            });
+            const finalX = resolvedPosition.x;
+            const finalY = resolvedPosition.y;
+            const needsAdjustment = resolvedPosition.adjusted;
 
-                    // 检查向左/向右逃逸是否有效（贴纸不会超出屏幕）
-                    const canEscapeLeft = (stickerScreenRect.left - escapeLeft) >= UI_ZONES.EDGE_MARGIN;
-                    const canEscapeRight = (stickerScreenRect.right + escapeRight) <= (windowWidth - UI_ZONES.EDGE_MARGIN);
-
-                    // 找到最小的有效逃逸距离
-                    let minEscape = escapeUp;
-                    let escapeDirection: 'up' | 'left' | 'right' = 'up';
-
-                    if (canEscapeLeft && escapeLeft < minEscape) {
-                        minEscape = escapeLeft;
-                        escapeDirection = 'left';
-                    }
-                    if (canEscapeRight && escapeRight < minEscape) {
-                        minEscape = escapeRight;
-                        escapeDirection = 'right';
-                    }
-
-                    // 根据方向应用逃逸位移
-                    switch (escapeDirection) {
-                        case 'up':
-                            finalY = (bottomRect.top - stickerHeight - UI_ZONES.EDGE_MARGIN) / viewportScale;
-                            break;
-                        case 'left':
-                            finalX = (bottomRect.left - stickerWidth - UI_ZONES.EDGE_MARGIN) / viewportScale;
-                            break;
-                        case 'right':
-                            finalX = (bottomRect.right + UI_ZONES.EDGE_MARGIN) / viewportScale;
-                            break;
-                    }
-                    needsAdjustment = true;
-                }
-            }
-
-
-
-
-            // 注意：左上角和右上角区域不再触发弹回效果
-            // 贴纸现在可以自由放置在这些区域
-
-            // 确保贴纸保持在屏幕边界内
-            // 将贴纸尺寸转换为原始坐标系以实现正确的边界计算
-            const stickerWidthOriginal = stickerWidth / viewportScale;
-            const stickerHeightOriginal = stickerHeight / viewportScale;
-            const maxX = (windowWidth / viewportScale) - stickerWidthOriginal - (UI_ZONES.EDGE_MARGIN / viewportScale);
-            const maxY = (windowHeight / viewportScale) - stickerHeightOriginal - (UI_ZONES.EDGE_MARGIN / viewportScale);
-            const minX = UI_ZONES.EDGE_MARGIN / viewportScale;
-            const minY = UI_ZONES.EDGE_MARGIN / viewportScale;
-
-            // 检查位置是否需要限制（将触发弹回动画）
-            let clampedX = finalX;
-            if (maxX < minX) {
-                // 贴纸比屏幕宽：允许平移，但保持贴纸覆盖屏幕（或至少在边界内）
-                clampedX = Math.max(maxX, Math.min(minX, finalX));
-            } else {
-                // 贴纸比屏幕窄：保持在屏幕边界内
-                clampedX = Math.max(minX, Math.min(maxX, finalX));
-            }
-
-            let clampedY = finalY;
-            if (maxY < minY) {
-                // 贴纸比屏幕高
-                clampedY = Math.max(maxY, Math.min(minY, finalY));
-            } else {
-                // 贴纸比屏幕矮
-                clampedY = Math.max(minY, Math.min(maxY, finalY));
-            }
-
-            // 如果位置被限制，则标记为需要调整
-            if (Math.abs(clampedX - finalX) > 0.1 || Math.abs(clampedY - finalY) > 0.1) {
-                needsAdjustment = true;
-            }
-
-
-            finalX = clampedX;
-            finalY = clampedY;
-
-            // 如果需要调整（由于 Dock/Searcher 重叠或边缘限制），则应用弹回动画
+            // 如果需要调整（文字/图片的底部避让或屏幕边缘限制），则应用弹回动画
             if (needsAdjustment) {
                 // 手动触发动画开始，以处理 React 属性未更改的情况
                 // （例如，拖走后又弹回同一位置）
                 if (elementRef.current) {
                     elementRef.current.classList.add(styles.bounceBack);
-                    elementRef.current.style.left = `${finalX * viewportScale}px`;
-                    elementRef.current.style.top = `${finalY * viewportScale}px`;
+                    elementRef.current.style.left = `${finalX}px`;
+                    elementRef.current.style.top = `${finalY}px`;
                 }
 
                 setIsBouncing(true);
@@ -539,7 +408,7 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
                 cancelAnimationFrame(positionRafId);
             }
         };
-    }, [isDragging, isBatchSelected, onBatchDelete, onBatchPositionCommit, onBatchPositionPreview, onDelete, onPositionChange, sticker.id, sticker.x, sticker.y, updatePhysics, viewportScale]);
+    }, [infiniteY, isBatchSelected, isDragging, isViewportFixed, onBatchDelete, onBatchPositionCommit, onBatchPositionPreview, onDelete, onDragEnd, onPositionChange, readEffectiveScrollY, sticker.id, sticker.isPinned, sticker.type, sticker.x, sticker.y, updatePhysics, viewportScale, viewportWidth]);
 
     // 卸载时清理 RAF
     useEffect(() => {
@@ -549,90 +418,38 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
         };
     }, []);
 
-    // 调整大小控制柄开始
-    const handleResizeStart = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (sticker.isPinned) return;
-
-        setIsResizing(true);
-        resizeStartRef.current = {
-            x: e.clientX,
-            y: e.clientY,
-            startScale: sticker.scale || 1,
-        };
-    };
-
-    // 具有 RAF 节流的调整大小效果
-    useEffect(() => {
-        if (!isResizing) return;
-
-        let resizeRafId: number | null = null;
-        let pendingScale: number | null = null;
-
-        const handleMouseMove = (e: MouseEvent) => {
-            if (!resizeStartRef.current) return;
-
-            const dx = e.clientX - resizeStartRef.current.x;
-            const dy = e.clientY - resizeStartRef.current.y;
-            const delta = (dx + dy) / 2;
-
-            const scaleDelta = delta / 200;
-            const newScale = Math.max(0.2, Math.min(3, resizeStartRef.current.startScale + scaleDelta));
-
-            // RAF 节流
-            pendingScale = newScale;
-            if (resizeRafId === null) {
-                resizeRafId = requestAnimationFrame(() => {
-                    resizeRafId = null;
-                    if (pendingScale !== null) {
-                        onScaleChange(pendingScale);
-                    }
-                });
-            }
-        };
-
-        const handleMouseUp = () => {
-            // 确保最终缩放值被更新
-            if (resizeRafId !== null) {
-                cancelAnimationFrame(resizeRafId);
-                if (pendingScale !== null) {
-                    onScaleChange(pendingScale);
-                }
-            }
-            setIsResizing(false);
-            resizeStartRef.current = null;
-        };
-
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-
-        return () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-            if (resizeRafId !== null) {
-                cancelAnimationFrame(resizeRafId);
-            }
-        };
-    }, [isResizing, onScaleChange]);
-
     // 获取图片原始宽度以进行缩放计算
     const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-        setImageNaturalWidth(e.currentTarget.naturalWidth);
+        const naturalWidth = e.currentTarget.naturalWidth || e.currentTarget.width;
+        // 某些 SVG（尤其 blob URL / 百分比尺寸）在 Chromium 中会短暂返回 0。
+        // 不能把 0 写进状态，否则 StickerContent 会把最终宽度直接算成 0。
+        if (Number.isFinite(naturalWidth) && naturalWidth > 0) {
+            setImageNaturalWidth(naturalWidth);
+        }
     };
 
     const handleDoubleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (getStickerLinkTarget(sticker)) return;
         if (sticker.linkCard) {
-            if (openInNewTab) {
-                window.open(sticker.linkCard.url, '_blank', 'noopener,noreferrer');
-            } else {
-                window.location.href = sticker.linkCard.url;
-            }
+            executeNavigationAction({ type: 'url', url: sticker.linkCard.url }, { openInNewTab });
             return;
         }
         onDoubleClick?.();
+    };
+
+    const handleStickerLinkClick = (e: React.MouseEvent) => {
+        if (dragMovedRef.current) return;
+        const canSwapIcon = sticker.interactionEffect === 'iconSwap'
+            && sticker.imagePresentation === 'vectorIcon'
+            && Boolean(sticker.iconSwapContent)
+            && Boolean(alternateSvgText);
+        const action = getStickerAction(sticker);
+        if (!canSwapIcon && !action) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (canSwapIcon) setShowAlternateIcon((current) => !current);
+        if (action) executeNavigationAction(action, { openInNewTab });
     };
 
     const classNames = [
@@ -641,161 +458,107 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
         isDragging && styles.dragging,
         isBouncing && styles.bounceBack,
         isDropDeleting && styles.dropDelete,
-        isSelected && !isBatchSelected && styles.selected,
         isBatchSelected && styles.batchSelected,
         isCreativeMode && styles.creativeHover,
+        isViewportFixed && styles.screenFixed,
     ].filter(Boolean).join(' ');
 
-    // 根据缩放比例计算实际图片宽度（不受视口缩放影响，固定尺寸）
-    const imageWidth = sticker.type === 'image'
-        ? Math.min(imageNaturalWidth, IMAGE_MAX_WIDTH) * (sticker.scale || 1)
-        : undefined;
-
-    // 为文字贴纸计算字体大小（不受视口缩放影响，固定尺寸）
-    const scaledFontSize = (sticker.style?.fontSize || 40);
+    const { priority, zIndex: resolvedZIndex } = resolveStickerZIndex(sticker);
+    const stickerScale = clampStickerScale(sticker.scale ?? 1);
+    const inverseStickerScale = 1 / stickerScale;
+    const strokeWidth = getStickerStrokeWidth(sticker, isSvgImage);
+    const cornerRadius = sticker.type === 'image' ? getStickerCornerRadius(sticker) : 0;
+    const interactionEffect = getStickerInteractionEffect(sticker);
+    const interactionClassName = interactionEffect === 'lift'
+        ? styles.stickerInteractionLift
+        : interactionEffect === 'scale'
+            ? styles.stickerInteractionScale
+            : interactionEffect === 'button'
+                ? styles.stickerInteractionButton
+                : '';
 
     return (
         <>
             <div
                 ref={elementRef}
                 className={classNames}
+                data-selected={isSelected ? 'true' : undefined}
                 style={{
-                    left: sticker.x * viewportScale,
-                    top: sticker.y * viewportScale,
-                    // 拖拽期间提升 z-index 以保持在 UI 元素之上
-                    zIndex: isDragging ? 3000 : (sticker.zIndex || 1),
-                }}
+                    left: sticker.x,
+                    top: sticker.y,
+                    // 拖拽时临时置顶；松开后恢复由 priority + 局部顺序决定的层级。
+                    zIndex: isDragging ? STICKER_DRAGGING_Z_INDEX : resolvedZIndex,
+                    transform: `scale(${stickerScale})`,
+                    transformOrigin: 'top left',
+                    '--sticker-inverse-scale': inverseStickerScale,
+                    '--sticker-stroke-render-width': `${strokeWidth * inverseStickerScale}px`,
+                    '--sticker-corner-radius-render': `${cornerRadius * inverseStickerScale}px`,
+                    '--sticker-hover-lift': `${-4 * inverseStickerScale}px`,
+                    '--sticker-button-lift': `${-2 * inverseStickerScale}px`,
+                    '--sticker-shadow-y-light': `${6 * inverseStickerScale}px`,
+                    '--sticker-shadow-y': `${8 * inverseStickerScale}px`,
+                    '--sticker-shadow-y-pressed': `${2 * inverseStickerScale}px`,
+                    '--sticker-shadow-blur-light': `${12 * inverseStickerScale}px`,
+                    '--sticker-shadow-blur': `${16 * inverseStickerScale}px`,
+                    '--sticker-shadow-blur-pressed': `${6 * inverseStickerScale}px`,
+                } as React.CSSProperties}
                 data-sticker-id={sticker.id}
+                data-sticker-svg={isSvgImage ? 'true' : undefined}
                 onMouseDown={handleMouseDown}
                 onDoubleClick={handleDoubleClick}
             >
-                {sticker.type === 'text' ? (
-                    <div className={[sticker.hasCheckbox ? styles.textStickerContainer : '', sticker.linkCard ? styles.hasLinkCard : ''].filter(Boolean).join(' ')}>
-                        {sticker.hasCheckbox && (
+                <div className={`${styles.stickerInteraction} ${interactionClassName}`.trim()}>
+                    <div
+                        ref={visualRef}
+                        className={styles.stickerVisual}
+                        data-sticker-visual="true"
+                        style={{ transform: `rotate(${baseRotation}deg)` }}
+                    >
+                        <StickerContent
+                        sticker={sticker}
+                        isDragging={isDragging}
+                        isCreativeMode={isCreativeMode}
+                        imageNaturalWidth={imageNaturalWidth}
+                        resolvedImageUrl={resolvedImageUrl}
+                        isSvgImage={isSvgImage}
+                        svgText={svgText}
+                        alternateSvgText={sticker.interactionEffect === 'iconSwap' ? alternateSvgText : null}
+                        showAlternateIcon={showAlternateIcon}
+                        onToggleCheckbox={onToggleCheckbox}
+                        onImageClick={handleStickerLinkClick}
+                        onTextClick={handleStickerLinkClick}
+                        onImageLoad={handleImageLoad}
+                        onResizeStart={handleResizeStart}
+                    />
+
+                    {isEditMode && (
+                        <div className={styles.stickerPriorityBadge} title={`层叠优先级：${priority}`}>
+                            P{priority}
+                        </div>
+                    )}
+
+                    {isEditMode && sticker.anchorId && (
+                        <div className={styles.stickerAnchorBadge} title={`内部标签：#${sticker.anchorId}`}>
+                            #{sticker.anchorId}
+                        </div>
+                    )}
+
+                    {/* 删除按钮 - 在创意模式下悬停时可见 */}
+                        {isCreativeMode && !isEditMode && (
                             <button
-                                className={`${styles.textStickerCheckbox} ${sticker.isChecked ? styles.textStickerCheckboxChecked : ''}`}
-                                onPointerDown={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation(); // prevent dragging/selecting
-                                    onToggleCheckbox?.();
+                                className={styles.deleteButton}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDelete();
                                 }}
-                                onDoubleClick={(e) => {
-                                    e.stopPropagation(); // prevent entering edit mode
-                                }}
-                                title={sticker.isChecked ? 'Uncheck' : 'Check'}
                             >
-                                {sticker.isChecked && (
-                                    <span
-                                        className={styles.toolbarIcon}
-                                        style={{ WebkitMaskImage: `url(${checkIcon})`, maskImage: `url(${checkIcon})`, backgroundColor: '#000000', width: '20px', height: '20px', position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
-                                    />
-                                )}
+                                ×
                             </button>
                         )}
-                        {sticker.linkCard ? (
-                            <article className={`${styles.linkCardSticker} ${!sticker.linkCard.imageUrl ? styles.noImage : ''}`}>
-                                {sticker.linkCard.imageUrl && (
-                                    <img
-                                        src={sticker.linkCard.imageUrl}
-                                        alt=""
-                                        className={styles.linkCardImage}
-                                        draggable={false}
-                                    />
-                                )}
-                                <div className={styles.linkCardContent}>
-                                    <div className={styles.linkCardTitle}>{sticker.linkCard.title}</div>
-                                    <div className={styles.linkCardSubtitle}>{sticker.linkCard.subtitle}</div>
-                                </div>
-                            </article>
-                        ) : (
-                            <div
-                                className={[
-                                    styles.textSticker,
-                                    isDragging && styles.dragging,
-                                    isCreativeMode && styles.creativeHover,
-                                    sticker.isChecked && styles.textStickerCrossedOut,
-                                ].filter(Boolean).join(' ')}
-                                style={{
-                                    color: getThemeAwareColor(sticker.style?.color || '#1C1C1E', theme),
-                                    textAlign: sticker.style?.textAlign || 'left',
-                                    fontSize: scaledFontSize,
-                                }}
-                            >
-                            {hasMarkdownLinks(sticker.content) ? (
-                                splitTextWithLinks(sticker.content).map((fragment, index) => (
-                                    fragment.type === 'link' ? (
-                                        <a
-                                            key={index}
-                                            href={fragment.url}
-                                            className={styles.stickerLink}
-                                            target={openInNewTab ? '_blank' : '_self'}
-                                            rel={openInNewTab ? 'noopener noreferrer' : undefined}
-                                            onMouseDown={(e) => e.stopPropagation()}
-                                            onPointerDown={(e) => e.stopPropagation()}
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            {fragment.content}
-                                        </a>
-                                    ) : (
-                                        <span key={index}>{fragment.content}</span>
-                                    )
-                                ))
-                            ) : (
-                                sticker.content
-                            )}
-                            </div>
-                        )}
                     </div>
-                ) : (
-                    <div className={[
-                        styles.imageContainer,
-                        isSvgImage && styles.svgStickerWrapper,
-                        isSvgImage && isDragging && styles.dragging,
-                        isSvgImage && isCreativeMode && styles.creativeHover,
-                    ].filter(Boolean).join(' ')}>
-                        <img
-                            src={resolvedImageUrl || ''}
-                            alt="sticker"
-                            className={[
-                                styles.imageSticker,
-                                isSvgImage && styles.svgSticker,
-                                !isSvgImage && isDragging && styles.dragging,
-                                !isSvgImage && isCreativeMode && styles.creativeHover,
-                            ].filter(Boolean).join(' ')}
-                            style={{ width: imageWidth }}
-                            draggable={false}
-                            onLoad={handleImageLoad}
-                        />
-                        {/* 调整大小控制柄 - 仅在悬停时可见 */}
-                        <div
-                            className={styles.resizeHandle}
-                            onMouseDown={handleResizeStart}
-                        />
-                    </div>
-                )}
-
-                {/* 删除按钮 - 在创意模式下悬停时可见 */}
-                {isCreativeMode && !isEditMode && (
-                    <button
-                        className={styles.deleteButton}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete();
-                        }}
-                    >
-                        ×
-                    </button>
-                )}
+                </div>
             </div>
 
-            {/* 用于选中文字贴纸的悬浮工具栏 */}
-            {isSelected && sticker.type === 'text' && stickerRect && (
-                <FloatingToolbar
-                    sticker={sticker}
-                    stickerRect={stickerRect}
-                    onStyleChange={onStyleChange}
-                />
-            )}
         </>
     );
 };
@@ -811,23 +574,39 @@ const arePropsEqual = (prev: StickerItemProps, next: StickerItemProps) => {
         prev.sticker.y === next.sticker.y &&
         prev.sticker.content === next.sticker.content &&
         prev.sticker.zIndex === next.sticker.zIndex &&
+        prev.sticker.priority === next.sticker.priority &&
         prev.sticker.scale === next.sticker.scale &&
+        prev.sticker.imagePresentation === next.sticker.imagePresentation &&
+        prev.sticker.iconSwapContent === next.sticker.iconSwapContent &&
+        prev.sticker.rotation === next.sticker.rotation &&
         prev.sticker.type === next.sticker.type &&
         prev.sticker.isPinned === next.sticker.isPinned &&
+        prev.sticker.positionMode === next.sticker.positionMode &&
         prev.sticker.hasCheckbox === next.sticker.hasCheckbox &&
         prev.sticker.isChecked === next.sticker.isChecked &&
+        prev.sticker.hideStroke === next.sticker.hideStroke &&
+        prev.sticker.strokeWidth === next.sticker.strokeWidth &&
+        prev.sticker.cornerRadius === next.sticker.cornerRadius &&
+        prev.sticker.interactionEffect === next.sticker.interactionEffect &&
         prev.sticker.linkCard?.url === next.sticker.linkCard?.url &&
         prev.sticker.linkCard?.title === next.sticker.linkCard?.title &&
         prev.sticker.linkCard?.subtitle === next.sticker.linkCard?.subtitle &&
         prev.sticker.linkCard?.imageUrl === next.sticker.linkCard?.imageUrl &&
+        prev.sticker.imageLinkUrl === next.sticker.imageLinkUrl &&
+        prev.sticker.action === next.sticker.action &&
+        prev.sticker.linkTarget === next.sticker.linkTarget &&
+        prev.sticker.anchorId === next.sticker.anchorId &&
         prev.sticker.style?.color === next.sticker.style?.color &&
         prev.sticker.style?.textAlign === next.sticker.style?.textAlign &&
         prev.sticker.style?.fontSize === next.sticker.style?.fontSize &&
+        prev.sticker.style?.fontFamily === next.sticker.style?.fontFamily &&
         prev.isSelected === next.isSelected &&
         prev.isBatchSelected === next.isBatchSelected &&
         prev.isCreativeMode === next.isCreativeMode &&
         prev.isEditMode === next.isEditMode &&
-        prev.viewportScale === next.viewportScale
+        prev.viewportScale === next.viewportScale &&
+        prev.viewportWidth === next.viewportWidth &&
+        prev.infiniteY === next.infiniteY
     );
 };
 

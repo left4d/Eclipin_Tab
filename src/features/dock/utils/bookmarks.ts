@@ -4,6 +4,8 @@
  */
 
 import { DockItem } from '@/shared/types';
+import { createId } from '@/shared/utils/id';
+import { normalizeUrl } from '@/shared/utils/url';
 
 // ============================================================================
 // 类型定义
@@ -81,6 +83,7 @@ export async function requestBookmarkPermission(): Promise<boolean> {
     return false;
 }
 
+
 // ============================================================================
 // 书签读取
 // ============================================================================
@@ -98,8 +101,9 @@ export async function getBookmarkTree(): Promise<BookmarkNode[]> {
 
     return new Promise((resolve, reject) => {
         bookmarks.getTree((tree: any[]) => {
-            if (chrome.runtime?.lastError) {
-                reject(new Error(chrome.runtime.lastError.message));
+            const runtimeError = typeof chrome !== 'undefined' ? chrome.runtime?.lastError : undefined;
+            if (runtimeError) {
+                reject(new Error(runtimeError.message || 'Failed to read bookmarks'));
                 return;
             }
             const normalized = normalizeNodes(tree);
@@ -137,14 +141,17 @@ function normalizeNodes(nodes: any[]): BookmarkNode[] {
  * 将选中的书签节点转换为 DockItem 列表
  */
 export function bookmarksToDockItems(nodes: BookmarkNode[]): DockItem[] {
-    return nodes
-        .filter(node => node.url)
-        .map(node => ({
-            id: crypto.randomUUID(),
-            name: node.title || new URL(node.url!).hostname,
-            url: node.url!,
+    return nodes.flatMap(node => {
+        const url = node.url ? normalizeUrl(node.url) : '';
+        if (!url) return [];
+
+        return [{
+            id: createId('item'),
+            name: node.title.trim() || new URL(url).hostname,
+            url,
             type: 'app' as const,
-        }));
+        }];
+    });
 }
 
 /**
@@ -155,8 +162,8 @@ export function bookmarkFolderToDockFolder(folder: BookmarkNode): DockItem {
     const items = bookmarksToDockItems(children);
 
     return {
-        id: crypto.randomUUID(),
-        name: folder.title || 'Folder',
+        id: createId('folder'),
+        name: folder.title.trim() || 'Folder',
         type: 'folder',
         items,
     };

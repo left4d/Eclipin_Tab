@@ -1,5 +1,5 @@
 import { createZip, readJsonEntry, readZip, textEntry } from './zip';
-import { applySnapshot, createSnapshot, isSnapshotManifest, SnapshotData, SnapshotManifest, SnapshotPackage } from './snapshot';
+import { applySnapshot, createSnapshot, getSnapshotAssetRefs, isSnapshotManifest, SnapshotData, SnapshotManifest, SnapshotPackage } from './snapshot';
 
 type LegacyBackupManifest = {
   type: 'eclipse-tab-backup';
@@ -34,19 +34,14 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-function allAssetRefs(manifest: SnapshotManifest) {
-  return [
-    ...manifest.assets.favicons,
-    ...manifest.assets.stickerImages,
-    ...manifest.assets.wallpapers,
-    ...manifest.assets.wallpapers
-      .filter(asset => asset.thumbnailPath)
-      .map(asset => ({ path: asset.thumbnailPath!, type: asset.thumbnailType || 'image/png' })),
-  ];
+function allAssetRefs(manifest: SnapshotManifest): Array<{ path: string; type: string }> {
+  return getSnapshotAssetRefs(manifest);
 }
 
 export async function exportFullBackup(): Promise<void> {
-  const snapshot = await createSnapshot();
+  window.dispatchEvent(new Event('eclipin:flush-persistent-state'));
+  await Promise.resolve();
+  const snapshot = await createSnapshot({ includeExtendedState: true });
   const zip = createZip([
     textEntry('manifest.json', snapshot.manifest),
     textEntry('data.json', snapshot.data),
@@ -57,7 +52,7 @@ export async function exportFullBackup(): Promise<void> {
   ]);
 
   const date = new Date().toISOString().slice(0, 10);
-  downloadBlob(zip, `eclipse-tab-backup-${date}.zip`);
+  downloadBlob(zip, `eclipin-backup-${date}.zip`);
 }
 
 export async function importFullBackup(file: File): Promise<void> {
@@ -85,7 +80,7 @@ export async function importFullBackup(file: File): Promise<void> {
   const wallpaper = data.assets?.wallpaper || null;
   const snapshot: SnapshotPackage = {
     manifest: {
-      type: 'eclipse-tab-snapshot',
+      type: 'eclipin-snapshot',
       version: 2,
       appVersion: manifest.appVersion,
       exportedAt: manifest.exportedAt,

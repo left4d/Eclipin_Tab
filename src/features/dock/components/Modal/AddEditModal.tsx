@@ -3,10 +3,14 @@ import { DockItem } from '@/shared/types';
 import { fetchAndProcessIcon, generateTextIcon } from '@/features/dock/utils/iconFetcher';
 import { compressIcon } from '@/features/theme/utils/imageCompression';
 import { normalizeUrl } from '@/shared/utils/url';
+import { parseNavigationAction, serializeNavigationAction } from '@/shared/navigation';
 import { isFaviconRef, getDomainFromRef, resolveIconUrl } from '@/features/dock/utils/iconCache';
+import { requestHostPermission } from '@/shared/utils/hostPermission';
 import { Modal } from '@/shared/components/Modal/Modal';
+import { VectorIconPickerModal } from '@/features/vector-icons/components/VectorIconPickerModal';
 import { useLanguage } from '@/shared/context/LanguageContext';
 import styles from './AddEditModal.module.css';
+
 
 interface AddEditModalProps {
   isOpen: boolean;
@@ -16,6 +20,13 @@ interface AddEditModalProps {
   anchorRect?: DOMRect | null;
   hideHeader?: boolean;
   onBatchImport?: () => void;
+  popoverPlacement?: 'top' | 'side';
+  /** 仅编辑名称，用于文件夹重命名。 */
+  nameOnly?: boolean;
+  /** 展示网址但禁止修改；用于浏览器不开放书签 update API 的场景。 */
+  urlReadOnly?: boolean;
+  /** 展示名称但禁止修改；与 urlReadOnly 配合用于只编辑图标。 */
+  nameReadOnly?: boolean;
 }
 
 export const AddEditModal: React.FC<AddEditModalProps> = ({
@@ -26,8 +37,12 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
   anchorRect,
   hideHeader,
   onBatchImport,
+  popoverPlacement,
+  nameOnly = false,
+  urlReadOnly = false,
+  nameReadOnly = false,
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
   const [icon, setIcon] = useState('');
@@ -36,20 +51,27 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
   const [isUsingFallback, setIsUsingFallback] = useState(false);
   const [textIconHue, setTextIconHue] = useState<number | null>(null);
   const [isFetchingIcon, setIsFetchingIcon] = useState(false);
+  const [iconFetchMessage, setIconFetchMessage] = useState('');
+  const [urlError, setUrlError] = useState('');
+  const [showVectorIconPicker, setShowVectorIconPicker] = useState(false);
+  const iconRequestIdRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // 只有在打开状态下才更新 state
     // 避免在关闭动画播放期间（isOpen=false 但组件尚未卸载）清空表单，导致视觉上的闪烁
     if (!isOpen) return;
+    setShowVectorIconPicker(false);
 
     if (item) {
       setName(item.name);
-      setUrl(item.url || '');
+      setUrl(item.action ? serializeNavigationAction(item.action) : (item.url || ''));
       setIcon(item.icon || '');
       setIconSmall(item.iconSmall || false);
       setIsUsingFallback(false);
       setTextIconHue(null);
+      setIconFetchMessage('');
+      setUrlError('');
     } else {
       setName('');
       setUrl('');
@@ -57,6 +79,8 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
       setIconSmall(false);
       setIsUsingFallback(false);
       setTextIconHue(null);
+      setIconFetchMessage('');
+      setUrlError('');
     }
   }, [item, isOpen]);
 
@@ -88,45 +112,47 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
     }
   }, [name, isUsingFallback, url, textIconHue]);
 
-  const handleUrlChange = async (value: string) => {
+  const handleUrlChange = (value: string) => {
     setUrl(value);
+    setUrlError('');
+    setIconFetchMessage('');
+  };
 
-    // 自动获取图标逻辑
-    // 我们以前会检查 !item?.icon 以避免覆盖现有图标，
-    // 但是如果用户更改了 URL，他们可能想要新图标？
-    // 原始逻辑是：if (value && !item?.icon)。
-    // 让我们坚持原始行为，但做得更好：
-    // 如果用户显式上传了图标（我们如何知道？图标状态），也许不要覆盖？
-    // 但对于“添加新项”，item 为空，因此 !item?.icon 为真。
-    // 对于“编辑”，这点很有效。
+  // 新增网址时延迟抓取图标，避免每次键入都发起网络请求。
+  useEffect(() => {
+    if (!isOpen || nameOnly || item?.icon || icon || !url.trim()) return;
 
-    if (value && (!item?.icon || !icon)) {
-      // 这里的防抖处理可能会更好，但目前只是急切获取
-      // 为了确保 URL 构造函数正常工作，严格规范化以进行获取
-      const normalized = normalizeUrl(value);
+    const normalized = normalizeUrl(url);
+    if (!normalized) return;
 
-      // 避免获取 'g', 'go', 'goo'... 的简单检查
-      // 检查它是否至少包含一个点或看起来有效？
-      if (!normalized.includes('.') && !normalized.includes('localhost')) return;
-
+    const requestId = ++iconRequestIdRef.current;
+    let started = false;
+    const timer = window.setTimeout(async () => {
+      started = true;
       setIsFetchingIcon(true);
       try {
-        // 自动获取：严格要求（最小 100x100）
-        // 使用 fetchAndProcessIcon 统一处理获取和压缩
-        const { url: processedIcon, isFallback, iconSmall: isSmall } = await fetchAndProcessIcon(normalized, 100);
-        setIsUsingFallback(isFallback);
-        if (isFallback) {
-          setTextIconHue(Math.floor(Math.random() * 360));
-        }
-        setIcon(processedIcon);
-        setIconSmall(!!isSmall);
-      } catch (error) {
-        // 静默失败
+        const result = await fetchAndProcessIcon(normalized, 100);
+        if (requestId !== iconRequestIdRef.current) return;
+        setIsUsingFallback(result.isFallback);
+        if (result.isFallback) setTextIconHue(Math.floor(Math.random() * 360));
+        setIcon(result.url);
+        setIconSmall(!!result.iconSmall);
+      } catch {
+        // 输入过程中的图标抓取失败不阻止保存。
       } finally {
-        setIsFetchingIcon(false);
+        if (requestId === iconRequestIdRef.current) setIsFetchingIcon(false);
       }
-    }
-  };
+    }, 500);
+
+    return () => {
+      window.clearTimeout(timer);
+      if (requestId === iconRequestIdRef.current) {
+        iconRequestIdRef.current += 1;
+        if (started) setIsFetchingIcon(false);
+      }
+    };
+  }, [icon, isOpen, item?.icon, nameOnly, url]);
+
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -139,9 +165,21 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
         setIcon(compressed);
         setIsUsingFallback(false); // 用户手动上传了图标
         setIconSmall(false);
+        setIconFetchMessage('已使用本地图标');
       };
       reader.readAsDataURL(file);
     }
+  };
+
+
+  const handleChooseVectorIcon = (dataUrl: string, iconName: string) => {
+    setIcon(dataUrl);
+    setIconPreviewUrl(dataUrl);
+    setIconSmall(false);
+    setIsUsingFallback(false);
+    setTextIconHue(null);
+    setIconFetchMessage(`已使用 SVG 图标「${iconName}」`);
+    setShowVectorIconPicker(false);
   };
 
   const handleUseTextIcon = () => {
@@ -153,65 +191,120 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
     const textToUse = name.trim() || url;
     if (textToUse) {
       setIcon(generateTextIcon(textToUse, newHue));
+      setIconFetchMessage('已切换为文字图标');
     }
   };
 
   const handleSave = () => {
     if (!name.trim()) return;
 
+    if (nameOnly) {
+      onSave({ name: name.trim() });
+      return;
+    }
+
+    const rawTarget = urlReadOnly
+      ? (item?.action ? serializeNavigationAction(item.action) : (item?.url || url))
+      : url;
+    const action = parseNavigationAction(rawTarget);
+    if (!action) {
+      setUrlError(language === 'zh'
+        ? '请输入有效网址或内部命令（如 page:3、#music）'
+        : 'Enter a valid URL or internal command (for example page:3 or #music)');
+      return;
+    }
+
     onSave({
-      name: name.trim(),
-      url: normalizeUrl(url), // 保存时规范化
-      icon: icon,
-      iconSmall: iconSmall,
+      name: nameReadOnly ? (item?.name || name.trim()) : name.trim(),
+      action,
+      url: action.type === 'url' ? action.url : undefined,
+      icon,
+      iconSmall,
     });
   };
 
   const handleFetchIcon = async () => {
     if (!url) return;
+    const requestId = ++iconRequestIdRef.current;
     setIsFetchingIcon(true);
+    setIconFetchMessage('正在读取网站图标…');
     try {
       const normalized = normalizeUrl(url);
-      // 手动获取：宽松要求（接受任何尺寸），并且强制刷新缓存 (forceRefresh: true)
-      // 使用 fetchAndProcessIcon 统一处理获取和压缩
-      const { url: processedIcon, isFallback, iconSmall: isSmall } = await fetchAndProcessIcon(normalized, 0, true, true);
-      setIsUsingFallback(isFallback);
-      if (isFallback) {
-        setTextIconHue(Math.floor(Math.random() * 360));
+      if (!normalized) {
+        setUrlError(language === 'zh' ? '请输入有效的 HTTP(S) 网址' : 'Enter a valid HTTP(S) URL');
+        return;
       }
-      setIcon(processedIcon);
-      setIconSmall(!!isSmall);
+      setUrlError('');
+
+      // 权限请求必须直接发生在点击手势中，不能等网络探测失败后再请求。
+      // 未声明 optional_host_permissions 的开发环境会返回 false，但仍继续尝试可跨域的图标源。
+      const permissionGranted = await requestHostPermission();
+      const result = await fetchAndProcessIcon(normalized, 0, true, false);
+      if (requestId !== iconRequestIdRef.current) return;
+
+      setIsUsingFallback(result.isFallback);
+      setIcon(result.url);
+      setIconSmall(!!result.iconSmall);
+
+      if (result.isFallback) {
+        setTextIconHue(Math.floor(Math.random() * 360));
+        setIconFetchMessage(permissionGranted
+          ? '没有找到可用的网站图标，已使用文字图标'
+          : '未获得网站访问权限，已使用文字图标');
+        return;
+      }
+
+      setTextIconHue(null);
+      if (isFaviconRef(result.url)) {
+        const resolved = await resolveIconUrl(getDomainFromRef(result.url));
+        if (requestId === iconRequestIdRef.current) setIconPreviewUrl(resolved || '');
+      } else {
+        setIconPreviewUrl(result.url);
+      }
+      setIconFetchMessage('已获取网站图标');
     } catch (error) {
       console.error('Failed to fetch icon:', error);
+      if (requestId === iconRequestIdRef.current) setIconFetchMessage('获取失败，请检查网址或上传本地图标');
     } finally {
-      setIsFetchingIcon(false);
+      if (requestId === iconRequestIdRef.current) setIsFetchingIcon(false);
     }
   };
 
+  const modalTitle = nameOnly ? t.space.rename : (item ? t.modal.edit : t.modal.addNew);
+
   return (
+    <>
     <Modal
-      isOpen={isOpen}
+      isOpen={isOpen && !showVectorIconPicker}
       onClose={onClose}
-      title={hideHeader ? undefined : (item ? t.modal.edit : t.modal.addNew)}
+      title={hideHeader ? undefined : modalTitle}
       anchorRect={anchorRect}
       hideHeader={hideHeader}
       className={styles.container}
+      popoverPlacement={popoverPlacement}
+      popoverWidth={nameOnly ? 360 : 420}
+      popoverHeight={nameOnly ? 320 : 620}
     >
       <div className={styles.header}>
-        <span>{item ? t.modal.edit : t.modal.addNew}</span>
+        <span>{modalTitle}</span>
       </div>
       <div className={styles.divider} />
 
-      {!item || item.type === 'app' ? (
+      {!nameOnly && (!item || item.type === 'app') ? (
         <div className={styles.formGroup}>
           <label className={styles.label}>{t.modal.address}</label>
           <input
             type="text"
-            className={styles.input}
+            className={`${styles.input} ${urlReadOnly ? styles.inputReadOnly : ''}`}
             value={url}
             onChange={(e) => handleUrlChange(e.target.value)}
+            readOnly={urlReadOnly}
+            aria-readonly={urlReadOnly}
             placeholder="https://"
+            aria-invalid={Boolean(urlError)}
+            aria-describedby={urlError ? 'dock-url-error' : undefined}
           />
+          {urlError && <p id="dock-url-error" className={styles.validationError} role="alert">{urlError}</p>}
         </div>
       ) : null}
 
@@ -219,13 +312,16 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
         <label className={styles.label}>{t.modal.name}</label>
         <input
           type="text"
-          className={styles.input}
+          className={`${styles.input} ${nameReadOnly ? styles.inputReadOnly : ''}`}
           value={name}
           onChange={(e) => setName(e.target.value)}
+          readOnly={nameReadOnly}
+          aria-readonly={nameReadOnly}
           placeholder="Name"
         />
       </div>
 
+      {!nameOnly && (
       <div className={styles.formGroup}>
         <label className={styles.label}>{t.modal.icon}</label>
         <div className={styles.iconSection}>
@@ -238,7 +334,15 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
           />
           <div className={styles.iconPreview}>
             {iconPreviewUrl ? (
-              <img src={iconPreviewUrl} alt="Icon" className={styles.iconImage} />
+              <img
+                src={iconPreviewUrl}
+                alt="Icon"
+                className={styles.iconImage}
+                onError={() => {
+                  setIconPreviewUrl('');
+                  setIconFetchMessage('图标文件无法显示，请重新获取或上传本地图标');
+                }}
+              />
             ) : (
               <div className={styles.iconPlaceholder} />
             )}
@@ -255,6 +359,18 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
                 <path d="M0.5 6C0.5 2.9625 2.9625 0.5 6 0.5C9.0375 0.5 11.5 2.9625 11.5 6C11.5 9.0375 9.0375 11.5 6 11.5C2.9625 11.5 0.5 9.0375 0.5 6ZM6 1.5C5.40905 1.5 4.82389 1.61632 4.27792 1.84254C3.73196 2.06875 3.23588 2.40016 2.81802 2.81802C2.40016 3.23588 2.06875 3.73196 1.84254 4.27792C1.61632 4.82389 1.5 5.40905 1.5 6C1.5 6.59095 1.61632 7.17611 1.84254 7.72208C2.06875 8.26804 2.40016 8.76412 2.81802 9.18198C3.23588 9.59984 3.73196 9.93125 4.27792 10.1575C4.82389 10.3837 5.40905 10.5 6 10.5C7.19347 10.5 8.33807 10.0259 9.18198 9.18198C10.0259 8.33807 10.5 7.19347 10.5 6C10.5 4.80653 10.0259 3.66193 9.18198 2.81802C8.33807 1.97411 7.19347 1.5 6 1.5Z" fill="currentColor" />
               </svg>
               {t.modal.getFromWebsite}
+            </button>
+            <button
+              type="button"
+              className={styles.actionButton}
+              onClick={() => setShowVectorIconPicker(true)}
+              title={t.modal.useSvgIcon}
+            >
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 2.5h7l3 3v8H3v-11Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+                <path d="M10 2.8V6h3.1M5 10l1.5-1.5L8 10l1.5-1.5L11 10" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {t.modal.useSvgIcon}
             </button>
             <button
               type="button"
@@ -280,7 +396,13 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
             </button>
           </div>
         </div>
+        {iconFetchMessage && (
+          <div className={`${styles.iconStatus} ${isUsingFallback ? styles.iconStatusWarning : ''}`} role="status">
+            {iconFetchMessage}
+          </div>
+        )}
       </div>
+      )}
 
       <div className={styles.footer}>
         <button
@@ -332,5 +454,13 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
         </>
       )}
     </Modal>
+
+    <VectorIconPickerModal
+      isOpen={isOpen && showVectorIconPicker}
+      purpose="dock"
+      onClose={() => setShowVectorIconPicker(false)}
+      onChoose={handleChooseVectorIcon}
+    />
+    </>
   );
 };

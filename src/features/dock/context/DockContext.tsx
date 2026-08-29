@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { DockItem, SearchEngine } from '@/shared/types';
+import { DockItem, SearchEngine, createDefaultDockApps } from '@/shared/types';
 import { storage } from '@/shared/utils/storage';
 import { DEFAULT_SEARCH_ENGINE } from '@/features/search/constants/searchEngines';
 import { generateFolderIcon, fetchIcon } from '@/features/dock/utils/iconFetcher';
 import { useSpaces } from '@/features/spaces/context/SpacesContext';
 import { useThemeData } from '@/features/theme/context/ThemeContext';
+import { createId } from '@/shared/utils/id';
+import { executeNavigationAction, parseNavigationAction } from '@/shared/navigation';
+import { useLanguage } from '@/shared/context/LanguageContext';
 
 // ============================================================================
 // 数据层 Context (低频变化)
@@ -73,6 +76,7 @@ interface DockContextType extends DockDataContextType, DockUIContextType, DockDr
 export const DockProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     // 从 SpacesContext 获取当前空间的 apps
     const { currentSpace, updateSpaceApps } = useSpaces();
+    const { language } = useLanguage();
 
     // 数据状态: dockItems 来自当前 Space
     const [dockItems, setDockItemsInternal] = useState<DockItem[]>(currentSpace.apps);
@@ -113,135 +117,52 @@ export const DockProvider: React.FC<{ children: React.ReactNode }> = ({ children
         openFolderIdRef.current = openFolderId;
     }, [openFolderId]);
 
-    // 初始化: 只在首次安装时加载默认常用网站
-    // 注意：这个 ref 确保默认数据只加载一次，新建空间不会自动填充
-    const hasLoadedDefaultsRef = React.useRef(false);
-
+    // 搜索引擎使用独立存储，仅在 Provider 初始化时读取一次。
     useEffect(() => {
-        // 只在首次运行且当前空间为空时初始化默认数据
-        // 使用 hasLoadedDefaultsRef 确保只加载一次
-        if (
-            !hasLoadedDefaultsRef.current &&
-            currentSpace.apps.length === 0 &&
-            dockItems.length === 0 &&
-            currentSpace.name === 'Main' // 只在 Main 空间为空时加载默认数据
-        ) {
-            hasLoadedDefaultsRef.current = true;
-
-            // 默认常用网站 - Main 空间
-            const defaults: DockItem[] = [
-                { id: 'bilibili', name: 'Bilibili', url: 'https://www.bilibili.com/', type: 'app' },
-                { id: 'notion', name: 'Notion', url: 'https://www.notion.so/', type: 'app' },
-                { id: 'notion-calendar', name: 'NotionCalendar', url: 'https://calendar.notion.so/', type: 'app' },
-                { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/app', type: 'app' },
-                { id: 'jike', name: '即刻', url: 'https://web.okjike.com', type: 'app' },
-                { id: 'behance', name: 'Behance', url: 'https://www.behance.net/', type: 'app' },
-                { id: 'x', name: 'X', url: 'https://x.com/', type: 'app' },
-                { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/', type: 'app' },
-                { id: 'claude', name: 'Claude', url: 'https://claude.ai/new', type: 'app' },
-            ];
-
-            // 为文件夹生成图标
-            defaults.forEach(item => {
-                if (item.type === 'folder' && item.items) {
-                    item.icon = generateFolderIcon(item.items);
-                }
-            });
-            setDockItems(defaults);
-
-            // 异步获取默认项目的图标
-            const fetchAllIcons = async (isMountedRef: React.MutableRefObject<boolean>) => {
-                type IconUpdateResult =
-                    | { id: string; icon: string; iconSmall?: boolean; isFolder?: undefined; subItems?: undefined }
-                    | { id: string; isFolder: true; subItems: { id: string; icon: string; iconSmall?: boolean }[]; icon?: undefined }
-                    | null;
-
-                // 并行获取图标，但不立即更新状态
-                const iconResults: IconUpdateResult[] = await Promise.all(defaults.map(async (item) => {
-                    if (item.type === 'folder' && item.items) {
-                        const updatedSubItems = await Promise.all(item.items.map(async (subItem) => {
-                            if (subItem.url) {
-                                try {
-                                    const result = await fetchIcon(subItem.url);
-                                    return { id: subItem.id, icon: result.url, iconSmall: result.iconSmall };
-                                } catch (e) {
-                                    return null;
-                                }
-                            }
-                            return null;
-                        }));
-
-                        // 过滤出获取到图标的项目
-                        const validSubUpdates: { id: string; icon: string; iconSmall?: boolean }[] = [];
-                        for (const item of updatedSubItems) {
-                            if (item !== null) {
-                                validSubUpdates.push(item);
-                            }
-                        }
-
-                        if (validSubUpdates.length > 0) {
-                            return {
-                                id: item.id,
-                                isFolder: true as const,
-                                subItems: validSubUpdates
-                            };
-                        }
-                    } else if (item.url) {
-                        try {
-                            const result = await fetchIcon(item.url);
-                            return { id: item.id, icon: result.url, iconSmall: result.iconSmall };
-                        } catch (e) {
-                            console.error(`Failed to fetch icon for ${item.name}`, e);
-                        }
-                    }
-                    return null;
-                }));
-
-                // 过滤有效结果
-                const updates = iconResults.filter((r): r is NonNullable<IconUpdateResult> => r !== null);
-
-                if (!isMountedRef.current) return;
-
-                // 安全更新: 仅更新图标，保留用户可能已做的操作（如排序、删除）
-                setDockItems(prev => {
-                    return prev.map(item => {
-                        const update = updates.find(u => u && u.id === item.id);
-                        if (!update) return item;
-
-                        if (update.isFolder && item.type === 'folder' && item.items) {
-                            // 更新文件夹内的图标
-                            const newSubItems = item.items.map(subItem => {
-                                const subUpdate = update.subItems?.find(su => su.id === subItem.id);
-                                return subUpdate ? { ...subItem, icon: subUpdate.icon, iconSmall: subUpdate.iconSmall } : subItem;
-                            });
-                            return {
-                                ...item,
-                                items: newSubItems,
-                                icon: generateFolderIcon(newSubItems) // 重新生成文件夹预览图
-                            };
-                        } else if (!update.isFolder && update.icon) {
-                            // 更新 App 图标
-                            return { ...item, icon: update.icon, iconSmall: update.iconSmall };
-                        }
-                        return item;
-                    });
-                });
-            };
-
-            const isMountedRef = { current: true };
-            fetchAllIcons(isMountedRef);
-
-            return () => {
-                isMountedRef.current = false;
-            };
-        }
-
-        // 搜索引擎仍使用独立存储
         const savedEngine = storage.getSearchEngine();
-        if (savedEngine) {
-            setSelectedSearchEngineState(savedEngine);
-        }
-    }, []); // 仅首次运行
+        if (savedEngine) setSelectedSearchEngineState(savedEngine);
+    }, []);
+
+    // 首次安装的默认网站只补充缺失图标，不再根据“当前是否为空”重复写入。
+    // 这样用户主动清空 Main 空间后，下一次打开新标签页仍会保持为空。
+    const iconFetchAttemptedSpacesRef = React.useRef(new Set<string>());
+    useEffect(() => {
+        if (iconFetchAttemptedSpacesRef.current.has(currentSpace.id)) return;
+
+        const defaultIds = new Set(createDefaultDockApps().map(item => item.id));
+        const candidates = currentSpace.apps.filter(item => (
+            item.type === 'app' && item.url && !item.icon && defaultIds.has(item.id)
+        ));
+        if (candidates.length === 0) return;
+
+        iconFetchAttemptedSpacesRef.current.add(currentSpace.id);
+        const targetSpaceId = currentSpace.id;
+        let cancelled = false;
+
+        void Promise.all(candidates.map(async item => {
+            try {
+                const result = await fetchIcon(item.url!);
+                return { id: item.id, icon: result.url, iconSmall: result.iconSmall };
+            } catch {
+                return null;
+            }
+        })).then(results => {
+            if (cancelled) return;
+            type IconUpdate = { id: string; icon: string; iconSmall: boolean };
+            const validResults = results.filter((result): result is IconUpdate => result !== null);
+            const updates = new Map(validResults.map(result => [result.id, result] as const));
+            if (updates.size === 0) return;
+
+            updateSpaceApps(targetSpaceId, previous => previous.map(item => {
+                const update = updates.get(item.id);
+                return update ? { ...item, icon: update.icon, iconSmall: update.iconSmall } : item;
+            }));
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [currentSpace.apps, currentSpace.id, updateSpaceApps]);
 
     // 保存搜索引擎 (dockItems 存储由 SpacesContext 管理)
     useEffect(() => {
@@ -296,7 +217,10 @@ export const DockProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // ========================================================================
 
     const handleItemDelete = useCallback((item: DockItem) => {
-        if (window.confirm(`确定要删除 "${item.name}" 吗？${item.type === 'folder' ? '文件夹内的所有内容也将被删除。' : ''}`)) {
+        const message = language === 'zh'
+            ? `确定要删除 "${item.name}" 吗？${item.type === 'folder' ? '文件夹内的所有内容也将被删除。' : ''}`
+            : `Delete "${item.name}"?${item.type === 'folder' ? ' Everything inside the folder will also be deleted.' : ''}`;
+        if (window.confirm(message)) {
             setDockItems(prev => {
                 const newItems = prev.filter((i) => i.id !== item.id);
                 return newItems;
@@ -305,14 +229,27 @@ export const DockProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setOpenFolderIdState(null);
             }
         }
-    }, [setDockItems]);
+    }, [language, setDockItems]);
 
     const handleItemSave = useCallback((data: Partial<DockItem>, editingItem: DockItem | null) => {
+        const hasNavigationUpdate = !editingItem
+            || Object.prototype.hasOwnProperty.call(data, 'action')
+            || Object.prototype.hasOwnProperty.call(data, 'url');
+        const action = hasNavigationUpdate
+            ? (data.action ?? parseNavigationAction(data.url ?? '') ?? undefined)
+            : undefined;
+        const normalizedData: Partial<DockItem> = hasNavigationUpdate
+            ? {
+                ...data,
+                action,
+                url: action?.type === 'url' ? action.url : undefined,
+            }
+            : data;
         if (editingItem) {
             const updateItemRecursively = (items: DockItem[]): DockItem[] => {
                 return items.map((item) => {
                     if (item.id === editingItem.id) {
-                        return { ...item, ...data };
+                        return { ...item, ...normalizedData };
                     }
                     if (item.type === 'folder' && item.items) {
                         const updatedItems = updateItemRecursively(item.items);
@@ -329,11 +266,12 @@ export const DockProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setDockItems(prev => updateItemRecursively(prev));
         } else {
             const newItem: DockItem = {
-                id: `item-${Date.now()}`,
-                name: data.name || '',
-                url: data.url,
-                icon: data.icon,
-                iconSmall: data.iconSmall,
+                id: createId('item'),
+                name: normalizedData.name || '',
+                url: normalizedData.url,
+                action: normalizedData.action,
+                icon: normalizedData.icon,
+                iconSmall: normalizedData.iconSmall,
                 type: 'app',
             };
             setDockItems(prev => [...prev, newItem]);
@@ -617,20 +555,19 @@ export const useDock = (): DockContextType => {
     const dataContext = useContext(DockDataContext);
     const uiContext = useContext(DockUIContext);
     const dragContext = useContext(DockDragContext);
+    const { openInNewTab } = useThemeData();
 
     if (dataContext === undefined || uiContext === undefined || dragContext === undefined) {
         throw new Error('useDock must be used within a DockProvider');
     }
-
-    const { openInNewTab } = useThemeData();
 
     // 组合操作 - 需要同时访问数据和 UI
     const handleItemClick = useCallback((item: DockItem, rect?: DOMRect) => {
         if (item.type === 'folder') {
             uiContext.setOpenFolderId(item.id);
             uiContext.setFolderAnchor(rect ?? null);
-        } else if (item.url) {
-            window.open(item.url, openInNewTab ? '_blank' : '_self');
+        } else if (item.action) {
+            executeNavigationAction(item.action, { openInNewTab });
         }
     }, [uiContext, openInNewTab]);
 

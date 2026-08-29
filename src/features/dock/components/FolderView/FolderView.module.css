@@ -16,7 +16,7 @@
 .popupWrapper {
   position: fixed;
   transform: translate(-50%, -100%);
-  z-index: 1998;
+  z-index: 1000000001;
   pointer-events: auto;
   display: flex;
   flex-direction: column;
@@ -35,7 +35,7 @@
 .clickAway {
   position: fixed;
   inset: 0;
-  z-index: 1997;
+  z-index: 1000000000;
   pointer-events: none;
 }
 
@@ -86,3 +86,13 @@
   opacity: 0 !important;
   visibility: hidden !important;
 }
+
+/* ===== 文件夹与菜单使用同一悬浮材质 ===== */
+.container {
+  border-color: var(--ui-menu-border);
+  background: var(--ui-menu-bg);
+  box-shadow: var(--ui-menu-shadow);
+  backdrop-filter: blur(var(--ui-menu-blur)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--ui-menu-blur)) saturate(1.08);
+}
+.container { border-radius: var(--ui-menu-radius); }

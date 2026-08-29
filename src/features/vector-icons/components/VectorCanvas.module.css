@@ -1,0 +1,291 @@
+.canvasPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  outline: none;
+}
+
+.canvasPanel:focus-visible {
+  border-radius: 14px;
+  box-shadow: 0 0 0 2px var(--fusion-focus-ring);
+}
+
+.canvasToolbar,
+.canvasInspector,
+.canvasToolbarGroup,
+.inspectorActions,
+.inspectorControls {
+  display: flex;
+  align-items: center;
+}
+
+.canvasToolbar {
+  min-height: 34px;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.canvasToolbarGroup,
+.inspectorActions,
+.inspectorControls {
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.canvasToolbarGroup > span {
+  margin-right: 3px;
+  color: var(--color-text-tertiary);
+  font-size: 9px;
+  font-weight: var(--font-weight-bold);
+}
+
+.canvasToolbar button,
+.canvasInspector button,
+.compactSelect {
+  min-height: 29px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 9px;
+  padding: 0 9px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.canvasToolbar button:hover:not(:disabled),
+.canvasInspector button:hover:not(:disabled),
+.compactSelect:hover:not(:disabled) {
+  border-color: var(--fusion-border-accent);
+  background: var(--fusion-accent-soft);
+  color: var(--fusion-accent);
+}
+
+.canvasToolbar button:active:not(:disabled),
+.canvasInspector button:active:not(:disabled) {
+  transform: scale(.98);
+}
+
+.canvasToolbar button:disabled,
+.canvasInspector button:disabled,
+.compactSelect:disabled {
+  cursor: default;
+  opacity: .42;
+}
+
+.primaryButton,
+.activeButton {
+  border-color: var(--fusion-border-accent) !important;
+  background: var(--fusion-accent-soft) !important;
+  color: var(--fusion-accent) !important;
+}
+
+.primaryButton {
+  background: var(--fusion-accent) !important;
+  color: var(--fusion-on-accent) !important;
+}
+
+.zoomLabel {
+  min-width: 44px;
+  font-variant-numeric: tabular-nums;
+}
+
+.compactSelect {
+  min-width: 48px;
+  outline: none;
+}
+
+.canvasViewport {
+  max-height: min(58vh, 620px);
+  overflow: auto;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 14px;
+  background: var(--color-bg-secondary);
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.vectorCanvas {
+  display: block;
+  min-width: 75%;
+  max-width: none;
+  aspect-ratio: 16 / 9;
+  margin: 0 auto;
+  touch-action: none;
+  user-select: none;
+  cursor: crosshair;
+}
+
+.canvasBackground { fill: var(--color-bg-secondary); }
+
+.canvasGridLine {
+  stroke: var(--color-border-subtle);
+  stroke-width: .8;
+}
+
+.canvasItem {
+  overflow: visible;
+  cursor: grab;
+}
+
+.canvasItem:active { cursor: grabbing; }
+
+.shapePlacementMode,
+.shapePlacementMode .canvasItem { cursor: crosshair; }
+
+.primitivePreviewBounds {
+  fill: none;
+  stroke: var(--fusion-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  opacity: .85;
+  pointer-events: none;
+}
+
+.canvasSelection,
+.canvasMultiSelection {
+  fill: none;
+  stroke: var(--fusion-accent);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+.canvasMultiSelection {
+  stroke-dasharray: 4 4;
+  opacity: .82;
+}
+
+.marqueeSelection {
+  fill: var(--fusion-accent-soft);
+  stroke: var(--fusion-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.snapGuide {
+  stroke: var(--fusion-accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  opacity: .72;
+  pointer-events: none;
+}
+
+.rotateStem {
+  stroke: var(--fusion-accent);
+  stroke-width: 2;
+  stroke-dasharray: 3 3;
+}
+
+.canvasResizeHandle,
+.canvasRotateHandle {
+  fill: var(--color-bg-primary);
+  stroke: var(--fusion-accent);
+  stroke-width: 3;
+  pointer-events: all;
+  filter: drop-shadow(0 2px 4px color-mix(in srgb, var(--color-text-primary) 18%, transparent));
+}
+
+.canvasResizeHandle { cursor: nwse-resize; }
+.canvasRotateHandle { cursor: grab; }
+.canvasRotateHandle:active { cursor: grabbing; }
+
+.canvasInspector {
+  min-height: 46px;
+  gap: 8px;
+  flex-wrap: wrap;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 11px;
+  padding: 8px;
+  background: var(--color-bg-secondary);
+}
+
+.selectionSummary {
+  display: flex;
+  min-width: 180px;
+  flex: 1 1 210px;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.selectionSummary strong,
+.canvasInspector > span {
+  color: var(--color-text-secondary);
+  font-size: 10px;
+}
+
+.selectionSummary span {
+  color: var(--color-text-tertiary);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.inspectorControls {
+  flex: 1 1 360px;
+}
+
+.inspectorControls label {
+  display: flex;
+  min-width: 160px;
+  flex: 1 1 190px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 9px;
+  padding: 5px 8px;
+  background: var(--color-bg-primary);
+}
+
+.inspectorControls label span {
+  flex: 0 0 auto;
+  color: var(--color-text-tertiary);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.inspectorControls input[type='range'] {
+  min-width: 90px;
+  width: 100%;
+  accent-color: var(--fusion-accent);
+}
+
+.dangerButton:hover:not(:disabled) {
+  border-color: color-mix(in srgb, #ef4444 46%, var(--color-border-subtle)) !important;
+  background: color-mix(in srgb, #ef4444 10%, var(--color-bg-secondary)) !important;
+  color: #ef4444 !important;
+}
+
+@media (max-width: 760px) {
+  .canvasToolbar { align-items: flex-start; flex-direction: column; }
+  .canvasToolbarGroup { width: 100%; }
+  .canvasInspector { align-items: stretch; flex-direction: column; }
+  .inspectorActions,
+  .inspectorControls { width: 100%; }
+  .inspectorControls label { min-width: 0; }
+  .canvasViewport { max-height: 52vh; }
+}
+
+/* ===== 画布工具与检查器跟随统一控件材质 ===== */
+.canvasToolbar button:not(.primaryButton):not(.activeButton),
+.canvasInspector button:not(.primaryButton):not(.activeButton),
+.compactSelect,
+.inspectorControls label {
+  border-color: var(--ui-control-border);
+  border-radius: var(--ui-control-radius);
+  background: var(--ui-control-bg);
+}
+.canvasToolbar button:not(.primaryButton):not(.activeButton):hover:not(:disabled),
+.canvasInspector button:not(.primaryButton):not(.activeButton):hover:not(:disabled),
+.compactSelect:hover:not(:disabled) { background: var(--ui-control-bg-hover); }
+.canvasInspector {
+  border-color: var(--ui-panel-divider);
+  border-radius: var(--ui-panel-inner-radius);
+  background: var(--ui-panel-card-bg);
+}
+.canvasViewport {
+  border-color: var(--ui-panel-divider);
+  border-radius: var(--ui-panel-inner-radius);
+  background: var(--ui-panel-inner-bg);
+}

@@ -57,3 +57,18 @@
     border-radius: 12px;
   }
 }
+/* Web × Pegboard 提示层 */
+.tooltipContainer {
+    border-color: var(--fusion-border-accent);
+    box-shadow: var(--fusion-shadow-sm);
+}
+
+/* ===== 统一轻提示材质 ===== */
+.tooltipContainer {
+    border-color: var(--ui-menu-border);
+    background: var(--ui-menu-bg);
+    box-shadow: var(--ui-chrome-shadow);
+    backdrop-filter: blur(var(--ui-menu-blur)) saturate(1.06);
+    -webkit-backdrop-filter: blur(var(--ui-menu-blur)) saturate(1.06);
+}
+.tooltipContainer { border-radius: var(--ui-menu-item-radius); }

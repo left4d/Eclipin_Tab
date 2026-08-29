@@ -93,3 +93,12 @@
 .engineName {
   flex: 1;
 }
+/* 搜索框本体保持不变，仅为引擎选择菜单补充主题反馈。 */
+.option:hover {
+  background: var(--fusion-accent-softer);
+}
+
+.selected {
+  color: var(--fusion-accent);
+  text-decoration-color: var(--fusion-accent);
+}

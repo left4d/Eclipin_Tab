@@ -1,4 +1,28 @@
-# 忽略 node.js 依赖文件夹
+# Dependencies
 node_modules/
-# 忽略 Mac 系统文件
+
+# Build outputs
+dist/
+extension.zip
+*.crx
+
+# Local/private signing keys
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Logs and caches
+*.log
+.vite/
+coverage/
+
+# Editor / OS files
 .DS_Store
+desktop.ini
+.idea/
+.vscode/
+
+
+*.zip
+temp_file_list.txt

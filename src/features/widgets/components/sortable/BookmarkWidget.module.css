@@ -1,0 +1,195 @@
+.bookmarkBody {
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 14px 12px;
+}
+
+.bookmarkList {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 2px 3px 8px 0;
+  scrollbar-color: var(--widget-scroll-thumb) transparent;
+  scrollbar-width: thin;
+  touch-action: pan-y;
+}
+
+.bookmarkList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bookmarkList::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--widget-scroll-thumb);
+}
+
+.bookmarkListNode,
+.bookmarkListChildren {
+  display: block;
+  min-width: 0;
+}
+
+.bookmarkListRowShell {
+  position: relative;
+  min-width: 0;
+}
+
+.bookmarkListRowEditable {
+  padding-right: 42px;
+}
+
+.bookmarkEditButton {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 9px;
+  background: var(--widget-surface-muted);
+  color: var(--widget-text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 140ms ease, background 140ms ease, color 140ms ease;
+}
+
+.bookmarkListRowShell:hover .bookmarkEditButton,
+.bookmarkEditButton:focus-visible {
+  opacity: 1;
+}
+
+.bookmarkEditButton:hover {
+  background: var(--widget-surface-hover);
+  color: var(--widget-text-primary);
+}
+
+.bookmarkEditButton:focus-visible {
+  outline: 2px solid var(--fusion-focus-ring);
+  outline-offset: 1px;
+}
+
+.bookmarkListRow {
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 13px;
+  padding: 6px 9px;
+  background: transparent;
+  color: var(--widget-text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.bookmarkListRow:hover {
+  background: var(--widget-surface-hover);
+  transform: translateX(1px);
+}
+
+.bookmarkListRow:focus-visible {
+  outline: 2px solid var(--fusion-focus-ring);
+  outline-offset: -2px;
+}
+
+.bookmarkListIcon {
+  display: grid;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--widget-surface-muted);
+  color: var(--widget-text-secondary);
+}
+
+.bookmarkListIcon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bookmarkListIcon img.bookmarkListIconSmall {
+  box-sizing: border-box;
+  padding: 6px;
+  object-fit: contain;
+}
+
+.bookmarkFolderGlyph {
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  transform: translateX(1px);
+}
+
+.bookmarkListText {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bookmarkListText strong,
+.bookmarkListText small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bookmarkListText strong {
+  color: var(--widget-text-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold, 650);
+  line-height: 1.25;
+}
+
+.bookmarkListText small {
+  color: var(--widget-text-tertiary);
+  font-size: 10px;
+  font-weight: 550;
+  line-height: 1.2;
+}
+
+.bookmarkFolderRow .bookmarkListText strong {
+  font-weight: var(--font-weight-bold, 700);
+}
+
+.bookmarkFolderCount {
+  flex: 0 0 auto;
+  min-width: 22px;
+  border-radius: 999px;
+  padding: 3px 6px;
+  background: var(--widget-surface-muted);
+  color: var(--widget-text-tertiary);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bookmarkListRow {
+    transition: none;
+  }
+}

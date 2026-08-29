@@ -1,0 +1,181 @@
+.clickAway {
+  position: fixed;
+  inset: 0;
+  z-index: 1000000002;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.editor {
+  position: fixed;
+  z-index: 1000000003;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+  border: 1px solid var(--context-menu-border);
+  border-radius: var(--radius-default);
+  padding: 16px;
+  background: var(--context-menu-bg);
+  color: var(--context-menu-text);
+  box-shadow: var(--context-menu-shadow);
+  backdrop-filter: blur(var(--context-menu-blur)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--context-menu-blur)) saturate(1.08);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header h3,
+.header p { margin: 0; }
+.header h3 { font-size: 16px; font-weight: 850; }
+.header p {
+  max-width: 270px;
+  margin-top: 5px;
+  color: var(--context-menu-muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.closeButton {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border: 1px solid var(--context-menu-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--context-menu-hover) 70%, transparent);
+  color: var(--context-menu-text);
+  font: inherit;
+  font-size: 18px;
+  cursor: pointer;
+}
+.closeButton:hover { background: var(--context-menu-hover); }
+
+.modeSwitch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  border: 1px solid var(--context-menu-border);
+  border-radius: 12px;
+  padding: 4px;
+  background: color-mix(in srgb, var(--context-menu-hover) 52%, transparent);
+}
+
+.modeSwitch button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--context-menu-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.modeSwitch button:hover { background: var(--context-menu-hover); color: var(--context-menu-text); }
+.modeSwitch .activeMode {
+  background: var(--context-menu-bg);
+  color: var(--fusion-accent);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.currentLocationCard,
+.selectedCity {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--context-menu-border);
+  border-radius: 12px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--context-menu-hover) 42%, transparent);
+}
+.currentLocationCard strong,
+.selectedCity strong { font-size: 13px; }
+.currentLocationCard span,
+.selectedCity span { color: var(--context-menu-muted); font-size: 10px; line-height: 1.5; }
+.currentLocationCard button {
+  align-self: flex-start;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 9px;
+  padding: 8px 12px;
+  background: var(--fusion-accent);
+  color: var(--fusion-on-accent, white);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.customArea {
+  min-height: 0;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.searchField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--context-menu-muted);
+  font-size: 10px;
+  font-weight: 750;
+}
+.searchField input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--context-menu-border);
+  border-radius: 10px;
+  padding: 0 11px;
+  background: color-mix(in srgb, var(--context-menu-hover) 52%, transparent);
+  color: var(--context-menu-text);
+  font: inherit;
+  outline: none;
+}
+.searchField input:focus {
+  border-color: var(--fusion-accent);
+  box-shadow: 0 0 0 2px var(--fusion-focus-ring);
+}
+
+.results {
+  min-height: 120px;
+  max-height: 230px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.results button {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 3px;
+  border: 0;
+  border-radius: 9px;
+  padding: 9px 10px;
+  background: transparent;
+  color: var(--context-menu-text);
+  text-align: left;
+  cursor: pointer;
+}
+.results button:hover { background: var(--context-menu-hover); }
+.results strong { font-size: 12px; }
+.results span,
+.results p { color: var(--context-menu-muted); font-size: 10px; line-height: 1.45; }
+.results p { margin: 14px 8px; }
+
+/* ===== 全局菜单几何与控件规范 ===== */
+.editor { border-radius: var(--ui-menu-radius); }
+.closeButton,
+.modeSwitch,
+.input,
+.results { border-radius: var(--ui-menu-item-radius); }

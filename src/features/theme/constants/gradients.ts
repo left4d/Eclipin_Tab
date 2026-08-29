@@ -4,7 +4,15 @@ export const GRADIENT_PRESETS = [
         name: '默认',
         nameEn: 'Default',
         gradient: '#F3F3F3', // 浅色主题默认值
-        solid: '#F3F3F3',    // 在组件逻辑中将针对深色主题重写为 #404040
+        solid: '#F3F3F3',    // 在主题逻辑中按明暗模式切换默认背景色
+    },
+    {
+        id: 'workshop-sage',
+        name: '雾松',
+        nameEn: 'Sage Workshop',
+        gradient: 'linear-gradient(145deg, #f8faf6 0%, #e8eee3 48%, #d5dfcf 100%)',
+        solid: '#F4F6F2',
+        solidDark: '#172019',
     },
     {
         id: 'gradient-1',
@@ -12,7 +20,7 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Pink',
         gradient: 'linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%)',
         solid: '#FFF5F7',
-        solidDark: '#5C444C',
+        solidDark: '#2B2026',
     },
     {
         id: 'gradient-2',
@@ -20,7 +28,7 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Blue',
         gradient: 'linear-gradient(to top, #fbc2eb 0%, #a6c1ee 100%)',
         solid: '#F5F9FF',
-        solidDark: '#374151',
+        solidDark: '#1B2432',
     },
     {
         id: 'gradient-3',
@@ -28,7 +36,7 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Green',
         gradient: 'linear-gradient(to top, #b8cf81ff 0%, #014108ff 100%)',
         solid: '#F1F6EF',
-        solidDark: '#354F3F',
+        solidDark: '#1A281F',
     },
     {
         id: 'gradient-4',
@@ -36,7 +44,7 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Grey',
         gradient: 'linear-gradient(to top, #6a85b6 0%, #bac8e0 100%)',
         solid: '#F8FAFC',
-        solidDark: '#4B5563',
+        solidDark: '#222831',
     },
     {
         id: 'gradient-5',
@@ -44,7 +52,7 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Purple',
         gradient: 'linear-gradient(to top, #505285 0%, #585e92 12%, #65689f 25%, #7474b0 37%, #7e7ebb 50%, #8389c7 62%, #9795d4 75%, #a2a1dc 87%, #b5aee4 100%)',
         solid: '#F9F5FF',
-        solidDark: '#4C3E5C',
+        solidDark: '#262130',
     },
     {
         id: 'gradient-6',
@@ -52,7 +60,7 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Brown',
         gradient: 'linear-gradient(to top, #bdc2e8 0%, #bdc2e8 1%, #e6dee9 100%)',
         solid: '#EAE6DB',
-        solidDark: '#5C4D44',
+        solidDark: '#29241F',
     },
     {
         id: 'gradient-7',
@@ -60,7 +68,7 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Orange',
         gradient: 'linear-gradient(to bottom, #323232 0%, #3F3F3F 40%, #1C1C1C 150%), linear-gradient(to top, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.25) 200%)',
         solid: '#F2E8DF',
-        solidDark: '#5C493D',
+        solidDark: '#2B211B',
     },
     {
         id: 'gradient-8',
@@ -68,7 +76,7 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Indigo',
         gradient: 'linear-gradient(to top, #0c3483 0%, #a2b6df 100%, #6b8cce 100%, #a2b6df 100%)',
         solid: '#F5F7FF',
-        solidDark: '#3F3F7F',
+        solidDark: '#22253D',
     },
     {
         id: 'gradient-9',

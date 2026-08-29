@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { DockItem } from '@/shared/types';
 import { useDragBase, createDockDragState, resetDockDragState, DockDragState, DockActionData } from './useDragBase';
 import { useDragMerge } from './useDragMerge';
@@ -11,9 +11,10 @@ import {
     calculateHorizontalReorderIndex,
     createMouseDownHandler,
     getFolderViewRect,
-    createHorizontalStrategy,
 } from '@/shared/utils/dragMath';
 import { onReturnAnimationComplete } from '@/features/dock/utils/animationUtils';
+import type { UseDragAndDropOptions } from './dockDragTypes';
+import { useDockItemTransforms } from './useDockItemTransforms';
 import {
     DOCK_DRAG_BUFFER,
     DOCK_CELL_SIZE,
@@ -22,24 +23,6 @@ import {
     MERGE_DISTANCE_THRESHOLD,
     HAPTIC_PATTERNS,
 } from '@/shared/constants/layout';
-
-interface UseDragAndDropOptions {
-    items: DockItem[];
-    isEditMode: boolean;
-    onReorder: (items: DockItem[]) => void;
-    onDropToFolder?: (dragItem: DockItem, targetFolder: DockItem) => void;
-    onMergeFolder?: (dragItem: DockItem, targetItem: DockItem) => void;
-    onDragToOpenFolder?: (dragItem: DockItem) => void;
-    onHoverOpenFolder?: (dragItem: DockItem, targetFolder: DockItem) => void;
-    onDragStart?: (item: DockItem) => void;
-    onDragEnd?: () => void;
-    externalDragItem?: DockItem | null;
-    /** 检查文件夹是否有活动占位符 - 从 Context 读取 */
-    hasFolderPlaceholderActive?: () => boolean;
-}
-
-// 模块级拖拽策略常量
-const horizontalStrategy = createHorizontalStrategy();
 
 export const useDragAndDrop = ({
     items,
@@ -102,9 +85,6 @@ export const useDragAndDrop = ({
         getItems: () => itemsRef.current,
         performHapticFeedback,
     });
-
-    // 使用模块级拖拽策略
-    const strategy = horizontalStrategy;
 
     const cachedDockRectRef = useRef<DOMRect | null>(null);
     const lastMousePositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -502,7 +482,7 @@ export const useDragAndDrop = ({
             if (onDragEnd) onDragEnd();
         }
     }, [
-        strategy, onDropToFolder, onMergeFolder, onDragToOpenFolder, onDragEnd, onReorder,
+        onDropToFolder, onMergeFolder, onDragToOpenFolder, onDragEnd, onReorder,
         handleMouseMove,
         setDragState, setPlaceholderIndex,
         cleanupDragListeners,
@@ -581,59 +561,12 @@ export const useDragAndDrop = ({
     }, [onReorder, onDropToFolder, onMergeFolder, onDragToOpenFolder, onDragEnd, setDragState, setPlaceholderIndex, dragRef]);
 
 
-    // ========================================================================
-    // 优化 3: 使用 useMemo 缓存 transform 计算
-    // ========================================================================
-
-    /** 预计算所有项目的 transform 值，避免每个项目渲染时重复计算 */
-    const itemTransforms = useMemo(() => {
-        const targetSlot = placeholderIndex;
-
-        // 无占位符时，所有项目不偏移
-        if (targetSlot === null) {
-            return items.map(() => 0);
-        }
-
-        const isInternalDragActive = (dragState.isDragging || dragState.isAnimatingReturn) && dragState.originalIndex !== -1;
-        const originalIndex = isInternalDragActive
-            ? dragState.originalIndex
-            : (externalDragItem ? -1 : dragState.originalIndex);
-        const isDragging = dragState.isDragging || dragState.isAnimatingReturn;
-
-        const transforms = items.map((_, index) => {
-            const transform = strategy.calculateTransform(
-                index,
-                targetSlot,
-                originalIndex,
-                isDragging
-            );
-            return transform.x;
-        });
-
-        // Add transform for the divider/extra elements at the end
-        const dividerTransform = strategy.calculateTransform(
-            items.length,
-            targetSlot,
-            originalIndex,
-            isDragging
-        );
-        transforms.push(dividerTransform.x);
-
-        return transforms;
-    }, [
+    const getItemTransform = useDockItemTransforms({
+        itemsLength: items.length,
         placeholderIndex,
-        dragState.isDragging,
-        dragState.isAnimatingReturn,
-        dragState.originalIndex,
+        dragState,
         externalDragItem,
-        items.length,
-        strategy
-    ]);
-
-    /** 获取指定索引的 transform 值 (简化的 getter) */
-    const getItemTransform = useCallback((index: number): number => {
-        return itemTransforms[index] ?? 0;
-    }, [itemTransforms]);
+    });
 
     // 组件卸载时清理
     useEffect(() => {

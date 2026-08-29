@@ -20,8 +20,21 @@ function svgInlinePlugin(): Plugin {
   };
 }
 
+// Keep the GPL license alongside every production build / extension package.
+function copyLicensePlugin(): Plugin {
+  return {
+    name: 'copy-license',
+    apply: 'build',
+    closeBundle() {
+      const source = path.resolve(__dirname, 'LICENSE');
+      const target = path.resolve(__dirname, 'dist/LICENSE');
+      if (fs.existsSync(source)) fs.copyFileSync(source, target);
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [svgInlinePlugin(), react()],
+  plugins: [svgInlinePlugin(), react(), copyLicensePlugin()],
   base: './',
   resolve: {
     alias: {

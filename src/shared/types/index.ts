@@ -20,8 +20,11 @@ export type {
 
 // Space 相关类型
 export type { Space, SpacesState } from '@/features/spaces/types/space';
-export { createDefaultSpace, createDefaultSpacesState } from '@/features/spaces/types/space';
+export { createDefaultSpace, createDefaultSpacesState, createDefaultDockApps } from '@/features/spaces/types/space';
 
 // Zen Shelf 贴纸相关类型
-export type { LinkCardMetadata, Sticker, StickerInput, TextStickerStyle } from '@/features/shelf/types/sticker';
+export type { LinkCardMetadata, Sticker, StickerDrawing, StickerInput, StickerInteractionEffect, TextStickerStyle } from '@/features/shelf/types/sticker';
 export { DEFAULT_TEXT_STYLE, IMAGE_MAX_WIDTH } from '@/features/shelf/types/sticker';
+
+// 统一导航 Action
+export type { NavigationAction, NavigationPageCondition } from '@/shared/navigation';

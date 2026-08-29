@@ -1,0 +1,50 @@
+新增：
+- THEME_FUSION_NOTES.md
+- features/theme/constants/palettes.ts
+
+主题状态与持久化：
+- features/theme/context/ThemeContext.tsx
+- shared/utils/storage.ts
+
+设置页与背景预设：
+- features/settings/components/Modal/SettingsModal.tsx
+- features/settings/components/Modal/SettingsModal.module.css
+- features/theme/constants/gradients.ts
+- shared/styles/variables.css
+
+外围视觉升级：
+- features/dock/components/Dock/AddIcon.module.css
+- features/dock/components/Dock/Dock.module.css
+- features/dock/components/Dock/DockContextMenu.module.css
+- features/dock/components/Dock/DockNavigator.module.css
+- features/dock/components/Dock/SpaceSwitcher.module.css
+- features/dock/components/Modal/AddEditModal.module.css
+- features/editor/components/Editor/Editor.module.css
+- features/search/components/Modal/SearchEngineModal.module.css
+- features/settings/components/Settings/Settings.module.css
+- features/spaces/components/Modal/SpaceManageMenu.module.css
+- features/sync/components/Modal/SyncModal.module.css
+- features/sync/components/SyncButton/SyncButton.module.css
+- features/theme/components/Modal/ThemeModal.module.css
+- shared/components/Modal/Modal.module.css
+- shared/components/PopoverPanel/PopoverPanel.module.css
+- shared/components/Tooltip/Tooltip.module.css
+- shared/styles/modal.css
+
+上一轮明确保持原样（第三轮仅通过可选样式追加覆盖，不改变默认视觉）：
+- features/search/components/Searcher/Searcher.module.css
+- features/widgets/components/WidgetPanel.module.css
+- features/shelf/components/ZenShelf/ZenShelf.module.css
+
+
+第三轮新增与修改：
+- shared/utils/embedUrl.ts
+- shared/utils/storage.ts
+- features/theme/context/ThemeContext.tsx
+- features/settings/components/Modal/SettingsModal.tsx
+- features/settings/components/Modal/SettingsModal.module.css
+- features/search/components/Searcher/Searcher.module.css
+- features/widgets/utils/layoutAlgorithm.ts
+- features/widgets/components/WidgetPanel.tsx
+- features/widgets/components/SortableWidget.tsx
+- features/widgets/components/WidgetPanel.module.css

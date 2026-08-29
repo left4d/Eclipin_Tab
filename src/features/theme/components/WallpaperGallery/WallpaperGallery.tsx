@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { useWallpaperStorage } from '@/features/theme/hooks/useWallpaperStorage';
-import { WallpaperItem } from '@/shared/utils/db';
+import { isWeSceneWallpaperItem, type WallpaperItem } from '@/shared/utils/db';
 import styles from './WallpaperGallery.module.css';
 import wallpaperIcon from '@/assets/icons/wallpaper.svg';
 import closeIcon from '@/assets/icons/close.svg';
@@ -19,27 +19,34 @@ export const WallpaperGallery: React.FC<WallpaperGalleryProps> = React.memo(({
     onWallpaperClear,
     onWallpaperUpload
 }) => {
-    const { getRecentWallpapers, createWallpaperUrl, deleteWallpaper } = useWallpaperStorage();
+    const { getRecentWallpapers, createWallpaperUrl, revokeWallpaperUrl, deleteWallpaper } = useWallpaperStorage();
     const [recentWallpapers, setRecentWallpapers] = useState<WallpaperItem[]>([]);
     const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const thumbnailUrlsRef = React.useRef<string[]>([]);
 
     const loadWallpapers = async () => {
         const wallpapers = await getRecentWallpapers();
         setRecentWallpapers(wallpapers);
 
-        // Create thumbnails
+        thumbnailUrlsRef.current.forEach(revokeWallpaperUrl);
         const newThumbnails: Record<string, string> = {};
         wallpapers.forEach(wp => {
-            newThumbnails[wp.id] = createWallpaperUrl(wp.thumbnail || wp.data);
+            const previewBlob = wp.thumbnail || (isWeSceneWallpaperItem(wp) ? null : wp.data);
+            if (previewBlob) newThumbnails[wp.id] = createWallpaperUrl(previewBlob);
         });
+        thumbnailUrlsRef.current = Object.values(newThumbnails);
         setThumbnails(newThumbnails);
     };
 
     useEffect(() => {
-        loadWallpapers();
-    }, []);
+        void loadWallpapers();
+        return () => {
+            thumbnailUrlsRef.current.forEach(revokeWallpaperUrl);
+            thumbnailUrlsRef.current = [];
+        };
+    }, [revokeWallpaperUrl]);
 
     const handleUploadClick = () => {
         fileInputRef.current?.click();
@@ -92,7 +99,7 @@ export const WallpaperGallery: React.FC<WallpaperGalleryProps> = React.memo(({
                 <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*,video/*"
+                    accept="image/*,video/*,.zip,application/zip,application/x-zip-compressed"
                     onChange={handleFileChange}
                     style={{ display: 'none' }}
                 />
@@ -105,10 +112,15 @@ export const WallpaperGallery: React.FC<WallpaperGalleryProps> = React.memo(({
                     key={wp.id}
                     className={`${styles.thumbnail} ${wp.id === wallpaperId ? styles.active : ''}`}
                     onClick={() => handleWallpaperSelect(wp.id)}
-                    title={new Date(wp.createdAt).toLocaleDateString()}
+                    title={isWeSceneWallpaperItem(wp)
+                        ? `Wallpaper Engine · ${wp.sourceDescriptorPath}`
+                        : new Date(wp.createdAt).toLocaleDateString()}
                 >
                     {thumbnails[wp.id] && (
                         <img src={thumbnails[wp.id]} alt="Wallpaper" className={styles.image} />
+                    )}
+                    {isWeSceneWallpaperItem(wp) && (
+                        <span className={styles.weSceneBadge} aria-label="Wallpaper Engine scene">WE</span>
                     )}
                     <button
                         className={styles.deleteBtn}

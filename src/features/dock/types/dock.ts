@@ -2,10 +2,14 @@
  * Dock 相关类型定义
  */
 
+import type { NavigationAction } from '@/shared/navigation';
+
 export interface DockItem {
     id: string;
     name: string;
     url?: string;
+    /** 可选结构化导航动作；未设置时继续兼容 url 字段。 */
+    action?: NavigationAction;
     icon?: string;
     iconSmall?: boolean; // 标记图标为小尺寸（<100px），渲染时缩小显示而非撑满容器
     type: 'app' | 'folder';

@@ -1,12 +1,15 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { db, WallpaperItem } from '@/shared/utils/db';
+import { db, isWeSceneWallpaperItem, type BlobWallpaperItem, type WallpaperItem } from '@/shared/utils/db';
 
 export interface UseWallpaperStorageReturn {
     saveWallpaper: (file: File) => Promise<string>;
+    saveWallpaperEngineZip: (file: File) => Promise<string[]>;
     getWallpaper: (id: string) => Promise<Blob | null>;
+    getWallpaperItem: (id: string) => Promise<WallpaperItem | null>;
     deleteWallpaper: (id: string) => Promise<void>;
     getRecentWallpapers: () => Promise<WallpaperItem[]>;
     createWallpaperUrl: (blob: Blob) => string;
+    revokeWallpaperUrl: (url: string | null | undefined) => void;
     isSupported: boolean;
     isProcessing: boolean;
     error: Error | null;
@@ -128,6 +131,9 @@ const generateVideoThumbnail = async (file: File | Blob): Promise<Blob> => {
 
         const cleanup = () => {
             clearTimeout(timeout);
+            video.pause();
+            video.removeAttribute('src');
+            try { video.load(); } catch { /* ignore */ }
             URL.revokeObjectURL(url);
         };
 
@@ -199,7 +205,7 @@ const generateVideoThumbnail = async (file: File | Blob): Promise<Blob> => {
             reject(new Error('Failed to load video for thumbnail'));
         };
 
-        video.preload = 'auto';
+        video.preload = 'metadata';
         video.muted = true;
         video.playsInline = true;
         video.src = url;
@@ -235,6 +241,12 @@ export const useWallpaperStorage = (): UseWallpaperStorageReturn => {
         return url;
     }, []);
 
+    const revokeWallpaperUrl = useCallback((url: string | null | undefined): void => {
+        if (!url || !activeUrlsRef.current.has(url)) return;
+        activeUrlsRef.current.delete(url);
+        URL.revokeObjectURL(url);
+    }, []);
+
     const saveWallpaper = useCallback(async (file: File): Promise<string> => {
         if (!isSupported) {
             throw new Error('Storage not supported');
@@ -266,7 +278,7 @@ export const useWallpaperStorage = (): UseWallpaperStorageReturn => {
 
             const id = `wallpaper_${Date.now()}`;
 
-            const item: WallpaperItem = {
+            const item: BlobWallpaperItem = {
                 id,
                 data: blobToSave,
                 thumbnail: thumbnailBlob,
@@ -285,12 +297,51 @@ export const useWallpaperStorage = (): UseWallpaperStorageReturn => {
         }
     }, [isSupported]);
 
+    const saveWallpaperEngineZip = useCallback(async (file: File): Promise<string[]> => {
+        if (!isSupported) {
+            throw new Error('Storage not supported');
+        }
+
+        setIsProcessing(true);
+        try {
+            // Keep the complete WE import pipeline out of the normal startup graph.
+            // This chunk is requested only after the user imports a WE ZIP.
+            const { importAndPersistWallpaperEngineZip } = await import(
+                '@/features/theme/utils/wallpaperEngineImportRuntime'
+            );
+            return await importAndPersistWallpaperEngineZip(file, async (previewBlob) => (
+                generateThumbnail(previewBlob).catch(err => {
+                    console.warn('Failed to generate Wallpaper Engine thumbnail:', err);
+                    return undefined;
+                })
+            ));
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error('Failed to save Wallpaper Engine scene');
+            setError(error);
+            throw error;
+        } finally {
+            setIsProcessing(false);
+        }
+    }, [isSupported]);
+
+    const getWallpaperItem = useCallback(async (id: string): Promise<WallpaperItem | null> => {
+        if (!isSupported) return null;
+        try {
+            return await db.get(id);
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error('Failed to get wallpaper item');
+            setError(error);
+            return null;
+        }
+    }, [isSupported]);
+
     const getWallpaper = useCallback(async (id: string): Promise<Blob | null> => {
         if (!isSupported) return null;
 
         try {
             const item = await db.get(id);
-            return item ? item.data : null;
+            if (!item || isWeSceneWallpaperItem(item)) return null;
+            return item.data;
         } catch (err) {
             const error = err instanceof Error ? err : new Error('Failed to get wallpaper');
             setError(error);
@@ -327,10 +378,13 @@ export const useWallpaperStorage = (): UseWallpaperStorageReturn => {
 
     return {
         saveWallpaper,
+        saveWallpaperEngineZip,
         getWallpaper,
+        getWallpaperItem,
         deleteWallpaper,
         getRecentWallpapers,
         createWallpaperUrl,
+        revokeWallpaperUrl,
         isSupported,
         isProcessing,
         error

@@ -1,220 +1,303 @@
-<div align="center">
+# Eclipin Tab
 
-# 🌟 Eclipse Tab
+## 个性化新标签页浏览器扩展
 
-### 新一代浏览器新标签页扩展
+灵感白板 · 多重空间 · 流畅交互
 
-[![Chrome Web Store](https://img.shields.io/badge/Chrome-Available-brightgreen?logo=googlechrome)](https://chromewebstore.google.com/detail/eclipse-tab/lcnmbgidemidmfffplkpflpdpmfdgabp)
-[![Edge Add-ons](https://img.shields.io/badge/Edge-Available-blue?logo=microsoftedge)](https://microsoftedge.microsoft.com/addons/detail/eclipse-tab/omlbmhdkajhbcdhjdgjalelbbmjoekfj)
-[![Firefox Add-ons](https://img.shields.io/badge/Firefox-Available-orange?logo=firefox)](https://addons.mozilla.org/zh-CN/firefox/addon/eclipse-tab/)
-[![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
+Eclipin Tab 是一款浏览器新标签页扩展，以 Zen Shelf（灵感白板）和 Focus Spaces（多重空间）为核心，让新标签页同时承担灵感记录、网址整理、小组件看板与个性化桌面的角色。
 
-[English](README-en.md) | 简体中文
+本项目是 [EclipseTab](https://github.com/ENCRE0520/EclipseTab) 的修改与延伸版本，自 2026 年起由 left4d 继续维护和扩展。上游项目由 ENCRE0520 创建并以 GNU GPL v3.0 发布；Eclipin Tab 继续按 GNU GPL v3.0（`GPL-3.0-only`）发布。
 
-![Eclipse Tab 预览](https://github.com/user-attachments/assets/f7674f4f-3830-43bc-8ac4-00fdc0ceec7d)
+## 快速开始
 
-**✨ 灵感白板 · 🌐 多重空间 · 🎨 美观高效**
+### 开发环境
 
-</div>
+```bash
+# 克隆项目
+git clone https://github.com/left4d/Eclipin_Tab.git
 
-<br>
+# 安装依赖
+npm install
 
-> 💡 **AI 驱动开发** - 本项目 90% 使用 AI 辅助编码（VibeCoding）开发
+# 启动开发服务器
+npm run dev
 
-Eclipse Tab 是一款功能强大的浏览器新标签页扩展，以 **Zen Shelf（灵感白板）** 和 **Focus Spaces（多重空间）** 为核心，让你的浏览器成为创意工作站和效率中心。
+# 构建生产版本
+npm run build
 
-<br>
+# 打包为扩展压缩包
+npm run zip
+```
 
-## 📦 安装
+### 浏览器扩展安装
 
-| 浏览器 | 链接 |
-|:---|:---|
-| <img src="https://raw.githubusercontent.com/alrra/browser-logos/main/src/chrome/chrome_48x48.png" width="20" /> **Chrome** | [Chrome 扩展商店](https://chromewebstore.google.com/detail/eclipse-tab/lcnmbgidemidmfffplkpflpdpmfdgabp?utm_source=ext_app_menu) |
-| <img src="https://raw.githubusercontent.com/alrra/browser-logos/main/src/edge/edge_48x48.png" width="20" /> **Edge** | [Edge 扩展商店](https://microsoftedge.microsoft.com/addons/detail/eclipse-tab/omlbmhdkajhbcdhjdgjalelbbmjoekfj?hl=zh-cn) |
-| <img src="https://raw.githubusercontent.com/alrra/browser-logos/main/src/firefox/firefox_48x48.png" width="20" /> **Firefox** | [Firefox 扩展商店](https://addons.mozilla.org/zh-CN/firefox/addon/eclipse-tab/) |
+1. 构建项目：
 
-<details>
-<summary>🛠️ 手动安装 / Zen Browser 配置</summary>
+```bash
+npm run build
+```
 
-<br>
+2. 加载扩展：
 
-**Chrome / Edge 手动安装**
-1. 下载项目并解压
-2. 打开 `chrome://extensions/` 或 `edge://extensions/`，开启「开发者模式」
-3. 点击「加载已解压的扩展程序」，选择 `dist` 文件夹
+   - Chrome / Edge：
+     1. 打开 `chrome://extensions/` 或 `edge://extensions/`
+     2. 开启「开发者模式」
+     3. 点击「加载已解压的扩展程序」
+     4. 选择项目中的 `dist` 文件夹
 
-**Zen Browser**（基于 Firefox）
-1. 按 Firefox 方式安装后，打开 `about:config`
-2. 将 `zen.urlbar.replace-newtab` 设为 `false`
+   - Firefox：
+     1. 打开 `about:addons`
+     2. 点击齿轮图标
+     3. 选择「调试附加组件」
+     4. 点击「临时载入附加组件」
+     5. 选择 `dist/manifest.json`
 
-</details>
+## 功能介绍
 
-<br>
+### Zen Shelf 灵感白板
 
-## 🎯 核心功能
+随时记录和整理灵感的多页面画布，支持三种贴纸类型：
 
-<table>
-<tr>
-<td width="50%" valign="top">
+- 文字贴纸：自定义字体、字号、颜色、对齐方式、复选框、Markdown 链接与链接卡片
+- 图片贴纸：本地图片、SVG 矢量图标、链接/导航动作；矢量图标可配置悬停切换图标
+- 绘图贴纸：线条、椭圆、矩形等绘图元素
+- 贴纸属性：缩放、旋转、层叠优先级、位置固定、屏幕固定、描边、图片圆角与悬停交互效果
+- 贴纸浮动工具栏：快速修改颜色、字体、对齐、尺寸等属性
+- 内部锚点导航：可在贴纸、小组件和页面之间建立跳转入口
+- 回收站：删除的贴纸可恢复、永久删除或清空
 
-### ✏️ Zen Shelf - 灵感白板
+### Focus Spaces 多重空间
 
-> 自由的创意画布，像便签纸和照片墙一样记录灵感。
+为不同场景维护独立的网址集合：
 
-- 📝 **文字贴纸** - 自定义字号（12–120px）、颜色、对齐方式
-- ☑️ **复选框模式** - 贴纸可添加复选框，点击切换完成状态
-- 🔗 **链接卡片** - 输入 URL 后一键转为带标题和封面的链接卡片；双击卡片直接跳转
-- 🖼️ **图片贴纸** - 支持上传、粘贴图片及 SVG，自由缩放
-- 🎭 **自由布局** - 拖拽摆放，自动避让界面元素
-- 📌 **固定贴纸** - 右键可固定贴纸，防止误触移动
-- 🗑️ **回收站** - 删除的贴纸进入回收站，可随时恢复
+- 每个 Focus Space 独立保存自己的 Dock / 网站项目与文件夹结构
+- 空间切换器可快速切换工作场景，并可控制哪些空间显示在快捷网址栏
+- Dock 项目可通过右键菜单移动到其他空间
+- 支持单个空间导入/导出，以及全部空间导出
 
-</td>
-<td width="50%" valign="top">
+> 贴纸和小组件按页面与横/纵布局保存，不会随 Focus Space 切换成另一套布局。
 
-### 🌐 Focus Spaces - 多重空间
+### Dock 应用栏
 
-> 为不同场景创建独立工作空间，工作、学习、娱乐互不干扰。
+macOS 风格的网址与应用入口管理栏：
 
-- 🗂️ **多空间管理** - 创建、重命名、置顶、删除
-- 📋 **独立应用列表** - 每个空间有专属的 Dock 应用
-- 🚀 **长按快速跳转** - 长按 Navigator 弹出空间选择器，滑动直达目标空间
-- 📤 **导入 / 导出** - 支持导出当前空间或一次导出全部空间配置
+- 应用图标与文件夹管理，支持拖拽排序与合并为文件夹
+- 文件夹展开后仍可继续拖拽、重排和移出项目
+- 右键上下文菜单：编辑、删除、移动至其他空间
+- 批量导入：可从浏览器书签选择导入，也可导入 JSON
+- 图标支持多级缓存，并可在设置中批量重新获取当前空间图标
 
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
+### 智能搜索
 
-### 🚀 Dock 应用栏
+- 搜索引擎切换：Google、Bing、Baidu、DuckDuckGo、Yahoo、Ecosia
+- 实时搜索建议（可在设置中关闭相关权限）
+- 高级搜索目标：网页、图片、YouTube、哔哩哔哩、GitHub、Google Maps、Wikipedia
+- 针对不同目标提供站点、文件类型、日期、语言、图片尺寸、视频时长/排序、GitHub 仓库/语言/Stars/路径、地图地点/类别等筛选条件
+- 在非输入状态下按 `/` 或空格，或使用 `Ctrl/Command + K`，可快速聚焦搜索框
 
-> macOS 风格的应用管理，优雅高效。
+### 主题与壁纸
 
-- 📌 **快速访问** - 常用网站一键打开
-- 📁 **文件夹整理** - 拖拽创建文件夹；少于 2 个应用自动解散
-- 🔍 **智能图标** - 多阶策略自动获取高清图标，兜底生成文字图标
-- 📚 **批量导入** - 从浏览器书签导入，或用 AI 生成 JSON 一键导入
+- 默认、浅色、深色主题，并支持跟随系统
+- 多套强调色调色板、纯色/渐变背景与纹理叠加
+- 界面材质：`classic`、`frame`、`ambient`、`veil`
+- 自定义本地壁纸：支持图片与视频；图片可压缩后保存到本地
+- Wallpaper Engine：支持导入经 RePKG 解包后的场景 ZIP，并在本地解析与渲染
+  - 图像效果层、文字效果层、水波纹层
+  - 木偶模型骨骼动画、透视与视差效果
+  - 后期处理渲染、场景资源依赖图管理
 
-</td>
-<td width="50%" valign="top">
+### Widgets 小组件面板
 
-### 🎨 精美主题
+可自由拖拽与调整尺寸的小组件系统：
 
-> 个性化你的新标签页。
+- 时钟：数字时钟、圆形模拟时钟
+- 天气：通过 Open-Meteo 获取当前位置或自定义城市天气，可查看体感、湿度、风向/风速、降水等信息并跳转 Windy
+- 翻译：Google / 百度翻译，并可跳转有道词典查询
+- 快捷链接：图标式网站入口
+- 便签：轻量 Markdown 预览，支持下划线与删除线等辅助编辑
+- 计算器：简单四则运算及百分比、正负号等基础操作
+- 番茄钟：专注/休息计时，可自定义时长并自动切换阶段
+- 月历：查看当前月份并切换月份
+- 倒数日：记录重要日期与剩余天数
+- 空白容器：为画板、贴纸或其他组件提供装饰背景
+- 网页嵌入：支持网页 URL（受目标网站 iframe 策略限制）、本地 HTML、网页包 ZIP 与完整网页文件夹
+  - 本地网页保存到 IndexedDB，并在隔离的 sandbox iframe 中运行
+  - ZIP / 文件夹会自动选择 HTML 入口，并保留 CSS、JS、图片、字体、WebAssembly、Worker、SVG sprite 等相对路径资源
+- 空间网站组件：把某个 Focus Space 的网址作为独立组件展示和编辑
+- 浏览器书签：读取并展示浏览器书签（按需请求权限）
+- 打开的标签页：按域名整理当前窗口标签页，可单个或整组加入指定 Focus Space；支持保存会话、追加到已有会话并恢复
+- 页面布局：纵向模式下第二页可向下延伸；横向模式可继续创建固定一屏的新页面
+- 页面导航栏：可开关，并可放在左侧、右侧或底部
+- 编辑模式支持 `Ctrl / Command` 跨贴纸与小组件多选，并整体拖动所选对象
+- 小组件删除后会进入共享回收站，可恢复或永久删除；本地网页资源会在不再被引用时清理
 
-- 🌈 **四种模式** - Default、Light、Dark、Auto 跟随系统
-- 🖼️ **自定义背景** - 渐变色、纯色、上传壁纸，支持纹理叠加
-- 🎯 **智能适配** - 自动调整文字颜色确保可读性
-- 🌐 **多语言** - 支持中文 / English 切换
+### 云同步与本地备份
 
-</td>
-</tr>
-<tr>
-<td colspan="2" valign="top">
+- WebDAV：把数据同步到你自己的 WebDAV 服务
+- 自动同步：打开新标签页时检查云端更新；本地修改稳定后会进行防抖上传
+- 手动上传与下载
+- 下载时若检测到云端版本旧于本地，会在覆盖前要求确认
+- 自定义壁纸和贴纸图片默认不参与 WebDAV 同步，可按需开启
+- 同步面板内置完整本地 ZIP 备份的导出与恢复
 
-### ☁️ 云端同步
+### 矢量图标工作室
 
-> 通过 WebDAV 多端同步，安全可控，数据完全属于你。
+- 内置 SVG 图标库浏览与搜索
+- 矢量图标颜色编辑
+- 画布缩放、组合与导出
+- 图标可用于贴纸或 Dock 项目
 
-- 🔄 **自动同步** - 打开新标签页自动检测并同步
-- 📦 **全量备份** - 配置 / 空间 / 贴纸一键同步
-- 🖼️ **资产可选** - 壁纸和贴纸图片按需开启同步（默认关闭）
-- 🆕 **新设备无忧** - 配置 WebDAV 即自动拉取全部数据
+### 设置中心
 
-</td>
-</tr>
-</table>
+- 外观：主题、强调色、界面材质、纹理、纯色/渐变与自定义壁纸
+- 布局：中/英文界面、Dock 位置、快捷网址栏开关、图标尺寸、链接打开方式、横/纵页面切换、连续/整页滚动、导航栏开关与位置
+- 搜索与图标：搜索建议权限开关、当前空间 Dock 图标批量修复
+- 空间：重命名空间、控制快捷网址栏显示、直接增删改空间网址
+- 组件：选择目标页面并添加、清空或重置小组件
+- 接口：浏览器权限与百度翻译 App ID / Secret 等凭据
+- 矢量图标：直接进入 SVG 图标工作台
+- 关于：项目来源、上游致谢与开源许可信息
 
----
+## 使用技巧
 
-## 💡 使用技巧
+### 界面
 
-### 🎯 界面
+- 设置：鼠标移到页面左上角可打开设置
+- 编辑 Dock：鼠标移到页面右上角进入编辑模式；Dock 项目也可直接右键编辑
+- 搜索：按 `/`、空格（当前不在输入框中）或 `Ctrl/Command + K` 快速聚焦搜索框
 
-- **设置**：鼠标移到页面**左上角**出现设置图标 ⚙️
-- **编辑 Dock**：鼠标移到页面**右上角**出现编辑按钮 ✏️，或右键 Dock 图标直接编辑 / 删除
-
-### ✏️ Zen Shelf
+### Zen Shelf 灵感白板
 
 | 操作 | 说明 |
-|:---|:---|
+|---|---|
 | 双击空白处 | 快速创建文字贴纸 |
 | 双击文字贴纸 | 编辑内容 |
-| `Ctrl+V` | 粘贴剪贴板图片为图片贴纸 |
-| `Shift` + 点击贴纸 | 多选文字贴纸，可批量拖动或按 `Delete` 批量删除 |
-| 拖到屏幕边缘 | 拖动贴纸到边缘回收站图标，松手即删除 |
+| Ctrl+V | 粘贴剪贴板图片为图片贴纸 |
+| Ctrl / Command / Shift + 点击 | 编辑模式下参与贴纸/对象多选 |
+| 拖到屏幕边缘 | 拖到回收站区域后松手删除 |
 | 输入 URL 后点击链接按钮 | 将纯 URL 文字转为链接卡片 |
-| 工具栏 +/- 或 `Ctrl+↑↓` | 调整字号；按住 `Shift` 大步长调整 |
-| `Ctrl+1`~`7` | 快速切换贴纸颜色 |
+| 工具栏 +/- 或 Ctrl+上下方向键 | 调整字号；按住 Shift 使用更大步长 |
+| Ctrl+1~7 | 快速切换贴纸颜色 |
 | 右键贴纸 | 编辑、复制、导出、固定、删除等操作 |
-| 右键背景 | 添加贴纸、上传图片、进入编辑模式、打开设置、清空所有贴纸 |
-| 回收站侧边栏 | 左滑还原，右滑永久删除 |
+| 右键背景 | 添加贴纸、上传图片、进入编辑模式、打开设置等 |
+| 回收站 | 恢复、永久删除或清空已删除对象 |
 | 文字中 `[文本](url)` | 渲染为可点击超链接 |
 
-### 🚀 Dock
+### Dock 应用栏
 
-- **图标右键**：可直接编辑或删除，无需进入编辑模式
-- **刷新图标**：设置面板中「批量刷新图标」可对当前空间所有图标强制重新获取，适用于图标缺失或需要更新的情况
-- **批量导入**：编辑模式下点击「+」→「批量导入」，支持从书签选择或导入 AI 生成的 JSON
+- 图标右键：可直接编辑、删除或移动至其他 Focus Space
+- 刷新图标：在「设置 → 布局」中可对当前空间图标批量重新获取
+- 批量导入：编辑模式下点击加号，选择批量导入，可从浏览器书签选择或导入 JSON
 
-### 🌐 Focus Spaces
+### Focus Spaces 多重空间
 
-- **循环切换**：点击 Dock 最右侧空间按钮循环切换
-- **快速跳转**：长按空间按钮（0.2 秒）弹出选择器，按住滑动到目标空间后松手直接跳转
-- **空间管理**：右键空间按钮 → 置顶、重命名、删除、导入 / 导出（支持导出全部空间）
+- 循环切换：点击 Dock 最右侧空间按钮循环切换
+- 快速跳转：长按空间按钮弹出选择器，滑动到目标空间后松手切换
+- 空间管理：右键空间按钮可置顶、重命名、删除、导入或导出，并可导出全部空间
 
-### ☁️ 云同步
+### 云同步
 
-- 在同步面板填入 WebDAV 服务器地址和账号密码，开启自动同步后每次打开新标签页会自动检测更新
-- 壁纸和贴纸图片默认不同步，可在面板中手动开启
+- 在同步面板填写 WebDAV 服务器地址和账号密码；开启自动同步后，新标签页打开时会检查云端更新
+- 自定义壁纸和贴纸图片默认不同步，可在同步面板中单独开启
+- 完整本地备份也位于同步面板中，不需要配置 WebDAV
 
----
-
-## ❓ 常见问题
+## 常见问题
 
 **数据存储在哪里？**
-所有数据存储在本地浏览器（`localStorage` + `IndexedDB`），不会上传至任何服务器。
+
+核心配置与资源默认保存在本地浏览器的 `localStorage` 与 IndexedDB 中。只有在你主动配置/启用 WebDAV，或使用天气、翻译、搜索建议等联网功能时，相关数据或请求才会发送到对应的服务。
 
 **如何备份数据？**
-- **完整备份**：设置 → 导出备份 → 保存 `.zip` 文件
-- **空间配置**：右键空间按钮 → 导出空间（或导出全部空间）→ 保存 JSON 文件
+
+- 完整备份：打开同步面板，在「本地备份」区域导出 `.zip`
+- 空间配置：右键空间按钮，选择导出当前空间或导出全部空间，保存为 JSON
 
 **如何恢复数据？**
-- **完整恢复**：设置 → 导入备份 → 选择 `.zip` 文件
-- **空间配置**：右键空间按钮 → 导入空间 → 选择 JSON 文件
 
-**云端同步和本地备份的区别？**
-- **本地备份**：生成 `.zip` 文件，适合手动迁移和恢复
-- **WebDAV 同步**：通过你自己的 WebDAV 服务多设备实时同步，壁纸和贴纸图片可按需开启
+- 完整恢复：打开同步面板，在「本地备份」区域导入 `.zip`
+- 空间配置：右键空间按钮，选择导入空间并加载 JSON
 
----
+**云端同步和本地备份有什么区别？**
 
-## 📝 关于项目
+- 本地备份：生成 `.zip` 文件，适合手动迁移、留档和恢复
+- WebDAV：通过你自己的 WebDAV 服务在多设备之间同步；自定义壁纸和贴纸图片可按需纳入同步
 
-Eclipse Tab 使用现代 Web 技术构建，90% 的代码通过 AI 辅助编码（VibeCoding）完成。
+## 技术栈
 
-特别感谢 [@SheepTAO](https://github.com/SheepTAO) 贡献 WebDAV 云端同步功能，[@lycohana](https://github.com/lycohana) 贡献文字贴纸超链接解析相关逻辑。
+- 框架与语言：React 18 + TypeScript
+- 构建工具：Vite 4
+- 拖拽交互：`@dnd-kit/core`、`@dnd-kit/sortable`、`@dnd-kit/utilities`
+- 颜色处理：`colord`
+- 数据存储：
+  - `localStorage`：应用配置、Dock / Focus Spaces 状态、贴纸与小组件结构化数据等
+  - IndexedDB：壁纸 Blob、贴纸图片、Favicon 缓存、自定义字体、本地网页包、Wallpaper Engine 场景资源等
+- 样式：CSS Modules + CSS Variables
+- 性能相关：
+  - `React.lazy` + `Suspense` 懒加载非核心组件
+  - Context 分层与细粒度 Hooks 减少无关重渲染
+  - 内存缓存与 IndexedDB 缓存减少重复读取
+  - Web Worker 处理图片压缩
+  - iframe / 页面离屏保活与卸载策略控制本地网页组件资源占用
+- 其他：
+  - Service Worker / PWA 支持
+  - Canvas 渲染 Wallpaper Engine 场景与动画
+  - 自定义内部导航动作解析与执行
 
-**技术栈**：React 18 + TypeScript + Vite · CSS Modules · Feature-based 架构
+## 目录结构
 
-**性能亮点**：多级图标缓存（Memory + IndexedDB）、并发请求去重、RAF 节流渲染、Web Worker 图片压缩、视口缩放响应式布局
+目录只列出稳定的模块边界，具体组件文件请以源码为准：
 
----
+```text
+src/
+├── App.tsx
+├── main.tsx
+├── assets/                     # 源码静态资源
+├── features/
+│   ├── dock/                   # Dock、文件夹、拖拽、批量导入
+│   ├── editor/                 # 全局编辑模式入口
+│   ├── navigation/             # 页面滚轮/触摸导航
+│   ├── search/                 # 搜索、建议与高级搜索
+│   ├── settings/               # 设置中心
+│   ├── shelf/                  # Zen Shelf 与贴纸系统
+│   ├── spaces/                 # Focus Spaces
+│   ├── sync/                   # WebDAV 与同步面板
+│   ├── theme/                  # 主题、壁纸、Wallpaper Engine
+│   ├── translation/            # 翻译服务
+│   ├── vector-icons/           # 矢量图标工作室
+│   └── widgets/                # 小组件、布局、本地网页嵌入
+├── shared/
+│   ├── components/             # 通用 UI
+│   ├── constants/
+│   ├── context/
+│   ├── hooks/
+│   ├── i18n/
+│   ├── navigation/
+│   ├── styles/
+│   ├── types/
+│   └── utils/                  # DB、备份、快照、存储、ZIP 等
+└── tools/                      # 静态检查、架构检查等开发脚本
 
-## 🙏 致谢
+public/
+├── fonts/                      # 内置字体及对应许可说明
+├── wallpaper-engine/fonts/     # Wallpaper Engine 场景字体资源及许可说明
+├── favicon.png
+├── manifest.json
+├── pwa.webmanifest
+├── sw.js
+├── local-web-runner.html
+└── local-web-runner.js
+```
 
-感谢所有使用和支持 Eclipse Tab 的用户！欢迎 ⭐ Star、提交 Issue 或分享使用体验。
+## 关于项目与致谢
 
-## 📄 许可证
+Eclipin Tab 基于 EclipseTab 继续开发，并在界面、组件、搜索、壁纸、本地网页嵌入等方向进行了修改和扩展。
 
-GNU GPLv3
+感谢原项目作者 **ENCRE0520** 创建并开源 EclipseTab，为本项目提供了核心设计与实现基础；同时感谢原项目贡献者 **SheepTAO**（WebDAV 云端同步）与 **lycohana**（文字贴纸超链接解析）以及其他贡献者。
 
----
+如果你继续分发或修改 Eclipin Tab，请保留适用的上游版权、许可与来源说明，并清楚标注你所做的修改。
 
-<div align="center">
+## 许可证
 
-**Eclipse Tab** - 让每一个新标签页都成为一次愉悦的开始 ✨
+本项目按 **GNU General Public License v3.0 only（GPL-3.0-only）** 发布，完整许可证文本见根目录 [`LICENSE`](LICENSE)。
 
-Made with ❤️ using AI-assisted coding (VibeCoding)
-
-</div>
+Eclipin Tab - 让每一个新标签页都成为一次愉悦的开始

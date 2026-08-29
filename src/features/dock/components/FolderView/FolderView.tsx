@@ -33,6 +33,10 @@ interface FolderViewProps {
   onFolderPlaceholderChange?: (active: boolean) => void;
   /** 切换编辑模式 */
   onToggleEditMode?: () => void;
+  /** Dock 默认向上展开；组件内使用 auto 自动选择上下方向 */
+  placement?: 'top' | 'auto';
+  /** 强制文件夹内图标重新从缓存解析。 */
+  iconRefreshKey?: number;
 }
 
 // 布局常量 (从共享常量导入)
@@ -59,6 +63,8 @@ export const FolderView: React.FC<FolderViewProps> = ({
   onDragEnd,
   onFolderPlaceholderChange,
   onToggleEditMode,
+  placement = 'top',
+  iconRefreshKey = 0,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -234,13 +240,16 @@ export const FolderView: React.FC<FolderViewProps> = ({
   // ============================================================================
   // 性能优化: 使用 useMemo 缓存内联样式对象
   // ============================================================================
+  const estimatedPopupHeight = gridHeight + padding * 2 + 2;
+  const openBelow = placement === 'auto' && (anchorRect?.top ?? 0) < estimatedPopupHeight + 28;
   const popupWrapperStyle = useMemo(() => ({
     left: `${Math.min(
       Math.max(Math.round((anchorRect?.left ?? 0) + (anchorRect?.width ?? 0) / 2),
         halfWidth
       ), window.innerWidth - halfWidth)}px`,
-    top: `${Math.round((anchorRect?.top ?? 0) - 24)}px`,
-  }), [anchorRect?.left, anchorRect?.width, anchorRect?.top, halfWidth]);
+    top: `${Math.round(openBelow ? ((anchorRect?.bottom ?? 0) + 12) : ((anchorRect?.top ?? 0) - 12))}px`,
+    transform: openBelow ? 'translate(-50%, 0)' : 'translate(-50%, -100%)',
+  }), [anchorRect?.bottom, anchorRect?.left, anchorRect?.top, anchorRect?.width, halfWidth, openBelow]);
 
   const containerStyle = useMemo(() => ({
     width: (Math.min(widthItemCount, COLUMNS) * cellSize - gap) + (padding * 2) + 2,
@@ -300,6 +309,7 @@ export const FolderView: React.FC<FolderViewProps> = ({
                     staggerIndex={index}
                     onMouseDown={(e) => handleMouseDown(e, item, index)}
                     onContextMenu={(x, y, rect) => handleItemContextMenu(item, x, y, rect)}
+                    iconRefreshKey={iconRefreshKey}
                   />
                 </div>
               );

@@ -1,53 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import styles from './ZenShelf.module.css';
+import styles from './RecycleBin.module.css';
 import { useZenShelf } from '@/features/shelf/context/ZenShelfContext';
 import TrashCanEmpty from '@/assets/icons/TrashCan-empty.svg';
 import TrashCanFull from '@/assets/icons/TrashCan-full.svg';
 import TrashCanHalf from '@/assets/icons/TrashCan-half.svg';
+import { useThemeData } from '@/features/theme/context/ThemeContext';
+import { DELETED_WIDGETS_CHANGED_EVENT, getDeletedWidgetCount } from '@/features/widgets/services/widgetRecycleBinService';
 
 interface RecycleBinProps {
     isVisible: boolean;
+    allowProximityReveal?: boolean;
     onClick?: () => void;
 }
 
-export const RecycleBin: React.FC<RecycleBinProps> = ({ isVisible, onClick }) => {
-    const [isPeek, setIsPeek] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
+export const RecycleBin: React.FC<RecycleBinProps> = ({ isVisible, allowProximityReveal = false, onClick }) => {
+    const [isNearCorner, setIsNearCorner] = useState(false);
+    const [isWidgetDragging, setIsWidgetDragging] = useState(false);
+    const [isWidgetOverBin, setIsWidgetOverBin] = useState(false);
     const { deletedStickers } = useZenShelf();
+    const { pageSlideDirection } = useThemeData();
+    const [deletedWidgetCount, setDeletedWidgetCount] = useState(() => getDeletedWidgetCount(pageSlideDirection));
 
-    // Check if mouse is near bottom-right corner to show bin partially
     useEffect(() => {
+        const refreshDeletedWidgetCount = (event?: Event) => {
+            const detail = (event as CustomEvent<{ mode?: string }> | undefined)?.detail;
+            if (detail?.mode && detail.mode !== pageSlideDirection) return;
+            setDeletedWidgetCount(getDeletedWidgetCount(pageSlideDirection));
+        };
+        refreshDeletedWidgetCount();
+        window.addEventListener(DELETED_WIDGETS_CHANGED_EVENT, refreshDeletedWidgetCount);
+        return () => window.removeEventListener(DELETED_WIDGETS_CHANGED_EVENT, refreshDeletedWidgetCount);
+    }, [pageSlideDirection]);
+
+    useEffect(() => {
+        const handleWidgetTrashDrag = (event: Event) => {
+            const detail = (event as CustomEvent<{ dragging?: boolean; over?: boolean }>).detail;
+            setIsWidgetDragging(Boolean(detail?.dragging));
+            setIsWidgetOverBin(Boolean(detail?.dragging && detail?.over));
+        };
+        window.addEventListener('eclipin:widget-trash-drag', handleWidgetTrashDrag);
+        return () => window.removeEventListener('eclipin:widget-trash-drag', handleWidgetTrashDrag);
+    }, []);
+
+    // 只有编辑模式允许“靠近右下角自动显示”。普通模式下回收站只会在拖拽贴纸或组件时出现。
+    useEffect(() => {
+        if (!allowProximityReveal || isVisible) {
+            setIsNearCorner(false);
+            return;
+        }
+
         const handleMouseMove = (e: MouseEvent) => {
-            if (isVisible) return; // If already visible due to drag, let parent control
-
             const { innerWidth, innerHeight } = window;
-            const threshold = 150; // Trigger peek when close to corner
-
-            const dist = Math.sqrt(
-                Math.pow(innerWidth - e.clientX, 2) +
-                Math.pow(innerHeight - e.clientY, 2)
-            );
-
-            setIsPeek(dist < threshold);
+            const threshold = 150;
+            const dist = Math.hypot(innerWidth - e.clientX, innerHeight - e.clientY);
+            setIsNearCorner(dist < threshold);
         };
 
-        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mousemove', handleMouseMove, { passive: true });
         return () => window.removeEventListener('mousemove', handleMouseMove);
-    }, [isVisible]);
+    }, [allowProximityReveal, isVisible]);
 
     const getClassName = () => {
-        if (isVisible) return `${styles.recycleBin} ${styles.visible}`;
-        // 二段出现逻辑：只有在 peek 状态下悬停才显示完整
-        if (isPeek && isHovered) return `${styles.recycleBin} ${styles.active}`;
-        if (isPeek) return `${styles.recycleBin} ${styles.peek}`;
+        const dragOverClass = isWidgetOverBin ? ` ${styles.dragOver}` : '';
+        if (isVisible || isWidgetDragging) return `${styles.recycleBin} ${styles.visible}${dragOverClass}`;
+        if (allowProximityReveal && isNearCorner) return `${styles.recycleBin} ${styles.active}`;
         return styles.recycleBin;
     };
 
     let icon = TrashCanEmpty;
-    if (deletedStickers.length >= 30) {
+    const deletedCount = deletedStickers.length + deletedWidgetCount;
+    if (deletedCount >= 30) {
         icon = TrashCanFull;
-    } else if (deletedStickers.length > 0) {
+    } else if (deletedCount > 0) {
         icon = TrashCanHalf;
     }
 
@@ -56,8 +81,6 @@ export const RecycleBin: React.FC<RecycleBinProps> = ({ isVisible, onClick }) =>
             id="sticker-recycle-bin"
             className={getClassName()}
             onClick={onClick}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
         >
             <img src={icon} alt="Trash Can" className={styles.recycleIcon} />
         </div>,

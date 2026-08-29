@@ -2,6 +2,13 @@ import React from 'react';
 import { useThemeData } from '@/features/theme/context/ThemeContext';
 import styles from './Background.module.css';
 
+// Wallpaper Engine runtime is intentionally outside the new-tab startup graph.
+// React.lazy only invokes this import when a WE scene is actually rendered.
+const LazyWeSceneRenderer = React.lazy(async () => {
+    const { WeSceneRenderer } = await import('./WeSceneRenderer');
+    return { default: WeSceneRenderer };
+});
+
 // 辅助函数：从背景值中提取 URL
 // 仅当背景是纯壁纸图像（无纹理叠加）时返回 URL
 const extractWallpaperUrl = (bgValue: string): string | null => {
@@ -18,8 +25,66 @@ const extractWallpaperUrl = (bgValue: string): string | null => {
     return null;
 };
 
+
+const ManagedWallpaperVideo: React.FC<{ src: string; className: string; style: React.CSSProperties }> = ({ src, className, style }) => {
+    const videoRef = React.useRef<HTMLVideoElement>(null);
+    const [pageVisible, setPageVisible] = React.useState(() =>
+        typeof document === 'undefined' || document.visibilityState !== 'hidden'
+    );
+
+    // 当前新标签页可见时保持 video/decoder 热状态；切到后台后 ThemeContext 会
+    // 立即释放 Blob URL，因此返回时只重新加载当前选中的视频壁纸。
+    React.useEffect(() => {
+        const handleVisibility = () => setPageVisible(document.visibilityState !== 'hidden');
+        const handlePageHide = () => setPageVisible(false);
+        const handlePageShow = () => setPageVisible(document.visibilityState !== 'hidden');
+
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('pagehide', handlePageHide);
+        window.addEventListener('pageshow', handlePageShow);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('pagehide', handlePageHide);
+            window.removeEventListener('pageshow', handlePageShow);
+        };
+    }, []);
+
+    React.useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+        if (pageVisible) void video.play().catch(() => undefined);
+        else video.pause();
+    }, [pageVisible, src]);
+
+    React.useEffect(() => {
+        const video = videoRef.current;
+        return () => {
+            if (!video) return;
+            video.pause();
+            video.removeAttribute('src');
+            try { video.load(); } catch { /* ignore detached/unsupported state */ }
+        };
+    }, []);
+
+    return (
+        <video
+            ref={videoRef}
+            src={src}
+            className={className}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            disablePictureInPicture
+            disableRemotePlayback
+            style={style}
+        />
+    );
+};
+
 export const Background: React.FC = () => {
-    const { backgroundBaseValue, backgroundTextureValue, backgroundTextureTileSize, backgroundBlendMode, wallpaperType } = useThemeData();
+    const { backgroundBaseValue, backgroundTextureValue, backgroundTextureTileSize, backgroundBlendMode, wallpaperType, wallpaperId } = useThemeData();
 
     // ========================================================================
     // 性能优化: 使用递增计数器代替 Date.now() 作为图层 ID
@@ -136,13 +201,9 @@ export const Background: React.FC = () => {
                 <div key={`base-${layer.id}`} className={styles.layerWrapper} style={{ zIndex: 0 }}>
                     {layer.wallpaperUrl ? (
                         layer.isVideo ? (
-                            <video
+                            <ManagedWallpaperVideo
                                 src={layer.wallpaperUrl}
                                 className={styles.layer}
-                                autoPlay
-                                loop
-                                muted
-                                playsInline
                                 style={{
                                     opacity: layer.visible ? 1 : 0,
                                     zIndex: layer.id,
@@ -174,6 +235,15 @@ export const Background: React.FC = () => {
                     )}
                 </div>
             ))}
+
+            {/* Wallpaper Engine 多资源场景。Phase 4 只渲染静态图片，并将帧动画冻结在第 1 帧。 */}
+            {wallpaperType === 'weScene' && wallpaperId ? (
+                <div className={styles.layerWrapper} style={{ zIndex: 0 }}>
+                    <React.Suspense fallback={null}>
+                        <LazyWeSceneRenderer key={wallpaperId} wallpaperId={wallpaperId} />
+                    </React.Suspense>
+                </div>
+            ) : null}
 
             {/* 纹理图层 (叠加层) */}
             {textureLayers.map((layer) => layer.value ? (

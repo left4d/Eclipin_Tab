@@ -9,6 +9,49 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  overflow: hidden;
+}
+
+.pageSlider {
+  position: absolute;
+  inset: 0;
+  z-index: 1000000001;
+  transform: translateY(0);
+  transition: transform 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+  pointer-events: none;
+}
+
+.pageSlider.secondPageActive {
+  transform: translateY(-100dvh);
+}
+
+.pageSliderHorizontal {
+  width: 200dvw;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  transform: translateX(0);
+}
+
+.pageSliderHorizontal.secondPageActive {
+  transform: translateX(-100dvw);
+}
+
+.pageSliderHorizontal .page {
+  flex: 0 0 100vw;
+}
+
+.page {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 100dvh;
+  pointer-events: none;
+}
+
+.page > * {
+  pointer-events: auto;
 }
 
 /* 内容容器 - 底部固定定位 */
@@ -27,7 +70,7 @@
   width: auto;
   max-width: var(--container-max-width);
   /* 移除 min-width 以支持响应式缩放 */
-  z-index: 100;
+  z-index: 1000000001;
   /* Above stickers (canvas z-index: 1) */
   /* 统一使用 top 和 transform 进行过渡，实现平滑动画 */
   transition: top 0.4s cubic-bezier(0.25, 1, 0.5, 1),
@@ -37,6 +80,23 @@
 
 /* 内容容器 - 屏幕中央定位 */
 /* 使用相同的 top + transform 定位策略 */
+.containerTop {
+  position: absolute;
+  top: max(25px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translate(-50%, 0);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  width: auto;
+  max-width: var(--container-max-width);
+  z-index: 1000000001;
+  transition: top 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+    transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+    width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
 .containerCenter {
   position: absolute;
   top: 50%;
@@ -50,7 +110,7 @@
   width: auto;
   max-width: var(--container-max-width);
   /* 移除 min-width 以支持响应式缩放 */
-  z-index: 100;
+  z-index: 1000000001;
   /* 使用相同的过渡参数确保两个状态间平滑切换 */
   transition: top 0.4s cubic-bezier(0.25, 1, 0.5, 1),
     transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
@@ -66,7 +126,7 @@
   height: 140px;
   /* 让鼠标穿透到贴纸，悬停检测由 JS 处理 */
   pointer-events: none;
-  z-index: 100;
+  z-index: 1000000001;
   /* Above stickers */
 }
 
@@ -79,6 +139,35 @@
   height: 140px;
   /* 让鼠标穿透到贴纸，悬停检测由 JS 处理 */
   pointer-events: none;
-  z-index: 100;
+  z-index: 1000000010;
   /* Above stickers */
+}
+
+.internalNavigationPulse {
+  animation: internal-navigation-pulse 1.05s ease-out both;
+}
+
+.internalNavigationMarker {
+  position: fixed;
+  z-index: 999999990;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border: 2px solid var(--fusion-accent, #8b5cf6);
+  border-radius: 50%;
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--fusion-accent, #8b5cf6) 18%, transparent);
+  pointer-events: none;
+  animation: internal-navigation-marker 1.05s ease-out both;
+}
+
+@keyframes internal-navigation-pulse {
+  0%, 100% { filter: none; }
+  28% { filter: drop-shadow(0 0 14px color-mix(in srgb, var(--fusion-accent, #8b5cf6) 72%, transparent)); }
+  55% { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--fusion-accent, #8b5cf6) 36%, transparent)); }
+}
+
+@keyframes internal-navigation-marker {
+  0% { opacity: 0; transform: scale(.45); }
+  22% { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 0; transform: scale(1.7); }
 }

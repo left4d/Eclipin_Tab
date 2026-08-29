@@ -61,7 +61,7 @@
 }
 
 .active {
-    border-color: var(--blue-500);
+    border-color: var(--fusion-accent);
     box-shadow: 0 0 0 1px var(--black-alpha-10);
 }
 
@@ -69,6 +69,22 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.weSceneBadge {
+    position: absolute;
+    left: 3px;
+    bottom: 3px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.58);
+    color: #fff;
+    font-size: 8px;
+    font-weight: 700;
+    line-height: 12px;
+    letter-spacing: 0.04em;
+    pointer-events: none;
+    backdrop-filter: blur(4px);
 }
 
 .deleteBtn {

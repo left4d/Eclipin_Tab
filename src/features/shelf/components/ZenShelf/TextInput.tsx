@@ -6,59 +6,40 @@ import { useLanguage } from '@/shared/context/LanguageContext';
 import plusIcon from '@/assets/icons/sticker-plus.svg';
 import minusIcon from '@/assets/icons/sticker-minus.svg';
 import checkCircleIcon from '@/assets/icons/sticker-todo.svg';
+import checkIcon from '@/assets/icons/for-checkbox.svg';
 import linkIcon from '@/assets/icons/sticker-link.svg';
-import { LinkCardMetadata } from '@/shared/types';
+import { LinkCardMetadata, StickerDrawing } from '@/shared/types';
 import { fetchLinkPreview } from '@/shared/utils/linkPreview';
 import { getSinglePlainUrl, markdownToEditableText, markdownToPlainText, rebuildMarkdownFromEditText } from '@/shared/utils/markdownLinks';
+import type { BuiltInFontId } from '@/shared/constants/builtInFonts';
+import { ensureBuiltInFontLoaded, getBuiltInFontFamily } from '@/shared/constants/builtInFonts';
+import { areStickerColorsEquivalent, DEFAULT_STICKER_COLOR, STICKER_COLOR_PRESETS } from '@/features/shelf/constants/colorPresets';
+import { getThemeAwareStickerColor } from '@/features/shelf/utils/stickerPresentation';
+import { getLastStickerFontSize, saveLastStickerFontSize } from './textInputPreferences';
+import { DrawingShape } from './DrawingShape';
 import styles from './ZenShelf.module.css';
-
-// localStorage 键：记忆用户上次使用的字体大小
-const LAST_FONT_SIZE_KEY = 'sticker_last_font_size';
-const DEFAULT_FONT_SIZE = 40;
-const STICKER_TEXT_COLORS = ['#1C1C1E', '#FF3B31', '#007AFF', '#35C759', '#FF9502', '#B052DE', '#FFFFFF'];
-
-const getLastFontSize = (): number => {
-    const saved = localStorage.getItem(LAST_FONT_SIZE_KEY);
-    if (saved) {
-        const num = parseInt(saved, 10);
-        if (!isNaN(num) && num >= 12 && num <= 120) return num;
-    }
-    return DEFAULT_FONT_SIZE;
-};
-
-// ============================================================================
-// 文字贴纸的主题感知颜色反转
-// ============================================================================
-const BLACK_COLOR = '#1C1C1E';
-const WHITE_COLOR = '#FFFFFF';
-
-/**
- * 在深色主题下反转黑/白颜色，以获得更好的可读性
- */
-const getThemeAwareColor = (color: string, theme: string): string => {
-    if (theme !== 'dark') return color;
-
-    const upperColor = color.toUpperCase();
-    if (upperColor === BLACK_COLOR.toUpperCase() || upperColor === '#1C1C1E') {
-        return WHITE_COLOR;
-    }
-    if (upperColor === WHITE_COLOR.toUpperCase() || upperColor === '#FFF') {
-        return BLACK_COLOR;
-    }
-    return color;
-};
 
 // ============================================================================
 // TextInput 组件 - 带有样式选项的增强弹出窗口
 // ============================================================================
 
+interface TextInputPresentation {
+    rotation?: number;
+    scale?: number;
+    hideStroke?: boolean;
+    strokeWidth?: number;
+}
+
 interface TextInputProps {
     x: number;
     y: number;
     initialText?: string;
-    initialStyle?: { color: string; textAlign: 'left' | 'center' | 'right'; fontSize?: number };
+    initialStyle?: { color: string; textAlign: 'left' | 'center' | 'right'; fontSize?: number; fontFamily?: BuiltInFontId };
     initialHasCheckbox?: boolean;
+    initialIsChecked?: boolean;
     initialLinkCard?: LinkCardMetadata;
+    initialDrawings?: StickerDrawing[];
+    initialPresentation?: TextInputPresentation;
     onSubmit: (content: string, style?: { color: string; textAlign: 'left' | 'center' | 'right'; fontSize: number }, hasCheckbox?: boolean, linkCard?: LinkCardMetadata, positionOffset?: { x: number; y: number }) => void;
     onCancel: () => void;
     viewportScale: number;
@@ -69,7 +50,7 @@ export interface TextInputHandle {
     saveNow: () => void;
 }
 
-export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, initialText = '', initialStyle, initialHasCheckbox = false, initialLinkCard, onSubmit, onCancel, viewportScale }, ref) => {
+export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, initialText = '', initialStyle, initialHasCheckbox = false, initialIsChecked = false, initialLinkCard, initialDrawings, initialPresentation, onSubmit, onCancel, viewportScale }, ref) => {
     const { t } = useLanguage();
     const { theme } = useThemeData();
     const inputRef = useRef<HTMLDivElement>(null);
@@ -81,15 +62,24 @@ export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, in
     const submitPositionOffsetRef = useRef({ x: 0, y: 0 });
     // 始终使用左对齐
     const textAlign = 'left' as const;
-    const [textColor, setTextColor] = useState(initialStyle?.color || STICKER_TEXT_COLORS[0]);
+    const [textColor, setTextColor] = useState(initialStyle?.color || DEFAULT_STICKER_COLOR);
     const [fontSize, setFontSize] = useState<number>(
-        (initialStyle?.fontSize as number) || getLastFontSize()
+        (initialStyle?.fontSize as number) || getLastStickerFontSize()
     );
     const [hasCheckbox, setHasCheckbox] = useState<boolean>(initialHasCheckbox);
     const [isExiting, setIsExiting] = useState(false);
     const [editText, setEditText] = useState(() => markdownToEditableText(initialText));
     const [linkCard, setLinkCard] = useState<LinkCardMetadata | undefined>(initialLinkCard);
     const [isFetchingLinkCard, setIsFetchingLinkCard] = useState(false);
+    const previewFontFamily = getBuiltInFontFamily(initialStyle?.fontFamily);
+    const isEditingExistingSticker = initialPresentation !== undefined;
+    const previewStickerScale = Math.max(0.1, initialPresentation?.scale ?? 1);
+    const previewViewportScale = isEditingExistingSticker ? viewportScale : 1;
+    const previewCombinedScale = previewStickerScale * previewViewportScale;
+    const previewRotation = initialPresentation?.rotation ?? 0;
+    const previewStrokeWidth = Math.max(0, initialPresentation?.strokeWidth ?? 6);
+    const previewStrokeRenderWidth = previewStrokeWidth / previewStickerScale;
+    const previewHideStroke = initialPresentation?.hideStroke ?? false;
     const trimmedEditText = editText.trim();
     const hasContent = !!markdownToPlainText(editText).trim();
     const detectedUrl = getSinglePlainUrl(trimmedEditText);
@@ -124,9 +114,13 @@ export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, in
         }
     }), [getCurrentEditText, getSubmittedContent, linkCard, onCancel, onSubmit]);
 
+    useEffect(() => {
+        void ensureBuiltInFontLoaded(initialStyle?.fontFamily);
+    }, [initialStyle?.fontFamily]);
+
     // 持久化字体大小到 localStorage
     useEffect(() => {
-        localStorage.setItem(LAST_FONT_SIZE_KEY, fontSize.toString());
+        saveLastStickerFontSize(fontSize);
     }, [fontSize]);
 
     useEffect(() => {
@@ -246,16 +240,15 @@ export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, in
                 return;
             }
 
-            // 颜色快捷键：Ctrl/Cmd + 1~7
-            const numKey = parseInt(e.key, 10);
-            if (!isNaN(numKey) && numKey >= 1 && numKey <= 7) {
-                e.preventDefault();
-                // 1-based index to 0-based index
-                const colorIndex = numKey - 1;
-                if (colorIndex < STICKER_TEXT_COLORS.length) {
-                    setTextColor(STICKER_TEXT_COLORS[colorIndex]);
+            // 颜色快捷键：Ctrl/Cmd + 1~9，0 对应第 10 个颜色。
+            if (/^[0-9]$/.test(e.key)) {
+                const colorIndex = e.key === '0' ? 9 : Number(e.key) - 1;
+                const preset = STICKER_COLOR_PRESETS[colorIndex];
+                if (preset) {
+                    e.preventDefault();
+                    setTextColor(preset.value);
+                    return;
                 }
-                return;
             }
         }
 
@@ -437,17 +430,54 @@ export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, in
             className={`${styles.stickerPreviewContainer} ${isExiting ? styles.exiting : ''}`}
             style={{ left: position.x, top: position.y }}
         >
-            {/* 实时预览贴纸 - 直接在背景上显示 */}
-            <div ref={inputWrapperRef} className={[!linkCard ? styles.stickerText : '', hasCheckbox ? styles.textStickerContainer : '', linkCard ? styles.hasLinkCard : ''].filter(Boolean).join(' ')}>
+            {/*
+             * 编辑已有贴纸时，预览层完整继承正式贴纸的几何与描边参数。
+             * 外层缩放、内层旋转的顺序与 StickerItem 保持一致；工具栏不参与变换。
+             */}
+            <div
+                className={styles.stickerPreviewScaleLayer}
+                style={{
+                    transform: `scale(${previewCombinedScale})`,
+                    transformOrigin: 'top left',
+                    '--sticker-stroke-render-width': `${previewStrokeRenderWidth}px`,
+                } as React.CSSProperties}
+            >
+                <div
+                    className={styles.stickerPreviewRotationLayer}
+                    style={{ transform: `rotate(${previewRotation}deg)` }}
+                >
+                    {/* 实时预览贴纸 - 直接在背景上显示 */}
+                    <div
+                        ref={inputWrapperRef}
+                        className={[!linkCard ? styles.stickerText : '', hasCheckbox ? styles.textStickerContainer : '', linkCard ? styles.hasLinkCard : ''].filter(Boolean).join(' ')}
+                        style={{ fontFamily: previewFontFamily }}
+                    >
                 {hasCheckbox && (
                     <button
-                        className={styles.textStickerCheckbox}
+                        className={`${styles.textStickerCheckbox} ${initialIsChecked ? styles.textStickerCheckboxChecked : ''}`}
                         style={{ cursor: 'default', pointerEvents: 'none' }}
                         disabled
-                    />
+                    >
+                        {initialIsChecked && (
+                            <span
+                                className={styles.toolbarIcon}
+                                style={{
+                                    WebkitMaskImage: `url(${checkIcon})`,
+                                    maskImage: `url(${checkIcon})`,
+                                    backgroundColor: '#000000',
+                                    width: '20px',
+                                    height: '20px',
+                                    position: 'absolute',
+                                    left: '50%',
+                                    top: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                }}
+                            />
+                        )}
+                    </button>
                 )}
                 {linkCard ? (
-                    <article className={`${styles.linkCardSticker} ${!linkCard.imageUrl ? styles.noImage : ''}`}>
+                    <article className={`${styles.linkCardSticker} ${!linkCard.imageUrl ? styles.noImage : ''}`} style={{ fontFamily: previewFontFamily }}>
                         {linkCard.imageUrl && (
                             <img
                                 src={linkCard.imageUrl}
@@ -457,29 +487,41 @@ export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, in
                             />
                         )}
                         <div className={styles.linkCardContent}>
-                            <div className={styles.linkCardTitle}>{linkCard.title}</div>
-                            <div className={styles.linkCardSubtitle}>{linkCard.subtitle}</div>
+                            <div className={styles.linkCardTitle} style={{ fontFamily: previewFontFamily }}>{linkCard.title}</div>
+                            <div className={styles.linkCardSubtitle} style={{ fontFamily: previewFontFamily }}>{linkCard.subtitle}</div>
                         </div>
                     </article>
                 ) : (
-                    <div
-                        ref={inputRef}
-                        className={styles.stickerPreviewInput}
-                        contentEditable
-                        suppressContentEditableWarning
-                        style={{
-                            color: getThemeAwareColor(textColor, theme),
-                            textAlign: textAlign,
-                            fontSize: `${fontSize}px`,
-                        }}
-                        onInput={syncInputState}
-                        onKeyUp={syncInputState}
-                        onKeyDown={handleKeyDown}
-                        onPaste={handlePaste}
-                        onClick={(e) => e.stopPropagation()}
-                        data-placeholder={t.textInput.placeholder}
-                    />
+                    <div className={styles.stickerPreviewDrawingHost}>
+                        {initialDrawings && initialDrawings.length > 0 && (
+                            <svg className={styles.textStickerDrawingLayer}>
+                                {initialDrawings.map((drawing) => (
+                                    <DrawingShape key={drawing.id} drawing={drawing} />
+                                ))}
+                            </svg>
+                        )}
+                        <div
+                            ref={inputRef}
+                            className={[styles.textSticker, styles.stickerPreviewInput, previewHideStroke ? styles.noStickerStroke : ''].filter(Boolean).join(' ')}
+                            contentEditable
+                            suppressContentEditableWarning
+                            style={{
+                                color: getThemeAwareStickerColor(textColor, theme),
+                                textAlign: textAlign,
+                                fontSize: `${fontSize}px`,
+                                fontFamily: previewFontFamily,
+                            }}
+                            onInput={syncInputState}
+                            onKeyUp={syncInputState}
+                            onKeyDown={handleKeyDown}
+                            onPaste={handlePaste}
+                            onClick={(e) => e.stopPropagation()}
+                            data-placeholder={t.textInput.placeholder}
+                        />
+                    </div>
                 )}
+                    </div>
+                </div>
             </div>
 
             {/* 工具栏 - 跟随在输入区域下方 */}
@@ -491,7 +533,9 @@ export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, in
                 <div className={`${styles.toolbarPanel} ${styles.toolbarSettings} ${detectedUrl ? styles.withLinkAction : ''}`}>
                     <div className={styles.toolbarStylePanel}>
                         {/* 字体大小控制 */}
-                        <div className={styles.toolbarFontSizeControl}>
+                        <div className={styles.toolbarControlSection}>
+                            <span className={styles.toolbarControlLabel}>字号</span>
+                            <div className={styles.toolbarFontSizeControl}>
                             <button
                                 className={styles.toolbarFontSizeBtn}
                                 onClick={(e) => {
@@ -537,21 +581,28 @@ export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, in
                             >
                                 <span className={styles.toolbarIcon} style={{ WebkitMaskImage: `url(${plusIcon})`, maskImage: `url(${plusIcon})` }} />
                             </button>
+                            </div>
                         </div>
 
                         <div className={styles.toolbarControlDivider} />
 
                         {/* 颜色选项 */}
-                        <div className={styles.toolbarColorGroup}>
-                            {STICKER_TEXT_COLORS.map((color) => (
+                        <div className={`${styles.toolbarControlSection} ${styles.toolbarColorSection}`}>
+                            <span className={styles.toolbarControlLabel}>颜色</span>
+                            <div className={styles.toolbarColorGroup} role="group" aria-label="文字颜色预设">
+                            {STICKER_COLOR_PRESETS.map((preset) => (
                                 <button
-                                    key={color}
-                                    className={`${styles.toolbarColorBtn} ${textColor === color ? styles.active : ''}`}
-                                    style={{ backgroundColor: color }}
-                                    onClick={() => setTextColor(color)}
-                                    title={color}
+                                    key={preset.value}
+                                    type="button"
+                                    className={`${styles.toolbarColorBtn} ${areStickerColorsEquivalent(textColor, preset.value) ? styles.active : ''}`}
+                                    style={{ backgroundColor: preset.value }}
+                                    onClick={() => setTextColor(preset.value)}
+                                    title={`${preset.label}${preset.shortcut ? `（⌘/Ctrl + ${preset.shortcut}）` : ''}`}
+                                    aria-label={`文字颜色：${preset.label}`}
+                                    aria-pressed={areStickerColorsEquivalent(textColor, preset.value)}
                                 />
                             ))}
+                            </div>
                         </div>
                     </div>
 

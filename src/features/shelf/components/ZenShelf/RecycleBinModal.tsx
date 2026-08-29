@@ -1,12 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { useZenShelf } from '@/features/shelf/context/ZenShelfContext';
+import { Sticker } from '@/shared/types';
 import { db } from '@/shared/utils/db';
-import styles from './ZenShelf.module.css';
+import styles from './RecycleBin.module.css';
+import shelfStyles from './ZenShelf.module.css';
 import { useLanguage } from '@/shared/context/LanguageContext';
 import TrashIcon from '@/assets/icons/trash.svg';
 import CancelIcon from '@/assets/icons/cancel.svg';
 import TrashCanEmpty from '@/assets/icons/TrashCan-empty.svg';
+import { DrawingShape } from './DrawingShape';
+import { ensureBuiltInFontLoaded, getBuiltInFontFamily } from '@/shared/constants/builtInFonts';
+import { widgetMeta } from '@/features/widgets/config/widgetMeta';
+import { DELETED_WIDGETS_CHANGED_EVENT, loadDeletedWidgets, permanentlyDeleteWidget, restoreDeletedWidget, type DeletedWidgetRecord } from '@/features/widgets/services/widgetRecycleBinService';
 
 interface RecycleBinModalProps {
     isOpen: boolean;
@@ -51,9 +57,9 @@ const rubberBand = (offset: number, maxOffset: number = 200): number => {
 
 // Sub-component for individual swipeable items
 const RecycleBinItem: React.FC<{
-    sticker: any;
-    onRestore: (sticker: any) => void;
-    onDelete: (item: any) => void;
+    sticker: Sticker;
+    onRestore: (sticker: Sticker) => void;
+    onDelete: (item: Sticker) => void;
     t: any;
     index: number;
 }> = ({ sticker, onRestore, onDelete, t, index }) => {
@@ -244,6 +250,10 @@ const RecycleBinItem: React.FC<{
         isThresholdReached ? styles.threshold : '',
     ].filter(Boolean).join(' ');
 
+    const drawingWidth = Math.max(1, sticker.drawingSize?.width || 1);
+    const drawingHeight = Math.max(1, sticker.drawingSize?.height || 1);
+    const drawingPadding = Math.max(4, sticker.drawing?.strokeWidth || 4);
+
     return (
         <div
             className={styles.recycleBinItemWrapper}
@@ -298,17 +308,30 @@ const RecycleBinItem: React.FC<{
                 onDoubleClick={(e) => { e.stopPropagation(); onRestore(sticker); }}
             >
                 {sticker.type === 'text' ? (
-                    <div className={styles.stickerText}>
+                    <div className={shelfStyles.stickerText}>
                         <div
-                            className={styles.textSticker}
+                            className={shelfStyles.textSticker}
                             style={{
                                 color: getThemeAwareColor(sticker.style?.color || '#1C1C1E', theme),
                                 fontSize: sticker.style?.fontSize || 40,
                                 textAlign: sticker.style?.textAlign || 'left',
+                                fontFamily: getBuiltInFontFamily(sticker.style?.fontFamily),
                             }}
                         >
                             {sticker.content}
                         </div>
+                    </div>
+                ) : sticker.type === 'drawing' && sticker.drawing ? (
+                    <div className={styles.recycleDrawingContainer}>
+                        <svg
+                            className={styles.recycleDrawingPreview}
+                            viewBox={`${-drawingPadding} ${-drawingPadding} ${drawingWidth + drawingPadding * 2} ${drawingHeight + drawingPadding * 2}`}
+                            preserveAspectRatio="xMidYMid meet"
+                            role="img"
+                            aria-label={`${sticker.drawing.type} drawing`}
+                        >
+                            <DrawingShape drawing={sticker.drawing} />
+                        </svg>
                     </div>
                 ) : (
                     <div className={[
@@ -333,11 +356,64 @@ const RecycleBinItem: React.FC<{
 };
 
 
+const RecycleBinWidgetItem: React.FC<{
+    record: DeletedWidgetRecord;
+    language: 'en' | 'zh';
+    onRestore: (record: DeletedWidgetRecord) => void;
+    onDelete: (record: DeletedWidgetRecord) => void;
+}> = ({ record, language, onRestore, onDelete }) => {
+    const meta = widgetMeta[record.widget.type];
+    const names: Record<string, [string, string]> = {
+        clock: ['时钟', 'Clock'], analogClock: ['圆形时钟', 'Analog Clock'], weather: ['天气', 'Weather'],
+        translate: ['翻译', 'Translator'], link: ['快捷链接', 'Quick Link'], notes: ['便签', 'Notes'],
+        todo: ['计算器', 'Calculator'], pomodoro: ['番茄钟', 'Pomodoro'], calendar: ['月历', 'Calendar'],
+        countdown: ['倒数日', 'Countdown'], gtrend: ['空白容器', 'Blank Container'], embed: ['网页嵌入', 'Web Embed'],
+        space: ['空间网站', 'Space Sites'], bookmarks: ['书签', 'Bookmarks'], openTabs: ['打开的标签页', 'Open Tabs'],
+    };
+    const [zhName, enName] = names[record.widget.type] ?? [meta.name, meta.name];
+    const pageLabel = record.widget.positionMode === 'viewport'
+        ? (language === 'zh' ? '屏幕固定' : 'Fixed to screen')
+        : language === 'zh' ? `第 ${(record.widget.pageId ?? 0) + 1} 页` : `Page ${(record.widget.pageId ?? 0) + 1}`;
+
+    return (
+        <div className={styles.deletedWidgetCard} onDoubleClick={() => onRestore(record)}>
+            <div className={styles.deletedWidgetIcon}>{meta.icon}</div>
+            <div className={styles.deletedWidgetInfo}>
+                <strong>{language === 'zh' ? zhName : enName}</strong>
+                <span>{pageLabel}</span>
+            </div>
+            <div className={styles.deletedWidgetActions}>
+                <button type="button" onClick={() => onRestore(record)}>{language === 'zh' ? '还原' : 'Restore'}</button>
+                <button type="button" className={styles.deletedWidgetDelete} onClick={() => onDelete(record)}>{language === 'zh' ? '永久删除' : 'Delete forever'}</button>
+            </div>
+        </div>
+    );
+};
 
 export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({ isOpen, onClose }) => {
     const { deletedStickers, restoreSticker, permanentlyDeleteSticker } = useZenShelf();
-    const { t } = useLanguage();
+    const { pageSlideDirection } = useThemeData();
+    const [deletedWidgets, setDeletedWidgets] = useState(() => loadDeletedWidgets(pageSlideDirection));
+
+    useEffect(() => {
+        if (!isOpen) return;
+        deletedStickers.forEach((sticker) => {
+            if (sticker.type === 'text') void ensureBuiltInFontLoaded(sticker.style?.fontFamily);
+        });
+    }, [deletedStickers, isOpen]);
+    const { t, language } = useLanguage();
+    useEffect(() => {
+        setDeletedWidgets(loadDeletedWidgets(pageSlideDirection));
+        const handleDeletedWidgetsChange = (event: Event) => {
+            const detail = (event as CustomEvent<{ mode?: string }>).detail;
+            if (detail?.mode && detail.mode !== pageSlideDirection) return;
+            setDeletedWidgets(loadDeletedWidgets(pageSlideDirection));
+        };
+        window.addEventListener(DELETED_WIDGETS_CHANGED_EVENT, handleDeletedWidgetsChange);
+        return () => window.removeEventListener(DELETED_WIDGETS_CHANGED_EVENT, handleDeletedWidgetsChange);
+    }, [pageSlideDirection]);
     const [isClosing, setIsClosing] = useState(false);
+    const gridRef = useRef<HTMLDivElement>(null);
 
     const handleClose = useCallback(() => {
         setIsClosing(true);
@@ -349,9 +425,17 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({ isOpen, onClos
     }, [onClose]);
 
     // 右滑删除不需要确认，直接删除
-    const handlePermanentDelete = useCallback((sticker: any) => {
+    const handlePermanentDelete = useCallback((sticker: Sticker) => {
         permanentlyDeleteSticker(sticker.id);
     }, [permanentlyDeleteSticker]);
+
+    const handleRestoreWidget = useCallback((record: DeletedWidgetRecord) => {
+        restoreDeletedWidget(record.id, record.mode);
+    }, []);
+
+    const handlePermanentDeleteWidget = useCallback((record: DeletedWidgetRecord) => {
+        permanentlyDeleteWidget(record.id, record.mode);
+    }, []);
 
     // 重置关闭状态
     useEffect(() => {
@@ -359,6 +443,15 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({ isOpen, onClos
             setIsClosing(false);
         }
     }, [isOpen]);
+
+    const handleModalWheel = useCallback((event: React.WheelEvent<HTMLDivElement>) => {
+        const grid = gridRef.current;
+        if (!grid) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const multiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? grid.clientHeight : 1;
+        grid.scrollTop += event.deltaY * multiplier;
+    }, []);
 
     if (!isOpen) return null;
 
@@ -371,6 +464,12 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({ isOpen, onClos
     return ReactDOM.createPortal(
         <div
             className={modalClassName}
+            data-page-scroll-lock="true"
+            data-modal="true"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t.space.recycleBin || 'Recycle Bin'}
+            onWheel={handleModalWheel}
             onClick={handleClose}
         >
             <div
@@ -380,7 +479,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({ isOpen, onClos
                 <div className={styles.recycleBinHeader}>
                     <div className={styles.headerTextWrapper}>
                         <h2 className={styles.recycleBinTitle}>{t.space.recycleBin || "Recycle Bin"}</h2>
-                        <span className={styles.recycleBinSubtitle}>{t.space.restoreHint || "Swipe left to restore, swipe right to delete"} · {t.space.recycleBinLimitHint}</span>
+                        <span className={styles.recycleBinSubtitle}>{language === 'zh' ? '贴纸左滑还原、右滑永久删除；组件可直接还原' : 'Swipe stickers left to restore or right to delete; widgets can be restored directly'}</span>
                     </div>
                     <button className={styles.recycleBinCloseWrapper} onClick={handleClose}>
                         <div className={styles.recycleBinCloseInner}>
@@ -391,18 +490,39 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({ isOpen, onClos
                     </button>
                 </div>
 
-                <div className={styles.recycleBinGrid}>
-                    {deletedStickers.length > 0 ? (
-                        deletedStickers.map((sticker, index) => (
-                            <RecycleBinItem
-                                key={sticker.id}
-                                sticker={sticker}
-                                onRestore={restoreSticker}
-                                onDelete={handlePermanentDelete}
-                                t={t}
-                                index={index}
-                            />
-                        ))
+                <div ref={gridRef} className={styles.recycleBinGrid} data-widget-scrollable="true">
+                    {deletedStickers.length > 0 || deletedWidgets.length > 0 ? (
+                        <>
+                            {deletedWidgets.length > 0 && (
+                                <section className={styles.deletedWidgetSection}>
+                                    <div className={styles.deletedSectionLabel}>{language === 'zh' ? `组件 · ${deletedWidgets.length}` : `Widgets · ${deletedWidgets.length}`}</div>
+                                    {deletedWidgets.map((record) => (
+                                        <RecycleBinWidgetItem
+                                            key={record.id}
+                                            record={record}
+                                            language={language}
+                                            onRestore={handleRestoreWidget}
+                                            onDelete={handlePermanentDeleteWidget}
+                                        />
+                                    ))}
+                                </section>
+                            )}
+                            {deletedStickers.length > 0 && (
+                                <section className={styles.deletedStickerSection}>
+                                    <div className={styles.deletedSectionLabel}>{language === 'zh' ? `贴纸 · ${deletedStickers.length}` : `Stickers · ${deletedStickers.length}`}</div>
+                                    {deletedStickers.map((sticker, index) => (
+                                        <RecycleBinItem
+                                            key={sticker.id}
+                                            sticker={sticker}
+                                            onRestore={restoreSticker}
+                                            onDelete={handlePermanentDelete}
+                                            t={t}
+                                            index={index}
+                                        />
+                                    ))}
+                                </section>
+                            )}
+                        </>
                     ) : (
                         <div className={styles.emptyState}>
                             <img src={TrashCanEmpty} alt="Empty Recycle Bin" className={styles.emptyStateIcon} />
@@ -410,7 +530,7 @@ export const RecycleBinModal: React.FC<RecycleBinModalProps> = ({ isOpen, onClos
                                 {t.space?.emptyRecycleBin || "No deleted items"}
                             </span>
                             <span className={styles.emptyStateHint}>
-                                {t.space?.emptyRecycleBinHint || "Deleted stickers will appear here"}
+                                {language === 'zh' ? '删除的贴纸和组件会出现在这里' : 'Deleted stickers and widgets will appear here'}
                             </span>
                         </div>
                     )}

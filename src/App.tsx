@@ -10,6 +10,13 @@ import { Background } from './features/theme/components/Background/Background';
 import { ZenShelf } from './features/shelf/components/ZenShelf';
 import { useAutoSync } from './features/sync/hooks/useAutoSync';
 import styles from './App.module.css';
+import type { WidgetPageId } from './features/widgets/utils/layoutAlgorithm';
+import { useDelayedUnmount } from './shared/hooks/useDelayedUnmount';
+import { executeNavigationAction } from './shared/navigation';
+import { useThemeData } from './features/theme/context/ThemeContext';
+import { usePageWheelNavigation } from './features/navigation/hooks/usePageWheelNavigation';
+import { PageNavigationBar } from './features/navigation/components/PageNavigationBar';
+import type { StickerNavigationRequest } from './features/shelf/utils/stickerNavigation';
 
 // ============================================================================
 // 性能优化: 懒加载非核心组件，减少初始包大小
@@ -20,6 +27,8 @@ const SearchEngineModal = lazy(() => import('./features/search/components/Modal/
 const SettingsModal = lazy(() => import('./features/settings/components/Modal/SettingsModal').then(m => ({ default: m.SettingsModal })));
 const SyncModal = lazy(() => import('./features/sync/components/Modal/SyncModal').then(m => ({ default: m.SyncModal })));
 const BatchImportView = lazy(() => import('./features/dock/components/BatchImport/BatchImportView').then(m => ({ default: m.BatchImportView })));
+const WidgetPanel = lazy(() => import('./features/widgets/components/WidgetPanel').then(m => ({ default: m.WidgetPanel })));
+const AddWidgetPage = lazy(() => import('./features/widgets/components/AddWidgetPage').then(m => ({ default: m.AddWidgetPage })));
 
 
 function App() {
@@ -50,6 +59,7 @@ function App() {
 
   // 拖拽层 (高频变化) - 仅在拖拽状态变化时重渲染
   const { draggingItem, setDraggingItem, setFolderPlaceholderActive } = useDockDrag();
+  const { openInNewTab, pageScrollMode, pageSlideDirection } = useThemeData();
 
   // 计算派生状态
   const openFolder = useMemo(
@@ -61,6 +71,7 @@ function App() {
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
   const [isSearchEngineModalOpen, setIsSearchEngineModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isAddWidgetPageOpen, setIsAddWidgetPageOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [searchEngineAnchor, setSearchEngineAnchor] = useState<DOMRect | null>(null);
   const [settingsAnchor, setSettingsAnchor] = useState<{ rect: DOMRect, source?: 'button' | 'contextMenu' } | null>(null);
@@ -71,6 +82,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [isTouchUI, setIsTouchUI] = useState(false);
   const [isBatchImportOpen, setIsBatchImportOpen] = useState(false);
+  const [pageIndex, setPageIndex] = useState<WidgetPageId>(0);
 
   // 跟踪拖拽来源，用于区分内部拖拽和外部拖拽
   const [draggingFromFolder, setDraggingFromFolder] = useState(false);
@@ -79,40 +91,34 @@ function App() {
   const settingsAreaRef = useRef<HTMLDivElement>(null);
   const editorAreaRef = useRef<HTMLDivElement>(null);
 
-  // 跟踪哪些 Modal 已经被打开过，以便保持挂载从而播放退出动画
-  const mountedModals = useRef({
-    addEdit: false,
-    searchEngine: false,
-    settings: false,
-    sync: false,
-    batchImport: false,
-  });
-
-  useEffect(() => {
-    if (isAddEditModalOpen) mountedModals.current.addEdit = true;
-    if (isSearchEngineModalOpen) mountedModals.current.searchEngine = true;
-    if (isSettingsModalOpen) mountedModals.current.settings = true;
-    if (isSyncModalOpen) mountedModals.current.sync = true;
-    if (isBatchImportOpen) mountedModals.current.batchImport = true;
-  }, [isAddEditModalOpen, isSearchEngineModalOpen, isSettingsModalOpen, isSyncModalOpen, isBatchImportOpen]);
+  // 只在退出动画期间保留懒加载弹窗，动画结束后真正卸载。
+  const renderAddEditModal = useDelayedUnmount(isAddEditModalOpen);
+  const renderSearchEngineModal = useDelayedUnmount(isSearchEngineModalOpen);
+  const renderSettingsModal = useDelayedUnmount(isSettingsModalOpen);
+  const renderSyncModal = useDelayedUnmount(isSyncModalOpen);
+  const renderBatchImport = useDelayedUnmount(isBatchImportOpen);
 
   // 自动同步：每次新标签页打开时检测云端更新
   useAutoSync();
 
   // ============================================================================
-  // 性能优化: 使用 RAF 节流 + 状态变化检测，减少 mousemove 期间的重渲染
+  // 性能优化: 缓存悬停热区尺寸，mousemove 只做数字比较
   // ============================================================================
   const lastSettingsState = useRef(false);
   const lastEditorState = useRef(false);
-  const rafId = useRef<number>(0);
+  const hoverZoneRectsRef = useRef<{ settings: DOMRect | null; editor: DOMRect | null }>({ settings: null, editor: null });
+  const pageTouchGestureRef = useRef<{ startX: number; lastX: number; startY: number; lastY: number; startScrollTop: number; blocked: boolean } | null>(null);
 
   useEffect(() => {
     const media = window.matchMedia('(hover: none), (pointer: coarse)');
     const updateTouchUI = () => {
-      setIsTouchUI(media.matches);
-      if (media.matches) {
-        setShowSettings(true);
-        setShowEditor(true);
+      const nextIsTouchUI = media.matches;
+      setIsTouchUI(nextIsTouchUI);
+      setShowSettings(nextIsTouchUI);
+      setShowEditor(nextIsTouchUI);
+      if (!nextIsTouchUI) {
+        lastSettingsState.current = false;
+        lastEditorState.current = false;
       }
     };
 
@@ -122,46 +128,129 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (isTouchUI) return;
+
+    const cacheHoverZoneRects = () => {
+      hoverZoneRectsRef.current = {
+        settings: settingsAreaRef.current?.getBoundingClientRect() ?? null,
+        editor: editorAreaRef.current?.getBoundingClientRect() ?? null,
+      };
+    };
+    cacheHoverZoneRects();
+
     const handleMouseMove = (e: MouseEvent) => {
-      // 取消上一帧的待处理更新
-      if (rafId.current) {
-        cancelAnimationFrame(rafId.current);
+      const settingsRect = hoverZoneRectsRef.current.settings;
+      if (settingsRect) {
+        const inSettingsZone = e.clientX >= settingsRect.left && e.clientX <= settingsRect.right &&
+          e.clientY >= settingsRect.top && e.clientY <= settingsRect.bottom;
+        if (inSettingsZone !== lastSettingsState.current) {
+          lastSettingsState.current = inSettingsZone;
+          setShowSettings(inSettingsZone);
+        }
       }
 
-      rafId.current = requestAnimationFrame(() => {
-        // 检查设置区域 (左上角)
-        if (settingsAreaRef.current) {
-          const rect = settingsAreaRef.current.getBoundingClientRect();
-          const inSettingsZone = e.clientX >= rect.left && e.clientX <= rect.right &&
-            e.clientY >= rect.top && e.clientY <= rect.bottom;
-          // 仅在状态变化时更新
-          if (inSettingsZone !== lastSettingsState.current) {
-            lastSettingsState.current = inSettingsZone;
-            setShowSettings(inSettingsZone);
-          }
+      const editorRect = hoverZoneRectsRef.current.editor;
+      if (editorRect) {
+        const inEditorZone = e.clientX >= editorRect.left && e.clientX <= editorRect.right &&
+          e.clientY >= editorRect.top && e.clientY <= editorRect.bottom;
+        if (inEditorZone !== lastEditorState.current) {
+          lastEditorState.current = inEditorZone;
+          setShowEditor(inEditorZone);
         }
-        // 检查编辑器区域 (右上角)
-        if (editorAreaRef.current) {
-          const rect = editorAreaRef.current.getBoundingClientRect();
-          const inEditorZone = e.clientX >= rect.left && e.clientX <= rect.right &&
-            e.clientY >= rect.top && e.clientY <= rect.bottom;
-          // 仅在状态变化时更新
-          if (inEditorZone !== lastEditorState.current) {
-            lastEditorState.current = inEditorZone;
-            setShowEditor(inEditorZone);
-          }
-        }
-      });
+      }
     };
 
     document.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('resize', cacheHoverZoneRects);
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
-      if (rafId.current) {
-        cancelAnimationFrame(rafId.current);
+      window.removeEventListener('resize', cacheHoverZoneRects);
+    };
+  }, [isTouchUI]);
+
+  usePageWheelNavigation({ pageIndex, scrollMode: pageScrollMode, pageSlideDirection, onPageChange: setPageIndex });
+
+  useEffect(() => {
+    const isInteractiveTouchTarget = (target: EventTarget | null) => {
+      if (!(target instanceof Element)) return false;
+      return !!target.closest('[data-widget-type], [data-sticker-id], [data-widget-scrollable="true"], [data-page-scroll-lock="true"], [data-modal="true"], [role="dialog"], [data-ui-zone], button, input, textarea, a, iframe');
+    };
+
+    const handleTouchStart = (event: TouchEvent) => {
+      if (event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      const scroller = document.querySelector<HTMLElement>('[data-widget-scroll-page="1"]');
+      pageTouchGestureRef.current = {
+        startX: touch.clientX,
+        lastX: touch.clientX,
+        startY: touch.clientY,
+        lastY: touch.clientY,
+        startScrollTop: scroller?.scrollTop ?? 0,
+        blocked: isInteractiveTouchTarget(event.target),
+      };
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      const gesture = pageTouchGestureRef.current;
+      if (!gesture || gesture.blocked || event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      gesture.lastX = touch.clientX;
+      gesture.lastY = touch.clientY;
+
+      if (pageSlideDirection === 'horizontal') {
+        const dx = gesture.startX - touch.clientX;
+        const dy = gesture.startY - touch.clientY;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) > 12) event.preventDefault();
+        return;
+      }
+
+      if (pageIndex === 1) {
+        const scroller = document.querySelector<HTMLElement>('[data-widget-scroll-page="1"]');
+        if (!scroller) return;
+        scroller.scrollTop = Math.max(0, gesture.startScrollTop + gesture.startY - touch.clientY);
+        event.preventDefault();
+      } else if (gesture.startY - touch.clientY > 12) {
+        event.preventDefault();
       }
     };
-  }, []);
+
+    const handleTouchEnd = () => {
+      const gesture = pageTouchGestureRef.current;
+      pageTouchGestureRef.current = null;
+      if (!gesture || gesture.blocked) return;
+      if (pageSlideDirection === 'horizontal') {
+        const distanceX = gesture.startX - gesture.lastX;
+        const distanceY = gesture.startY - gesture.lastY;
+        if (Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > 72) {
+          setPageIndex((current) => Math.max(0, current + (distanceX > 0 ? 1 : -1)));
+        }
+        return;
+      }
+
+      const distance = gesture.startY - gesture.lastY;
+
+      if (pageIndex === 0 && distance > 72) {
+        setPageIndex(1);
+        return;
+      }
+
+      const scroller = document.querySelector<HTMLElement>('[data-widget-scroll-page="1"]');
+      if (pageIndex === 1 && distance < -72 && (scroller?.scrollTop ?? 0) <= 2) {
+        setPageIndex(0);
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [pageIndex, pageSlideDirection]);
 
 
 
@@ -176,16 +265,66 @@ function App() {
     setIsAddEditModalOpen(true);
   }, []);
 
+  const handleDockItemAdd = useCallback((rect?: DOMRect | null) => {
+    setAddIconAnchor(rect ?? null);
+    handleItemAdd();
+  }, [handleItemAdd]);
+
+  const handleSearchEngineClick = useCallback((rect: DOMRect) => {
+    setSearchEngineAnchor(rect);
+    setIsSearchEngineModalOpen(true);
+  }, []);
+
+  const handlePageDown = useCallback(() => setPageIndex(1), []);
+
+  const handleStickerInternalNavigation = useCallback((request: StickerNavigationRequest) => {
+    setPageIndex(request.pageIndex);
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const scroller = document.querySelector<HTMLElement>('[data-widget-scroll-page="1"]');
+        if (pageSlideDirection === 'vertical' && request.pageIndex === 1 && scroller) {
+          scroller.scrollTo({ top: request.scrollTop, behavior: 'smooth' });
+        }
+
+        window.setTimeout(() => {
+          if (request.focusStickerId) {
+            const target = document.querySelector<HTMLElement>(`[data-sticker-id="${request.focusStickerId}"]`);
+            if (target) {
+              target.classList.add(styles.internalNavigationPulse);
+              window.setTimeout(() => target.classList.remove(styles.internalNavigationPulse), 1100);
+            }
+          }
+
+          if (request.focusWidgetId) {
+            const target = document.querySelector<HTMLElement>(`[data-widget-id="${request.focusWidgetId}"]`);
+            if (target) {
+              target.classList.add(styles.internalNavigationPulse);
+              window.setTimeout(() => target.classList.remove(styles.internalNavigationPulse), 1100);
+            }
+          }
+
+          if (request.coordinate) {
+            const marker = document.createElement('div');
+            marker.className = styles.internalNavigationMarker;
+            marker.style.left = `${Math.max(8, Math.min(window.innerWidth - 8, request.coordinate.x))}px`;
+            marker.style.top = `${Math.max(8, Math.min(window.innerHeight - 8, request.coordinate.y))}px`;
+            document.body.appendChild(marker);
+            window.setTimeout(() => marker.remove(), 1100);
+          }
+        }, pageSlideDirection === 'vertical' && request.pageIndex === 1 ? 560 : 120);
+      });
+    });
+  }, [pageSlideDirection]);
+
   const handleModalSave = useCallback((data: Partial<DockItem>) => {
     handleItemSave(data, editingItem);
     setIsAddEditModalOpen(false);
   }, [handleItemSave, editingItem]);
 
   const handleFolderItemClick = useCallback((item: DockItem) => {
-    if (item.url) {
-      window.open(item.url, '_blank'); // Temporary fallback, should be handled by DockLayoutContainer or openInNewTab value passed down
-    }
-  }, []);
+    if (item.action) executeNavigationAction(item.action, { openInNewTab });
+  }, [openInNewTab]);
 
   const handleFolderItemEdit = useCallback((item: DockItem, rect?: DOMRect) => {
     handleItemEdit(item, rect);
@@ -197,19 +336,19 @@ function App() {
       const strokeColor = getComputedStyle(document.documentElement)
         .getPropertyValue('--color-sticker-stroke').trim();
 
-      const floodElement = document.querySelector('#text-sticker-stroke feFlood');
-      if (floodElement && strokeColor) {
-        floodElement.setAttribute('flood-color', strokeColor);
+      const floodElements = document.querySelectorAll('#text-sticker-stroke feFlood, #vector-icon-sticker-stroke feFlood');
+      if (strokeColor) {
+        floodElements.forEach((element) => element.setAttribute('flood-color', strokeColor));
       }
     };
 
     // 组件挂载时更新
     updateStrokeColor();
 
-    // 当主题变化时更新 (观察 data-theme 属性变化)
+    // 当主题或默认背景明暗变化时更新
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+        if (mutation.type === 'attributes' && (mutation.attributeName === 'data-theme' || mutation.attributeName === 'data-background-brightness')) {
           updateStrokeColor();
         }
       });
@@ -217,7 +356,7 @@ function App() {
 
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['data-theme']
+      attributeFilter: ['data-theme', 'data-background-brightness']
     });
 
     return () => observer.disconnect();
@@ -247,26 +386,47 @@ function App() {
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+          {/* SVG 图标库贴纸使用更轻的圆润描边，不影响普通图片贴纸。 */}
+          <filter id="vector-icon-sticker-stroke" x="-18%" y="-18%" width="136%" height="136%">
+            <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="dilated" />
+            <feGaussianBlur in="dilated" stdDeviation="0.8" result="blurred" />
+            <feComponentTransfer in="blurred" result="rounded">
+              <feFuncA type="discrete" tableValues="0 1" />
+            </feComponentTransfer>
+            <feFlood floodColor="white" result="white" />
+            <feComposite in="white" in2="rounded" operator="in" result="stroke" />
+            <feMerge>
+              <feMergeNode in="stroke" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
       </svg>
       <Background />
-      <ZenShelf onOpenSettings={(pos) => {
+      <ZenShelf pageIndex={pageIndex} onNavigateInternal={handleStickerInternalNavigation} onOpenAddWidget={() => setIsAddWidgetPageOpen(true)} onOpenSettings={(pos) => {
         // 直接使用传入的位置，不需要为了抵消 SettingsModal 的内部偏移而做运算
         const pseudoRect = { left: pos.x, top: pos.y, right: pos.x, bottom: pos.y, width: 0, height: 0, x: pos.x, y: pos.y, toJSON: () => ({}) } as DOMRect;
         setSettingsAnchor({ rect: pseudoRect, source: 'contextMenu' });
         setIsSettingsModalOpen(true);
       }} />
-      <DockLayoutContainer
-        onSearchEngineClick={(rect) => {
-          setSearchEngineAnchor(rect);
-          setIsSearchEngineModalOpen(true);
-        }}
-        onItemEdit={handleItemEdit}
-        onItemAdd={(rect) => {
-          setAddIconAnchor(rect ?? null);
-          handleItemAdd();
-        }}
-      />
+      <Suspense fallback={null}>
+        <WidgetPanel activePage={pageIndex} onPageChange={setPageIndex} />
+      </Suspense>
+      <PageNavigationBar currentPageIndex={pageIndex} />
+      <div
+        className={`${styles.pageSlider} ${pageSlideDirection === 'horizontal' ? styles.pageSliderHorizontal : ''} ${pageSlideDirection === 'vertical' && pageIndex === 1 ? styles.secondPageActive : ''}`}
+        style={pageSlideDirection === 'horizontal' ? { transform: `translateX(-${Math.max(0, pageIndex) * 100}vw)` } : undefined}
+      >
+        <section className={styles.page}>
+          <DockLayoutContainer
+            onSearchEngineClick={handleSearchEngineClick}
+            onItemEdit={handleItemEdit}
+            onItemAdd={handleDockItemAdd}
+            onPageDown={handlePageDown}
+          />
+        </section>
+        <section className={styles.page} aria-label="Widget page" />
+      </div>
       {/* 左上角触发热点：悬停显示设置按钮 */}
       <div
         ref={settingsAreaRef}
@@ -325,7 +485,7 @@ function App() {
           />
         </Suspense>
       )}
-      {(isAddEditModalOpen || mountedModals.current.addEdit) && (
+      {renderAddEditModal && (
         <Suspense fallback={null}>
           <AddEditModal
             isOpen={isAddEditModalOpen}
@@ -340,7 +500,7 @@ function App() {
           />
         </Suspense>
       )}
-      {(isSearchEngineModalOpen || mountedModals.current.searchEngine) && (
+      {renderSearchEngineModal && (
         <Suspense fallback={null}>
           <SearchEngineModal
             isOpen={isSearchEngineModalOpen}
@@ -352,7 +512,17 @@ function App() {
           />
         </Suspense>
       )}
-      {(isSettingsModalOpen || mountedModals.current.settings) && (
+      {isAddWidgetPageOpen && (
+        <Suspense fallback={null}>
+          <AddWidgetPage
+            isOpen={isAddWidgetPageOpen}
+            currentPage={pageIndex}
+            onClose={() => setIsAddWidgetPageOpen(false)}
+          />
+        </Suspense>
+      )}
+
+      {renderSettingsModal && (
         <Suspense fallback={null}>
           <SettingsModal
             isOpen={isSettingsModalOpen}
@@ -363,11 +533,12 @@ function App() {
               x: settingsAnchor.rect.left,
               y: settingsAnchor.source === 'button' ? settingsAnchor.rect.top + 60 : settingsAnchor.rect.top
             } : { x: 0, y: 0 }}
+            currentPage={pageIndex}
           />
         </Suspense>
       )}
 
-      {(isSyncModalOpen || mountedModals.current.sync) && (
+      {renderSyncModal && (
         <Suspense fallback={null}>
           <SyncModal
             isOpen={isSyncModalOpen}
@@ -377,7 +548,7 @@ function App() {
         </Suspense>
       )}
 
-      {(isBatchImportOpen || mountedModals.current.batchImport) && (
+      {renderBatchImport && (
         <Suspense fallback={null}>
           <BatchImportView
             isOpen={isBatchImportOpen}

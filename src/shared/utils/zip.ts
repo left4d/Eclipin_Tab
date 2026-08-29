@@ -5,6 +5,9 @@ type ZipEntryInput = {
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
+const utf8FatalDecoder = new TextDecoder('utf-8', { fatal: true });
+let gbkDecoder: TextDecoder | null = null;
+try { gbkDecoder = new TextDecoder('gbk'); } catch { gbkDecoder = null; }
 
 const toBlobPart = (data: Uint8Array): ArrayBuffer => {
   return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
@@ -29,6 +32,35 @@ function crc32(data: Uint8Array): number {
   }
   return (crc ^ 0xffffffff) >>> 0;
 }
+
+
+const decodeZipEntryName = (rawName: Uint8Array, extra: Uint8Array, flags: number): string => {
+  // Info-ZIP Unicode Path Extra Field (0x7075): version(1) + CRC32(raw name) + UTF-8 name.
+  let cursor = 0;
+  while (cursor + 4 <= extra.length) {
+    const view = new DataView(extra.buffer, extra.byteOffset + cursor, extra.length - cursor);
+    const headerId = view.getUint16(0, true);
+    const size = view.getUint16(2, true);
+    const dataStart = cursor + 4;
+    const dataEnd = dataStart + size;
+    if (dataEnd > extra.length) break;
+    if (headerId === 0x7075 && size >= 5) {
+      const version = extra[dataStart];
+      const expectedCrc = new DataView(extra.buffer, extra.byteOffset + dataStart + 1, 4).getUint32(0, true);
+      if (version === 1 && expectedCrc === crc32(rawName)) {
+        return decoder.decode(extra.slice(dataStart + 5, dataEnd));
+      }
+    }
+    cursor = dataEnd;
+  }
+
+  if (flags & 0x0800) return decoder.decode(rawName);
+  try { return utf8FatalDecoder.decode(rawName); } catch {
+    // Windows/Chinese ZIP tools often use GBK when the UTF-8 flag is absent.
+    if (gbkDecoder) return gbkDecoder.decode(rawName);
+    return decoder.decode(rawName);
+  }
+};
 
 function writeU16(view: DataView, offset: number, value: number) {
   view.setUint16(offset, value, true);
@@ -115,6 +147,16 @@ export function createZip(entries: ZipEntryInput[]): Blob {
   return new Blob([...localParts, centralDirectory, end].map(toBlobPart), { type: 'application/zip' });
 }
 
+const inflateRaw = async (data: Uint8Array): Promise<Uint8Array> => {
+  if (typeof DecompressionStream === 'undefined') {
+    throw new Error('当前浏览器不支持解压 Deflate ZIP，请升级 Chromium/Chrome 后重试。');
+  }
+  const stream = new Blob([toBlobPart(data)]).stream().pipeThrough(
+    new DecompressionStream('deflate-raw' as CompressionFormat),
+  );
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+};
+
 export async function readZip(file: File): Promise<Map<string, Uint8Array>> {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -125,24 +167,34 @@ export async function readZip(file: File): Promise<Map<string, Uint8Array>> {
     const signature = view.getUint32(offset, true);
     if (signature !== 0x04034b50) break;
 
+    const flags = view.getUint16(offset + 6, true);
+    if (flags & 0x08) {
+      throw new Error('暂不支持使用 data descriptor 的 ZIP，请使用常规 ZIP 格式重新压缩。');
+    }
     const compression = view.getUint16(offset + 8, true);
-    if (compression !== 0) {
-      throw new Error('Unsupported backup compression');
+    if (compression !== 0 && compression !== 8) {
+      throw new Error(`不支持的 ZIP 压缩方式：${compression}`);
     }
 
     const compressedSize = view.getUint32(offset + 18, true);
+    const uncompressedSize = view.getUint32(offset + 22, true);
     const fileNameLength = view.getUint16(offset + 26, true);
     const extraLength = view.getUint16(offset + 28, true);
     const nameStart = offset + 30;
     const dataStart = nameStart + fileNameLength + extraLength;
     const dataEnd = dataStart + compressedSize;
 
-    if (dataEnd > bytes.length) {
-      throw new Error('Invalid backup file');
-    }
+    if (dataEnd > bytes.length) throw new Error('Invalid ZIP file');
 
-    const path = decoder.decode(bytes.slice(nameStart, nameStart + fileNameLength));
-    entries.set(path, bytes.slice(dataStart, dataEnd));
+    const rawName = bytes.slice(nameStart, nameStart + fileNameLength);
+    const extra = bytes.slice(nameStart + fileNameLength, dataStart);
+    const path = decodeZipEntryName(rawName, extra, flags);
+    const compressed = bytes.slice(dataStart, dataEnd);
+    const data = compression === 8 ? await inflateRaw(compressed) : compressed;
+    if (uncompressedSize && data.length !== uncompressedSize) {
+      throw new Error(`ZIP 文件损坏：${path}`);
+    }
+    entries.set(path, data);
     offset = dataEnd;
   }
 

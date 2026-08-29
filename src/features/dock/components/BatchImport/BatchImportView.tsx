@@ -2,6 +2,8 @@ import React, { useState, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { DockItem } from '@/shared/types';
 import { normalizeUrl } from '@/shared/utils/url';
+import { createId } from '@/shared/utils/id';
+import { copyText } from '@/shared/utils/clipboard';
 import { useLanguage } from '@/shared/context/LanguageContext';
 import { useDockData } from '@/features/dock/context/DockContext';
 import { useSpaces } from '@/features/spaces/context/SpacesContext';
@@ -21,7 +23,7 @@ const AI_PROMPT_EN = `I need you to generate a browser new-tab extension space c
 
 {
   "version": "1.0",
-  "type": "eclipse-space-export",
+  "type": "eclipin-space-export",
   "data": {
     "name": "Space Name",
     "iconType": "text",
@@ -40,7 +42,7 @@ const AI_PROMPT_ZH = `我需要你帮我生成一个浏览器新标签页扩展�
 
 {
   "version": "1.0",
-  "type": "eclipse-space-export",
+  "type": "eclipin-space-export",
   "data": {
     "name": "空间名称",
     "iconType": "text",
@@ -57,7 +59,7 @@ const AI_PROMPT_ZH = `我需要你帮我生成一个浏览器新标签页扩展�
 
 function createEmptyCard(): CardData {
     return {
-        id: crypto.randomUUID(),
+        id: createId(),
         name: '',
         url: '',
         icon: '',
@@ -115,15 +117,17 @@ export const BatchImportView: React.FC<BatchImportViewProps> = ({ isOpen, onClos
 
     // 批量提交
     const handleConfirm = useCallback(() => {
-        const validCards = cards.filter(c => c.name.trim());
+        const validCards = cards
+            .map(card => ({ ...card, name: card.name.trim(), url: normalizeUrl(card.url) }))
+            .filter(card => card.name && card.url);
         if (validCards.length === 0) return;
 
-        const newItems: DockItem[] = validCards.map(c => ({
-            id: crypto.randomUUID(),
-            name: c.name.trim(),
-            url: normalizeUrl(c.url),
-            icon: c.icon || undefined,
-            iconSmall: c.iconSmall || undefined,
+        const newItems: DockItem[] = validCards.map(card => ({
+            id: createId('item'),
+            name: card.name,
+            url: card.url,
+            icon: card.icon || undefined,
+            iconSmall: card.iconSmall || undefined,
             type: 'app' as const,
         }));
 
@@ -147,15 +151,17 @@ export const BatchImportView: React.FC<BatchImportViewProps> = ({ isOpen, onClos
 
     // 从书签导入：直接将书签数据转为卡片，无需经过 bookmarksToDockItems
     const handleBookmarkImport = useCallback((bookmarks: BookmarkNode[]) => {
-        const newCards: CardData[] = bookmarks
-            .filter(b => b.url)
-            .map(b => ({
-                id: crypto.randomUUID(),
-                name: b.title || (() => { try { return new URL(b.url!).hostname; } catch { return b.url!; } })(),
-                url: b.url || '',
+        const newCards: CardData[] = bookmarks.flatMap(bookmark => {
+            const url = bookmark.url ? normalizeUrl(bookmark.url) : '';
+            if (!url) return [];
+            return [{
+                id: createId('card'),
+                name: bookmark.title.trim() || new URL(url).hostname,
+                url,
                 icon: '',
                 iconSmall: false,
-            }));
+            }];
+        });
 
         setCards(prev => {
             // 如果当前只有一个空卡片，替换它
@@ -168,8 +174,7 @@ export const BatchImportView: React.FC<BatchImportViewProps> = ({ isOpen, onClos
         // 异步批量获取书签的图标
         newCards.forEach(card => {
             if (card.url) {
-                const normalized = normalizeUrl(card.url);
-                fetchIcon(normalized).then(result => {
+                fetchIcon(card.url).then(result => {
                     if (closedRef.current) return;
                     setCards(prev => prev.map(c =>
                         c.id === card.id && !c.icon
@@ -186,21 +191,10 @@ export const BatchImportView: React.FC<BatchImportViewProps> = ({ isOpen, onClos
     // 复制 AI Prompt
     const handleCopyPrompt = useCallback(async () => {
         const prompt = language === 'zh' ? AI_PROMPT_ZH : AI_PROMPT_EN;
-        try {
-            await navigator.clipboard.writeText(prompt);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch {
-            // Fallback: 使用已弃用的 execCommand('copy') 作为兼容方案
-            const textarea = document.createElement('textarea');
-            textarea.value = prompt;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy'); // eslint-disable-line deprecation/deprecation
-            document.body.removeChild(textarea);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        }
+        const didCopy = await copyText(prompt);
+        if (!didCopy) return;
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2000);
     }, [language]);
 
     // 导入 AI 生成的 JSON 文件
@@ -226,7 +220,7 @@ export const BatchImportView: React.FC<BatchImportViewProps> = ({ isOpen, onClos
 
     if (!isOpen && !isClosing) return null;
 
-    const validCount = cards.filter(c => c.name.trim()).length;
+    const validCount = cards.filter(card => card.name.trim() && normalizeUrl(card.url)).length;
     const hasBookmarkApi = isBookmarkApiAvailable();
 
     const overlayClass = [

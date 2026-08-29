@@ -15,6 +15,10 @@ declare module "*.svg?raw" {
 
 // Minimal Chrome Extension Type Definitions for dev environment
 declare namespace chrome {
+    export namespace search {
+        export type Disposition = 'CURRENT_TAB' | 'NEW_TAB' | 'NEW_WINDOW';
+        export function query(options: { text: string; disposition?: Disposition }): void;
+    }
     export namespace permissions {
         export function contains(permissions: { origins?: string[], permissions?: string[] }, callback?: (result: boolean) => void): Promise<boolean>;
         export function request(permissions: { origins?: string[], permissions?: string[] }, callback?: (granted: boolean) => void): Promise<boolean>;
@@ -22,5 +26,6 @@ declare namespace chrome {
     }
     export namespace runtime {
         export const lastError: { message?: string } | undefined;
+        export function getURL(path: string): string;
     }
 }

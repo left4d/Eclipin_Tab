@@ -3,7 +3,7 @@
 
 .contextMenu {
     position: fixed;
-    z-index: 3000;
+    z-index: 1000000001;
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     background: var(--color-bg-primary);
@@ -150,7 +150,7 @@
 
 .spaceSubmenu {
     position: fixed;
-    z-index: 3001;
+    z-index: 1000000002;
     min-width: 210px;
     max-height: calc(100vh - 20px);
     overflow-y: auto;
@@ -197,3 +197,39 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* Web × Pegboard 菜单强调色 */
+.contextMenu,
+.spaceSubmenu {
+    border-color: var(--fusion-border-accent);
+    background:
+        linear-gradient(145deg, var(--fusion-accent-softer), transparent 62%),
+        var(--color-bg-primary);
+    box-shadow: var(--fusion-shadow-md);
+}
+
+.menuItem:hover,
+.spaceItem:hover {
+    background: var(--fusion-accent-softer);
+}
+
+/* ===== 统一右键菜单材质 ===== */
+.contextMenu,
+.spaceSubmenu {
+    border-color: var(--context-menu-border);
+    background: var(--context-menu-bg);
+    box-shadow: var(--context-menu-shadow);
+    backdrop-filter: blur(var(--context-menu-blur)) saturate(1.08);
+    -webkit-backdrop-filter: blur(var(--context-menu-blur)) saturate(1.08);
+}
+.menuDivider::after { background: var(--context-menu-border); }
+.menuItem,
+.spaceItem { color: var(--context-menu-text); }
+.menuItem:hover,
+.spaceItem:hover { background: var(--context-menu-hover); }
+.menuItem:active { background: var(--context-menu-active); }
+.menuLabel { color: var(--context-menu-muted); opacity: 1; }
+.contextMenu,
+.spaceSubmenu { border-radius: var(--ui-menu-radius); }
+.menuItem,
+.spaceItem { border-radius: var(--ui-menu-item-radius); }

@@ -1,5 +1,5 @@
-const STORAGE_KEY_LAST_SYNC = 'EclipseTab_lastSyncTime';
-const STORAGE_KEY_FINGERPRINT = 'EclipseTab_lastFingerprint';
+const STORAGE_KEY_LAST_SYNC = 'Eclipin_lastSyncTime';
+const STORAGE_KEY_FINGERPRINT = 'Eclipin_lastFingerprint';
 
 /**
  * 获取本地最后同步时间
@@ -34,13 +34,13 @@ export function getLastSyncTimeLabel(): string {
  */
 export function computeLocalFingerprint(): string {
     const keys = [
-        'EclipseTab_config',
-        'EclipseTab_spaces',
-        'EclipseTab_dockItems',
-        'EclipseTab_searchEngine',
-        'EclipseTab_stickers',
-        'EclipseTab_deletedStickers',
-        'EclipseTab_wallpaperId',
+        'Eclipin_config',
+        'Eclipin_spaces',
+        'Eclipin_dockItems',
+        'Eclipin_searchEngine',
+        'Eclipin_stickers',
+        'Eclipin_deletedStickers',
+        'Eclipin_wallpaperId',
     ];
     let combined = '';
     for (const key of keys) {

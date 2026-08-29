@@ -5,7 +5,7 @@
 .modalBackdrop {
     position: fixed;
     inset: 0;
-    z-index: 2999;
+    z-index: 1000000000;
     pointer-events: auto;
 }
 
@@ -13,7 +13,7 @@
 .modalBackdropDark {
     position: fixed;
     inset: 0;
-    z-index: 2999;
+    z-index: 1000000000;
     pointer-events: auto;
     background: var(--black-alpha-30);
     display: flex;
@@ -57,7 +57,7 @@
 
 /* 选项激活状态 */
 .optionButtonActive {
-    border-color: var(--blue-500);
+    border-color: var(--fusion-accent);
     box-shadow: 0 0 0 1px var(--black-alpha-10);
 }
 
@@ -182,7 +182,7 @@
 /* --- 4. 主要/确认按钮 --- */
 /* 用于模态框底部的主要操作，蓝色标识主要动作 */
 .primaryBtn {
-    background: var(--blue-500);
+    background: var(--fusion-accent);
     border: none;
     border-radius: var(--radius-small);
     color: var(--white);
@@ -300,4 +300,61 @@
 /* 暗色模式下图标颜色反转 */
 [data-theme='dark'] .iconInvert img {
     filter: invert(1);
+}
+
+/* ========================================================================== */
+/* Web × Pegboard 共享控件强调色                                               */
+/* ========================================================================== */
+.modalContainer {
+    border-color: var(--fusion-border-accent);
+    background:
+        linear-gradient(145deg, var(--fusion-accent-softer), transparent 60%),
+        var(--color-bg-primary);
+    box-shadow: var(--fusion-shadow-md);
+}
+
+.optionButtonActive {
+    border-color: var(--fusion-accent);
+    box-shadow: 0 0 0 2px var(--fusion-focus-ring), var(--shadow-small);
+}
+
+.primaryBtn {
+    background: var(--fusion-accent);
+    color: var(--fusion-on-accent);
+}
+
+.actionBtn:hover,
+.menuItem:hover {
+    background: var(--fusion-accent-softer);
+}
+
+.globeBtn {
+    border-color: var(--fusion-border-accent);
+    box-shadow: var(--fusion-shadow-sm);
+}
+
+.globeBtn:hover {
+    box-shadow: 0 0 0 3px var(--fusion-focus-ring), var(--fusion-shadow-sm);
+}
+
+/* ===== 统一大页面 / Modal 材质 ===== */
+.modalBackdrop,
+.modalBackdropDark {
+    background: var(--ui-overlay-bg);
+    backdrop-filter: blur(var(--ui-overlay-blur)) saturate(var(--ui-overlay-saturate));
+    -webkit-backdrop-filter: blur(var(--ui-overlay-blur)) saturate(var(--ui-overlay-saturate));
+}
+
+.modalContainer {
+    border-color: var(--ui-panel-border);
+    border-radius: var(--ui-panel-radius);
+    background: var(--ui-panel-bg);
+    box-shadow: var(--ui-panel-shadow);
+    backdrop-filter: blur(var(--ui-panel-blur)) saturate(1.08);
+    -webkit-backdrop-filter: blur(var(--ui-panel-blur)) saturate(1.08);
+}
+
+.modalInner {
+    border-radius: var(--ui-panel-inner-radius);
+    background: var(--ui-panel-inner-bg);
 }

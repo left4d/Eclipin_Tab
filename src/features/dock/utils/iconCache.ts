@@ -11,13 +11,66 @@ export const FAVICON_PREFIX = 'favicon:';
 const REMOTE_ICON_PREFIX = 'remote-icon:';
 
 // ============================================================================
-// objectURL 内存缓存: domain → objectURL
-// 同一标签页会话内复用，不需要 LRU 淘汰（objectURL 占用极少内存）
+// objectURL 内存缓存: key → objectURL
+// Blob URL 会连带保留底层 Blob/解码资源，书签非常多时不能无限增长。
+// 使用轻量 LRU；被淘汰的 URL 会立即 revoke。
 // ============================================================================
+const MAX_OBJECT_URL_CACHE_SIZE = 256;
 const objectURLCache = new Map<string, string>();
+
+const getCachedObjectUrl = (key: string): string | undefined => {
+  const url = objectURLCache.get(key);
+  if (!url) return undefined;
+  objectURLCache.delete(key);
+  objectURLCache.set(key, url);
+  return url;
+};
+
+const cacheObjectUrl = (key: string, url: string): void => {
+  const previous = objectURLCache.get(key);
+  if (previous && previous !== url) URL.revokeObjectURL(previous);
+  objectURLCache.delete(key);
+  objectURLCache.set(key, url);
+
+  while (objectURLCache.size > MAX_OBJECT_URL_CACHE_SIZE) {
+    const oldest = objectURLCache.entries().next().value as [string, string] | undefined;
+    if (!oldest) break;
+    objectURLCache.delete(oldest[0]);
+    URL.revokeObjectURL(oldest[1]);
+  }
+};
 
 // 进行中的加载请求去重
 const pendingLoads = new Map<string, Promise<string>>();
+
+const canDecodeImageBlob = async (blob: Blob): Promise<boolean> => {
+  if (!(blob instanceof Blob) || blob.size <= 0) return false;
+  try {
+    const bitmap = await createImageBitmap(blob);
+    const valid = bitmap.width > 1 && bitmap.height > 1;
+    bitmap.close();
+    return valid;
+  } catch {
+    const objectUrl = URL.createObjectURL(blob);
+    try {
+      return await new Promise<boolean>((resolve) => {
+        const image = new Image();
+        const timer = window.setTimeout(() => resolve(false), 2500);
+        image.onload = () => {
+          window.clearTimeout(timer);
+          resolve(image.naturalWidth > 1 && image.naturalHeight > 1);
+        };
+        image.onerror = () => {
+          window.clearTimeout(timer);
+          resolve(false);
+        };
+        image.src = objectUrl;
+      });
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+};
 
 /**
  * 判断 icon 字符串是否为 favicon 引用 ID
@@ -49,7 +102,7 @@ const getRemoteIconCacheKey = (iconUrl: string): string => {
 };
 
 export const getCachedRemoteIconUrlSync = (iconUrl: string): string | undefined => {
-  return objectURLCache.get(getRemoteIconCacheKey(iconUrl));
+  return getCachedObjectUrl(getRemoteIconCacheKey(iconUrl));
 };
 
 /**
@@ -57,7 +110,7 @@ export const getCachedRemoteIconUrlSync = (iconUrl: string): string | undefined 
  * @returns objectURL 或 undefined（未缓存）
  */
 export const getCachedIconUrlSync = (domain: string): string | undefined => {
-  return objectURLCache.get(domain);
+  return getCachedObjectUrl(domain);
 };
 
 /**
@@ -69,7 +122,7 @@ export const getCachedIconUrlSync = (domain: string): string | undefined => {
  */
 export const resolveIconUrl = async (domain: string): Promise<string> => {
   // 1. 检查内存缓存
-  const cached = objectURLCache.get(domain);
+  const cached = getCachedObjectUrl(domain);
   if (cached) {
     return cached;
   }
@@ -85,8 +138,13 @@ export const resolveIconUrl = async (domain: string): Promise<string> => {
     try {
       const item = await db.getFavicon(domain);
       if (item && item.data) {
+        const valid = await canDecodeImageBlob(item.data);
+        if (!valid) {
+          await db.deleteFavicon(domain);
+          return '';
+        }
         const url = URL.createObjectURL(item.data);
-        objectURLCache.set(domain, url);
+        cacheObjectUrl(domain, url);
         return url;
       }
       return '';
@@ -114,12 +172,8 @@ export const resolveRemoteIconUrl = async (iconUrl: string): Promise<string> => 
       const response = await fetch(iconUrl, { redirect: 'follow' });
       if (!response.ok) return iconUrl;
 
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.startsWith('image/') && !contentType.includes('icon')) return iconUrl;
-
       const blob = await response.blob();
-      const bitmap = await createImageBitmap(blob);
-      bitmap.close();
+      if (!await canDecodeImageBlob(blob)) return iconUrl;
 
       await db.saveFavicon({
         domain: key,
@@ -129,7 +183,7 @@ export const resolveRemoteIconUrl = async (iconUrl: string): Promise<string> => 
       });
 
       const objectUrl = URL.createObjectURL(blob);
-      objectURLCache.set(key, objectUrl);
+      cacheObjectUrl(key, objectUrl);
       return objectUrl;
     } catch {
       return iconUrl;

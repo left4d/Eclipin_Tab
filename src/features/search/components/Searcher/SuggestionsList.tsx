@@ -10,6 +10,7 @@ interface SuggestionsListProps {
     onHover: (index: number) => void;
     isExiting?: boolean;
     anchorRect: DOMRect | null;
+    placement?: 'above' | 'below';
 }
 
 export const SuggestionsList: React.FC<SuggestionsListProps> = ({
@@ -19,20 +20,26 @@ export const SuggestionsList: React.FC<SuggestionsListProps> = ({
     onHover,
     isExiting = false,
     anchorRect,
+    placement = 'above',
 }) => {
     const listRef = useRef<HTMLUListElement>(null);
     const [position, setPosition] = useState<React.CSSProperties>({});
 
     useEffect(() => {
         if (anchorRect) {
-            setPosition({
+            setPosition(placement === 'below' ? {
+                position: 'fixed',
+                left: `${anchorRect.left}px`,
+                top: `${anchorRect.bottom}px`,
+                width: `${anchorRect.width}px`,
+            } : {
                 position: 'fixed',
                 left: `${anchorRect.left}px`,
                 bottom: `${window.innerHeight - anchorRect.top}px`,
                 width: `${anchorRect.width}px`,
             });
         }
-    }, [anchorRect]);
+    }, [anchorRect, placement]);
 
     // 入场动画
     useEffect(() => {
@@ -53,12 +60,17 @@ export const SuggestionsList: React.FC<SuggestionsListProps> = ({
     return createPortal(
         <ul
             ref={listRef}
-            className={styles.suggestionsList}
+            id="search-suggestions"
+            role="listbox"
+            className={`${styles.suggestionsList} ${placement === 'below' ? styles.suggestionsListBelow : ''}`}
             style={position}
         >
             {suggestions.map((suggestion, index) => (
                 <li
-                    key={index}
+                    key={`${suggestion}-${index}`}
+                    id={`search-suggestion-${index}`}
+                    role="option"
+                    aria-selected={index === activeIndex}
                     className={`${styles.suggestionItem} ${index === activeIndex ? styles.active : ''}`}
                     onClick={() => onSelect(suggestion)}
                     onMouseEnter={() => onHover(index)}

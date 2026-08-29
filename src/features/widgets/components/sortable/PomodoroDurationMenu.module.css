@@ -1,0 +1,101 @@
+.clickAway {
+  position: fixed;
+  z-index: 1000000000;
+  inset: 0;
+  background: transparent;
+}
+
+.menu {
+  position: fixed;
+  z-index: 1000000001;
+  width: 168px;
+  box-sizing: border-box;
+  border: 1px solid var(--context-menu-border);
+  border-radius: var(--radius-default);
+  padding: 12px;
+  background: var(--context-menu-bg);
+  color: var(--context-menu-text);
+  box-shadow: var(--context-menu-shadow);
+  backdrop-filter: blur(var(--context-menu-blur)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--context-menu-blur)) saturate(1.08);
+  pointer-events: auto;
+}
+
+.title {
+  color: var(--context-menu-muted);
+  font-size: .7rem;
+  font-weight: 900;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 32px 1fr 32px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.controls strong {
+  color: var(--context-menu-text);
+  font-size: 1.15rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.controls button,
+.presets button {
+  border: 1px solid color-mix(in srgb, var(--context-menu-border) 82%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--context-menu-hover) 82%, transparent);
+  color: var(--context-menu-text);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.controls button {
+  height: 32px;
+}
+
+.presets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.presets button {
+  padding: 6px 0;
+  font-size: .72rem;
+}
+
+.controls button:hover,
+.presets button:hover {
+  border-color: var(--context-menu-border);
+  background: var(--context-menu-active);
+  color: var(--context-menu-text);
+}
+
+.controls button:active,
+.presets button:active {
+  transform: scale(.97);
+}
+
+.controls button:focus-visible,
+.presets button:focus-visible {
+  outline: 2px solid var(--fusion-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .controls button,
+  .presets button {
+    transition: none;
+  }
+}
+
+/* ===== 全局菜单几何规范 ===== */
+.menu { border-radius: var(--ui-menu-radius); }

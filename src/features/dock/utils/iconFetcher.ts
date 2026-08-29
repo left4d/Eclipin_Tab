@@ -1,6 +1,11 @@
 import { makeFaviconRef, invalidateIconCache, resolveIconUrl } from './iconCache';
+import { discoverIconCandidates } from './iconCandidateDiscovery';
+import { fetchAndProbeImage, imageUrlToBlob, probeBlobDimensions, probeImageLegacy } from './iconImageTools';
+import { generateTextIconBlob } from './iconTextIcon';
 import { db } from '@/shared/utils/db';
 import { ensureHostPermission } from '@/shared/utils/hostPermission';
+
+export { generateFolderIcon, generateTextIcon } from './iconTextIcon';
 
 // ============================================================================
 // 请求去重: 跟踪进行中的请求，避免重复网络请求
@@ -18,61 +23,6 @@ const pendingRequests = new Map<string, Promise<IconResult>>();
 const FALLBACK_REFRESH_INTERVAL = 24 * 60 * 60 * 1000;
 // 小图标阈值: 低于此尺寸标记为 iconSmall
 const SMALL_ICON_THRESHOLD = 100;
-
-// ============================================================================
-// 基于 fetch 的图标探测
-// 使用 fetch() + Blob + createImageBitmap
-// 解决浏览器扩展新标签页中的 CSP / 跨域限制
-// ============================================================================
-
-/**
- * 通过 fetch 获取图片 Blob 并检查尺寸
- */
-const fetchAndProbeImage = async (
-  src: string,
-  timeout: number = 3000,
-  probeMinSize: number = 100
-): Promise<{ blob: Blob; width: number; height: number }> => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch(src, {
-      signal: controller.signal,
-      redirect: 'follow',
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const contentType = response.headers.get('content-type') || '';
-    if (!contentType.startsWith('image/') && !contentType.includes('icon')) {
-      throw new Error(`Not an image: ${contentType}`);
-    }
-
-    const blob = await response.blob();
-    const bitmap = await createImageBitmap(blob);
-    const { width, height } = bitmap;
-    bitmap.close();
-
-    if (probeMinSize > 0) {
-      if (width < probeMinSize || height < probeMinSize) {
-        if (width <= 1) throw new Error('Image invalid');
-        throw new Error(`Image too small (${width}x${height} < ${probeMinSize})`);
-      }
-    } else {
-      if (width <= 1) throw new Error('Image invalid');
-    }
-
-    return { blob, width, height };
-  } catch (err) {
-    clearTimeout(timeoutId);
-    throw err;
-  }
-};
 
 /**
  * 获取网站图标
@@ -99,8 +49,15 @@ export const fetchIcon = async (
       try {
         const dbCached = await db.getFavicon(domain);
       if (dbCached && dbCached.data) {
-        // 验证 Blob 有效性：空 Blob（之前的 bug 导致）需要重新获取
-        const blobValid = dbCached.data instanceof Blob && dbCached.data.size > 0;
+        // 旧版本可能缓存了 HTML、空文件或浏览器无法解码的响应。
+        let blobValid = dbCached.data instanceof Blob && dbCached.data.size > 0;
+        if (blobValid) {
+          try {
+            await probeBlobDimensions(dbCached.data);
+          } catch {
+            blobValid = false;
+          }
+        }
 
         if (!blobValid) {
           // 清除损坏的缓存条目，让下次重新获取，并使其内存缓存失效
@@ -208,6 +165,7 @@ const fetchIconFromNetwork = async (
     const protocol = urlObj.protocol;
     const origin = `${protocol}//${domain}`;
     const normalizedDomain = domain.replace(/^www\./, '');
+    const discoveredCandidates = await discoverIconCandidates(url);
 
     const specialCandidates: Record<string, string[]> = {
       'chatgpt.com': [
@@ -224,6 +182,7 @@ const fetchIconFromNetwork = async (
     };
 
     const highPriorityCandidates = Array.from(new Set([
+      ...discoveredCandidates,
       ...(specialCandidates[normalizedDomain] || []),
       `${origin}/apple-touch-icon.png`,
       `${origin}/apple-touch-icon-180x180.png`,
@@ -422,123 +381,6 @@ const tryImageProbeStrategy = async (
 };
 
 /**
- * 旧版图片探测：使用 new Image() 加载并检查尺寸
- * 不设置 crossOrigin 以避免 CORS 错误（允许 opaque response）
- */
-const probeImageLegacy = (
-  src: string,
-  minSize: number
-): Promise<{ url: string; width: number; height: number }> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    let settled = false;
-
-    const cleanup = () => {
-      img.onload = null;
-      img.onerror = null;
-      if (!settled) {
-        img.src = '';
-      }
-    };
-
-    // 不设置 crossOrigin，允许跨域加载（opaque response）
-    img.onload = () => {
-      settled = true;
-      if (minSize > 0) {
-        if (img.naturalWidth >= minSize && img.naturalHeight >= minSize) {
-          resolve({ url: src, width: img.naturalWidth, height: img.naturalHeight });
-        } else if (img.naturalWidth > 1) {
-          reject(`Image too small (${img.naturalWidth}x${img.naturalHeight} < ${minSize})`);
-        } else {
-          reject('Image invalid');
-        }
-      } else {
-        if (img.naturalWidth > 1) {
-          resolve({ url: src, width: img.naturalWidth, height: img.naturalHeight });
-        } else {
-          reject('Image invalid');
-        }
-      }
-    };
-    img.onerror = () => {
-      settled = true;
-      reject('Failed to load');
-    };
-    img.src = src;
-
-    setTimeout(() => {
-      if (!settled) {
-        cleanup();
-        reject('Timeout');
-      }
-    }, 5000);
-  });
-};
-
-/**
- * 将图片 URL 转为 Blob（用于存入 IndexedDB）
- * 先尝试 canvas 转换，失败则 fetch 获取
- * 全部失败时返回 null（而非空 Blob），调用方据此决定回退到直接 URL
- */
-const imageUrlToBlob = async (
-  imageUrl: string,
-  width: number,
-  height: number
-): Promise<Blob | null> => {
-  // 方式 1: 尝试通过 canvas 转换（需要 CORS 允许）
-  try {
-    const img = await loadImageWithCORS(imageUrl);
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(img, 0, 0, width, height);
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(b => b ? resolve(b) : reject('toBlob failed'), 'image/png');
-      });
-      return blob;
-    }
-  } catch {
-    // canvas tainted 或其他错误，继续尝试
-  }
-
-  // 方式 2: 尝试 fetch 获取 Blob 并验证
-  try {
-    const response = await fetch(imageUrl, { redirect: 'follow' });
-    if (response.ok) {
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.startsWith('image/') || contentType.includes('icon')) {
-        const blob = await response.blob();
-        // 验证 Blob 是否真的是有效图片
-        const bitmap = await createImageBitmap(blob);
-        bitmap.close();
-        return blob;
-      }
-    }
-  } catch {
-    // fetch 或验证失败
-  }
-
-  // 无法获取 Blob（跨域限制），返回 null
-  return null;
-};
-
-/**
- * 带 crossOrigin 属性加载图片（canvas 绘制需要）
- */
-const loadImageWithCORS = (src: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = () => reject('Failed to load with CORS');
-    img.src = src;
-    setTimeout(() => reject('Timeout'), 5000);
-  });
-};
-
-/**
  * 内部图标获取逻辑：网络获取 → 存 IndexedDB → 返回引用 ID 或直接 URL
  */
 const fetchIconInternal = async (
@@ -598,182 +440,3 @@ const fetchIconInternal = async (
   return { url: makeFaviconRef(domain), isFallback: true };
 };
 
-// ============================================================================
-// 文字图标生成
-// ============================================================================
-const CANVAS_SIZE = 576;
-let reusableCanvas: HTMLCanvasElement | null = null;
-let reusableCtx: CanvasRenderingContext2D | null = null;
-
-function getReusableCanvas(): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } | null {
-  if (!reusableCanvas) {
-    reusableCanvas = document.createElement('canvas');
-    reusableCanvas.width = CANVAS_SIZE;
-    reusableCanvas.height = CANVAS_SIZE;
-    reusableCtx = reusableCanvas.getContext('2d');
-  }
-  if (!reusableCtx) return null;
-  reusableCtx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-  return { canvas: reusableCanvas, ctx: reusableCtx };
-}
-
-/**
- * 生成文字图标，同时返回 Blob 和 data URL
- */
-const generateTextIconBlob = (text: string): { blob: Blob; dataUrl: string } => {
-  const dataUrl = generateTextIcon(text);
-  // 将 data URL 转为 Blob
-  const parts = dataUrl.split(',');
-  const mime = parts[0]?.match(/:(.*?);/)?.[1] || 'image/png';
-  const bstr = atob(parts[1] || '');
-  const u8arr = new Uint8Array(bstr.length);
-  for (let i = 0; i < bstr.length; i++) {
-    u8arr[i] = bstr.charCodeAt(i);
-  }
-  return { blob: new Blob([u8arr], { type: mime }), dataUrl };
-};
-
-/**
- * 生成文字图标（返回 data URL）
- * 
- * 颜色方案：活力浅色背景 + 高饱和度深色文字（同色相）
- * 换行逻辑：文字中有空格时按空格拆分为多行显示
- * @param text 显示的文本
- * @param hue  可选，指定色相（0-359）。不传时随机生成。
- */
-export const generateTextIcon = (text: string, hue?: number): string => {
-  try {
-    const canvasData = getReusableCanvas();
-    if (!canvasData) return '';
-    const { canvas, ctx } = canvasData;
-
-    let displayText = text;
-    try {
-      const isUrlLike = text.startsWith('http') || text.includes('.');
-      if (isUrlLike) {
-        let hostname = text;
-        try {
-          const urlObj = new URL(text.startsWith('http') ? text : `https://${text}`);
-          hostname = urlObj.hostname;
-        } catch {
-          hostname = text;
-        }
-        hostname = hostname.replace(/^www\./, '');
-        const mainName = hostname.split('.')[0];
-        if (mainName) {
-          displayText = mainName;
-        }
-      }
-    } catch {
-      // 忽略
-    }
-
-    // 按空格拆分文字为多行，无空格时直接显示一行
-    const trimmed = displayText.trim();
-    const lines = trimmed.includes(' ')
-      ? trimmed.split(/\s+/).filter(Boolean)
-      : [trimmed];
-
-    // 颜色：活力浅色背景
-    const bgHue = hue ?? Math.floor(Math.random() * 360);
-    const bgSat = 55 + (bgHue * 7) % 25;      // 饱和度 55-80%
-    const bgLig = 82 + (bgHue * 3) % 10;       // 亮度 82-92%（浅色）
-    ctx.fillStyle = `hsl(${bgHue}, ${bgSat}%, ${bgLig}%)`;
-    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-    // 文字颜色：同色相，提高饱和度，降低明度
-    const textSat = Math.min(bgSat + 20, 100);
-    const textLig = 25 + (bgHue * 11) % 15;    // 亮度 25-40%（深色）
-    ctx.fillStyle = `hsl(${bgHue}, ${textSat}%, ${textLig}%)`;
-
-    // 字体样式：按 Figma 设计稿（192px 容器中 48px，等比到 576px canvas = 144px）
-    // Bricolage Grotesque SemiBold 600, lineHeight 90%
-    const fontSize = 144;
-    const lineHeight = fontSize * 0.9; // 129.6px
-
-    ctx.font = `600 ${fontSize}px "Bricolage Grotesque", sans-serif`;
-    ctx.textBaseline = 'alphabetic';
-    ctx.textAlign = 'left';
-
-    // padding: 设计稿 16px / 192px * 576 = 48px
-    const padding = 48;
-    const textAreaWidth = CANVAS_SIZE - padding * 2;
-
-    // 计算总文字块高度，垂直居中
-    const totalTextHeight = lines.length * lineHeight;
-    // alphabetic baseline 约在字体高度的 75% 处，首行基线位置
-    const startY = (CANVAS_SIZE - totalTextHeight) / 2 + fontSize * 0.75;
-
-    for (let i = 0; i < lines.length; i++) {
-      const lineText = lines[i];
-      // 如果文字超出宽度，缩放绘制
-      const measured = ctx.measureText(lineText);
-      if (measured.width > textAreaWidth) {
-        const scale = textAreaWidth / measured.width;
-        ctx.save();
-        ctx.translate(padding, startY + i * lineHeight);
-        ctx.scale(scale, 1);
-        ctx.fillText(lineText, 0, 0);
-        ctx.restore();
-      } else {
-        ctx.fillText(lineText, padding, startY + i * lineHeight);
-      }
-    }
-
-    return canvas.toDataURL('image/png');
-  } catch {
-    return '';
-  }
-};
-
-/**
- * 为文件夹生成图标（前4个应用的图标组合成2x2网格）
- * 注意：文件夹图标中的子项 icon 可能是 favicon:domain 引用，
- * 这里只用于文件夹预览缩略图（SVG 中嵌入），
- * 如果子项 icon 是引用 ID 则显示空白块
- */
-export const generateFolderIcon = (items: Array<{ icon?: string }>): string => {
-  if (items.length === 0) {
-    return generateTextIcon('');
-  }
-
-  const icons = items.slice(0, 4).map(item => {
-    const icon = item.icon || '';
-    // favicon: 引用无法嵌入 SVG，用空字符串（会显示为空白）
-    if (icon.startsWith('favicon:')) return '';
-    return icon || generateTextIcon('');
-  });
-
-  const svg = `
-    <svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <clipPath id="clip-0">
-          <rect x="0" y="0" width="32" height="32" rx="8"/>
-        </clipPath>
-        <clipPath id="clip-1">
-          <rect x="32" y="0" width="32" height="32" rx="8"/>
-        </clipPath>
-        <clipPath id="clip-2">
-          <rect x="0" y="32" width="32" height="32" rx="8"/>
-        </clipPath>
-        <clipPath id="clip-3">
-          <rect x="32" y="32" width="32" height="32" rx="8"/>
-        </clipPath>
-      </defs>
-      ${icons.map((icon, index) => {
-    const x = (index % 2) * 32;
-    const y = Math.floor(index / 2) * 32;
-    if (!icon) {
-      return `<rect x="${x}" y="${y}" width="32" height="32" rx="8" fill="rgba(128,128,128,0.2)"/>`;
-    }
-    return `
-          <g clip-path="url(#clip-${index})">
-            <image href="${icon}" x="${x}" y="${y}" width="32" height="32" preserveAspectRatio="xMidYMid slice"/>
-          </g>
-        `;
-  }).join('')}
-    </svg>
-  `;
-
-  return `data:image/svg+xml;base64,${btoa(svg)}`;
-};

@@ -171,7 +171,7 @@
 
 .renameInput:focus {
     background: var(--color-bg-tertiary);
-    border-color: var(--blue-focus);
+    border-color: var(--ui-control-focus-border);
 }
 
 .renameInput::placeholder {
@@ -214,3 +214,43 @@
     border-radius: 12px;
   }
 }
+/* Web × Pegboard 菜单强调色 */
+.menuItem:hover {
+    background: var(--fusion-accent-softer);
+}
+
+.renameInput:focus {
+    border-color: var(--fusion-accent);
+    box-shadow: 0 0 0 3px var(--fusion-focus-ring);
+}
+
+.confirmButton:hover {
+    border-color: var(--fusion-border-accent);
+    background: var(--fusion-accent-soft);
+    color: var(--fusion-accent);
+}
+
+/* ===== 菜单项统一交互色 ===== */
+.divider::after { background: var(--context-menu-border); }
+.menuItem { color: var(--context-menu-text); }
+.menuItem:hover { background: var(--context-menu-hover); }
+.menuItem:active { background: var(--context-menu-active); }
+.label { color: var(--context-menu-muted); opacity: 1; }
+.renameInput {
+    border-color: var(--ui-control-border);
+    border-radius: var(--ui-control-radius);
+    background: var(--ui-control-bg);
+}
+.renameInput:focus {
+    border-color: var(--ui-control-focus-border);
+    background: var(--ui-control-bg-hover);
+    box-shadow: var(--ui-control-focus-ring);
+}
+.confirmButton {
+    border-color: var(--ui-control-border);
+    border-radius: var(--ui-control-radius);
+    background: var(--ui-control-bg);
+}
+.confirmButton:hover { background: var(--ui-control-bg-hover); }
+.menu { border-radius: var(--ui-menu-radius); }
+.menuItem { border-radius: var(--ui-menu-item-radius); }

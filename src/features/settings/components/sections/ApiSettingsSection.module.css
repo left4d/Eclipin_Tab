@@ -1,0 +1,167 @@
+.apiCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.apiCardHeader p {
+  margin: 4px 0 0;
+  color: var(--color-text-tertiary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.apiCredentialGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.apiCredentialField {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.apiCredentialField span {
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+}
+
+.apiCredentialField input {
+  width: 100%;
+  min-height: 38px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
+  padding: 0 11px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.apiCredentialField input:focus {
+  border-color: var(--fusion-accent);
+  box-shadow: 0 0 0 3px var(--fusion-focus-ring);
+}
+
+.apiActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.apiStatus {
+  min-width: 0;
+  color: var(--color-text-tertiary);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.apiButtons {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 7px;
+}
+
+.apiButtons button {
+  min-height: 32px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 9px;
+  padding: 0 11px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+.apiButtons button:hover:not(:disabled) {
+  border-color: var(--fusion-border-accent);
+  background: var(--fusion-accent-soft);
+  color: var(--fusion-accent);
+}
+
+.apiButtons button:last-child {
+  border-color: var(--fusion-border-accent);
+  background: var(--fusion-accent);
+  color: var(--fusion-on-accent);
+}
+
+.apiButtons button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.apiHint {
+  margin: 0;
+  color: var(--color-text-tertiary);
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+@media (max-width: 720px) {
+  .apiCredentialGrid { grid-template-columns: 1fr; }
+  .apiActions { align-items: stretch; flex-direction: column; }
+  .apiButtons { justify-content: flex-end; }
+}
+
+.apiPermissionCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 14px;
+  padding: 14px;
+  background: var(--color-bg-secondary);
+}
+
+.apiPermissionCard > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.apiPermissionCard strong { color: var(--color-text-primary); font-size: 14px; }
+.apiPermissionCard span,
+.apiPermissionCard small { color: var(--color-text-tertiary); font-size: 11px; line-height: 1.45; }
+
+.apiPermissionCard button {
+  flex: 0 0 auto;
+  min-width: 86px;
+  height: 34px;
+  border: 0;
+  border-radius: var(--radius-small);
+  padding: 0 12px;
+  background: var(--fusion-accent);
+  color: var(--fusion-on-accent);
+  font: inherit;
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+
+.apiPermissionCard button:disabled { cursor: not-allowed; opacity: 0.48; }
+
+/* ===== 跟随统一界面材质 ===== */
+.apiCredentialField input,
+.apiButtons button:not(:last-child),
+.apiPermissionCard {
+  border-color: var(--ui-control-border);
+  border-radius: var(--ui-control-radius);
+  background: var(--ui-control-bg);
+}
+.apiCredentialField input:focus {
+  border-color: var(--ui-control-focus-border);
+  box-shadow: var(--ui-control-focus-ring);
+}
+.apiButtons button:not(:last-child):hover:not(:disabled) { background: var(--ui-control-bg-hover); }

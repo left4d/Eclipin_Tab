@@ -1,0 +1,666 @@
+.root {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 52px;
+  padding: 11px 14px 8px 16px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.header:active { cursor: grabbing; }
+
+.titleBlock {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  color: var(--widget-text-primary);
+  font-size: 0.98rem;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+
+.count {
+  color: var(--widget-text-tertiary);
+  font-size: 0.72rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.headerActions {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.spaceSelect {
+  min-width: 0;
+  max-width: 132px;
+  height: 30px;
+  border: 1px solid var(--widget-border-subtle);
+  border-radius: 9px;
+  padding: 0 26px 0 9px;
+  background: var(--widget-control-surface);
+  color: var(--widget-text-secondary);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 750;
+  outline: none;
+}
+
+.spaceSelect:focus { box-shadow: 0 0 0 2px var(--fusion-focus-ring); }
+
+.iconButton,
+.addButton,
+.saveButton,
+.groupAddButton,
+.permissionButton,
+.saveCurrentButton,
+.sessionIconButton,
+.removeSavedButton,
+.pickerClose,
+.pickerSessionButton,
+.newSessionRow button {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  transition: background 150ms ease, transform 150ms ease, color 150ms ease, opacity 150ms ease;
+}
+
+.iconButton {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--widget-control-surface);
+  color: var(--widget-text-secondary);
+  font-size: 0.9rem;
+}
+
+.iconButton:hover,
+.addButton:hover:not(:disabled),
+.saveButton:hover,
+.groupAddButton:hover:not(:disabled),
+.permissionButton:hover,
+.saveCurrentButton:hover,
+.sessionIconButton:hover,
+.removeSavedButton:hover,
+.pickerClose:hover,
+.pickerSessionButton:hover,
+.newSessionRow button:hover {
+  background: var(--widget-control-hover);
+  transform: translateY(-1px);
+}
+
+.viewTabs {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  margin: 0 10px;
+  padding: 3px;
+  border: 1px solid var(--widget-border-subtle);
+  border-radius: 11px;
+  background: var(--widget-surface-muted);
+}
+
+.viewTab,
+.viewTabActive {
+  min-width: 0;
+  height: 31px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 9px;
+  background: transparent;
+  color: var(--widget-text-tertiary);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.viewTab:hover { color: var(--widget-text-primary); }
+
+.viewTabActive {
+  background: var(--widget-control-surface);
+  color: var(--widget-text-primary);
+  box-shadow: inset 0 0 0 1px var(--widget-border-subtle);
+}
+
+.viewTab span,
+.viewTabActive span {
+  margin-left: 3px;
+  color: var(--widget-text-tertiary);
+  font-size: 0.64rem;
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px 10px 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--widget-scroll-thumb) transparent;
+}
+
+.content::-webkit-scrollbar { width: 6px; }
+.content::-webkit-scrollbar-thumb { border-radius: 999px; background: var(--widget-scroll-thumb); }
+
+.group {
+  border-bottom: 1px solid var(--widget-border-subtle);
+}
+
+.group:last-child { border-bottom: 0; }
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 37px;
+}
+
+.groupToggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  padding: 4px 3px;
+  background: transparent;
+  color: var(--widget-text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chevron {
+  flex: 0 0 auto;
+  width: 12px;
+  color: var(--widget-text-tertiary);
+  font-size: 0.68rem;
+  transition: transform 150ms ease;
+}
+
+.chevronCollapsed { transform: rotate(-90deg); }
+
+.domain {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 820;
+}
+
+.domainCount {
+  flex: 0 0 auto;
+  color: var(--widget-text-tertiary);
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.groupActions,
+.rowActions,
+.sessionActions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.groupAddButton {
+  flex: 0 0 auto;
+  min-width: 29px;
+  height: 27px;
+  border-radius: 8px;
+  padding: 0 8px;
+  background: var(--widget-surface-muted);
+  color: var(--widget-accent);
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.groupAddButton:disabled,
+.addButton:disabled {
+  cursor: default;
+  transform: none;
+  color: var(--widget-text-tertiary);
+  opacity: 0.58;
+}
+
+.tabList,
+.savedTabList {
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 6px 18px;
+}
+
+.savedTabList { padding-left: 12px; }
+
+.tabRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 3px 2px 3px 4px;
+  border-radius: 10px;
+}
+
+.tabRow:hover { background: var(--widget-surface-muted); }
+
+.tabMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.favicon,
+.faviconFallback {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+}
+
+.favicon { object-fit: contain; }
+
+.faviconFallback {
+  display: grid;
+  place-items: center;
+  background: var(--widget-surface-muted);
+  color: var(--widget-text-secondary);
+  font-size: 0.66rem;
+  font-weight: 900;
+}
+
+.tabCopy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tabTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--widget-text-primary);
+  font-size: 0.73rem;
+  font-weight: 720;
+}
+
+.tabMeta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--widget-text-tertiary);
+  font-size: 0.62rem;
+  font-weight: 620;
+}
+
+.activeDot {
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  margin-left: 2px;
+  border-radius: 999px;
+  background: var(--widget-accent);
+}
+
+.addButton,
+.saveButton,
+.removeSavedButton,
+.sessionIconButton,
+.pickerClose {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.addButton {
+  color: var(--widget-accent);
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.saveButton {
+  color: var(--widget-text-tertiary);
+}
+
+.saveButtonActive {
+  color: var(--widget-accent);
+  background: var(--widget-accent-soft);
+}
+
+.actionSvg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.state {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  padding: 20px;
+  color: var(--widget-text-tertiary);
+  text-align: center;
+  font-size: 0.74rem;
+  font-weight: 680;
+}
+
+.permissionButton {
+  min-height: 34px;
+  border-radius: 10px;
+  padding: 0 12px;
+  background: var(--widget-accent-soft);
+  color: var(--widget-accent);
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.notice {
+  flex: 0 0 auto;
+  min-height: 24px;
+  padding: 4px 12px 7px;
+  color: var(--widget-text-tertiary);
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.savedView {
+  min-height: 100%;
+}
+
+.savedToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+  padding: 5px 2px 8px;
+  border-bottom: 1px solid var(--widget-border-subtle);
+}
+
+.savedToolbar > span {
+  min-width: 0;
+  color: var(--widget-text-tertiary);
+  font-size: 0.63rem;
+  font-weight: 680;
+}
+
+.saveCurrentButton {
+  flex: 0 0 auto;
+  min-height: 29px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 8px;
+  padding: 0 9px;
+  background: var(--widget-accent-soft);
+  color: var(--widget-accent);
+  font-size: 0.66rem;
+  font-weight: 850;
+}
+
+.sessionCard {
+  border-bottom: 1px solid var(--widget-border-subtle);
+}
+
+.sessionCard:last-child { border-bottom: 0; }
+
+.sessionHeader {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sessionToggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  padding: 5px 3px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sessionCopy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sessionName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--widget-text-primary);
+  font-size: 0.77rem;
+  font-weight: 830;
+}
+
+.sessionMeta {
+  color: var(--widget-text-tertiary);
+  font-size: 0.61rem;
+  font-weight: 650;
+}
+
+.sessionIconButton,
+.removeSavedButton,
+.pickerClose {
+  color: var(--widget-text-tertiary);
+}
+
+.sessionIconButton:hover,
+.removeSavedButton:hover,
+.pickerClose:hover {
+  color: var(--widget-text-primary);
+}
+
+.dangerButton:hover {
+  color: #d35f64;
+  background: color-mix(in srgb, #d35f64 10%, transparent);
+}
+
+.pickerBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  background: color-mix(in srgb, var(--color-bg-primary) 58%, transparent);
+  backdrop-filter: blur(7px);
+}
+
+.pickerPanel {
+  width: min(100%, 330px);
+  max-height: min(88%, 420px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--widget-border-subtle);
+  border-radius: 14px;
+  padding: 12px;
+  background: var(--widget-control-surface);
+  box-shadow: 0 16px 36px color-mix(in srgb, #000 18%, transparent);
+  overflow: auto;
+}
+
+.pickerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pickerHeader > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pickerHeader strong {
+  color: var(--widget-text-primary);
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.pickerHeader span {
+  color: var(--widget-text-tertiary);
+  font-size: 0.62rem;
+  font-weight: 680;
+}
+
+.pickerSessions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pickerLabel {
+  color: var(--widget-text-tertiary);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.pickerSessionButton {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-radius: 9px;
+  padding: 0 10px;
+  background: var(--widget-surface-muted);
+  color: var(--widget-text-primary);
+  font-size: 0.7rem;
+  font-weight: 780;
+  text-align: left;
+}
+
+.pickerSessionButton span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickerSessionButton small {
+  flex: 0 0 auto;
+  color: var(--widget-text-tertiary);
+  font-size: 0.6rem;
+}
+
+.newSessionForm {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.newSessionRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.newSessionRow input {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  box-sizing: border-box;
+  border: 1px solid var(--widget-border-subtle);
+  border-radius: 9px;
+  padding: 0 10px;
+  outline: 0;
+  background: var(--widget-surface-muted);
+  color: var(--widget-text-primary);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 720;
+}
+
+.newSessionRow input:focus {
+  border-color: var(--widget-accent);
+  box-shadow: 0 0 0 2px var(--fusion-focus-ring);
+}
+
+.newSessionRow button {
+  flex: 0 0 auto;
+  height: 34px;
+  border-radius: 9px;
+  padding: 0 12px;
+  background: var(--widget-accent);
+  color: var(--widget-on-accent);
+  font-size: 0.7rem;
+  font-weight: 850;
+}
+
+@container (max-width: 380px) {
+  .savedToolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .saveCurrentButton { justify-content: center; }
+  .tabMeta { display: none; }
+  .tabList,
+  .savedTabList { padding-left: 8px; }
+  .groupAddButton { padding-inline: 6px; }
+}
+
+@container (max-width: 330px) {
+  .header { align-items: flex-start; flex-direction: column; }
+  .headerActions { width: 100%; justify-content: stretch; }
+  .spaceSelect { flex: 1; max-width: none; }
+  .viewTab,
+  .viewTabActive { padding-inline: 5px; font-size: 0.64rem; }
+  .rowActions { gap: 1px; }
+}

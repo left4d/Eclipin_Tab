@@ -1,0 +1,893 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483600;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  box-sizing: border-box;
+  background: var(--ui-overlay-bg);
+  backdrop-filter: blur(var(--ui-overlay-blur)) saturate(var(--ui-overlay-saturate));
+  -webkit-backdrop-filter: blur(var(--ui-overlay-blur)) saturate(var(--ui-overlay-saturate));
+}
+
+.modal {
+  position: relative;
+  z-index: 2147483601;
+  display: flex;
+  width: min(820px, 100%);
+  max-height: min(720px, calc(100vh - 36px));
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid var(--ui-panel-border);
+  border-radius: var(--ui-panel-radius);
+  background: var(--ui-panel-bg);
+  color: var(--color-text-primary);
+  box-shadow: var(--ui-panel-shadow), inset 0 1px 0 color-mix(in srgb, var(--fusion-palette-surface) 28%, transparent);
+  backdrop-filter: blur(var(--ui-panel-blur)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--ui-panel-blur)) saturate(1.08);
+}
+
+.header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px 15px;
+  border-bottom: 1px solid var(--ui-panel-divider);
+}
+
+.headerText {
+  min-width: 0;
+}
+
+.headerEyebrow {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: 760;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 760;
+  letter-spacing: -0.03em;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.closeButton {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border: 1px solid var(--ui-control-border);
+  border-radius: var(--ui-control-radius);
+  background: var(--ui-control-bg);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.closeButton:hover {
+  background: var(--ui-control-bg-hover);
+}
+
+.body {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: 196px minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.sidebar {
+  min-height: 0;
+  overflow: auto;
+  padding: 15px 12px 16px;
+  border-right: 1px solid var(--ui-panel-divider);
+  background: color-mix(in srgb, var(--ui-panel-card-bg) 54%, transparent);
+  overscroll-behavior: contain;
+}
+
+.sidebarLabel {
+  margin: 0 8px 7px;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: 720;
+}
+
+.targetGroups {
+  display: grid;
+  gap: 4px;
+}
+
+.targetGroupButton,
+.anchorQuickButton {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: 28px minmax(0, 1fr) 12px;
+  align-items: center;
+  gap: 9px;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.targetGroupButton:hover,
+.anchorQuickButton:hover {
+  background: var(--ui-control-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.targetGroupButtonActive,
+.anchorQuickButtonActive {
+  border-color: color-mix(in srgb, var(--fusion-accent) 34%, var(--ui-control-border));
+  background: var(--fusion-accent-soft);
+  color: var(--color-text-primary);
+}
+
+.targetGroupIcon,
+.anchorQuickIcon {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--ui-control-bg);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.targetGroupText,
+.anchorQuickText {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.targetGroupText b,
+.anchorQuickText b {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.targetGroupText small,
+.anchorQuickText small {
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 9px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.targetGroupChevron {
+  width: 12px;
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  text-align: center;
+}
+
+.targetGroupButtonActive .targetGroupChevron,
+.anchorQuickButtonActive .targetGroupChevron {
+  color: var(--color-text-primary);
+}
+
+.sidebarDivider {
+  height: 1px;
+  margin: 12px 7px;
+  background: var(--ui-panel-divider);
+}
+
+.main {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px 20px 20px;
+  overscroll-behavior: contain;
+}
+
+.editorSection {
+  min-width: 0;
+}
+
+.sectionHeadingRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sectionHeadingText {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.sectionIcon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border: 1px solid var(--ui-control-border);
+  border-radius: 10px;
+  background: var(--ui-control-bg);
+  color: var(--color-text-primary);
+  font-size: 16px;
+  font-weight: 760;
+}
+
+.eyebrow {
+  margin-bottom: 2px;
+  color: var(--color-text-secondary);
+  font-size: 9px;
+  font-weight: 720;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 740;
+  letter-spacing: -0.015em;
+}
+
+.sectionDescription {
+  margin: 2px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.statusBadge {
+  display: inline-flex;
+  min-height: 23px;
+  flex: 0 0 auto;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--fusion-accent) 28%, transparent);
+  border-radius: 999px;
+  background: var(--fusion-accent-soft);
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.editorPanel,
+.anchorSection {
+  border: 1px solid var(--ui-control-border);
+  border-radius: 14px;
+  padding: 14px;
+  background: var(--ui-panel-card-bg);
+}
+
+.label {
+  display: grid;
+  gap: 7px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+
+.label > span {
+  font-weight: 650;
+}
+
+.inputActionWrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+}
+
+.input,
+.numberInput,
+.anchorInput {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--ui-control-border);
+  border-radius: var(--ui-control-radius);
+  background: var(--ui-control-bg);
+  color: var(--color-text-primary);
+  padding: 10px 11px;
+  outline: none;
+  font: inherit;
+  font-size: 13px;
+}
+
+.input:focus,
+.numberInput:focus,
+.anchorInput:focus {
+  border-color: var(--ui-control-focus-border);
+  box-shadow: var(--ui-control-focus-ring);
+}
+
+.inputAction {
+  min-width: 52px;
+  border: 1px solid var(--ui-control-border);
+  border-radius: var(--ui-control-radius);
+  background: var(--ui-control-bg);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.inputAction:hover {
+  background: var(--ui-control-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.numberInput {
+  font-variant-numeric: tabular-nums;
+}
+
+.help {
+  margin: 7px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.anchorPicker {
+  margin-top: 12px;
+}
+
+.pickerLabel {
+  margin-bottom: 7px;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.anchorChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.anchorChip,
+.presetButton {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 6px 9px;
+  border: 1px solid var(--ui-control-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.anchorChip:hover,
+.anchorChipActive,
+.presetButton:hover {
+  border-color: color-mix(in srgb, var(--fusion-accent) 40%, var(--ui-control-border));
+  background: var(--fusion-accent-soft);
+  color: var(--color-text-primary);
+}
+
+.emptyHint {
+  margin-top: 10px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ui-control-bg) 76%, transparent);
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.pageModes {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.pageModesThree {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pageModeButton {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  padding: 9px 8px;
+  border: 1px solid var(--ui-control-border);
+  border-radius: 10px;
+  background: var(--ui-control-bg);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.pageModeButton:hover {
+  background: var(--ui-control-bg-hover);
+}
+
+.pageModeButton b {
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pageModeButton small {
+  overflow: hidden;
+  font-size: 8px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pageModeButtonActive {
+  border-color: color-mix(in srgb, var(--fusion-accent) 42%, var(--ui-control-border));
+  background: var(--fusion-accent-soft);
+  color: var(--color-text-primary);
+}
+
+.focusBox {
+  margin-top: 10px;
+  padding: 11px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--ui-control-bg) 72%, transparent);
+}
+
+.grid2,
+.grid3 {
+  display: grid;
+  gap: 10px;
+}
+
+.grid2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.inlineInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 11px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--fusion-accent-soft) 52%, transparent);
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.inlineInfoIcon {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--ui-control-bg);
+  color: var(--color-text-primary);
+  font-size: 14px;
+}
+
+.presetRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.advancedHelp {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ui-control-bg) 70%, transparent);
+  color: var(--color-text-secondary);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.advancedHelp b {
+  color: var(--color-text-primary);
+  font-size: 10px;
+}
+
+.advancedHelp code,
+.previewText code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.previewCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 9px;
+  padding: 9px 11px;
+  border: 1px solid color-mix(in srgb, var(--fusion-accent) 20%, var(--ui-control-border));
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--fusion-accent-soft) 38%, transparent);
+}
+
+.previewIcon {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  flex: 0 0 27px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--ui-control-bg);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 720;
+}
+
+.previewText {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.previewText span {
+  color: var(--color-text-secondary);
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.previewText b,
+.previewText code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.previewText b {
+  color: var(--color-text-primary);
+  font-size: 11px;
+  font-weight: 680;
+}
+
+.previewText code {
+  color: var(--color-text-secondary);
+  font-size: 9px;
+}
+
+.anchorSection {
+  margin-top: 14px;
+}
+
+.anchorSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.anchorSectionIcon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--ui-control-bg);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.anchorSectionText {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.anchorSectionText b {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.anchorSectionText small {
+  color: var(--color-text-secondary);
+  font-size: 9px;
+}
+
+.anchorInputWrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--ui-control-border);
+  border-radius: var(--ui-control-radius);
+  background: var(--ui-control-bg);
+}
+
+.anchorInputWrap:focus-within {
+  border-color: var(--ui-control-focus-border);
+  box-shadow: var(--ui-control-focus-ring);
+}
+
+.anchorInputWrap > span {
+  padding-left: 11px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.anchorInput {
+  border: 0;
+  background: transparent;
+  padding-left: 4px;
+}
+
+.anchorInput:focus {
+  box-shadow: none;
+}
+
+.error {
+  margin-top: 12px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, #ef4444 9%, transparent);
+  color: #ef4444;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 20px;
+  border-top: 1px solid var(--ui-panel-divider);
+  background: color-mix(in srgb, var(--ui-panel-bg) 92%, transparent);
+}
+
+.actionHint {
+  min-width: 0;
+  flex: 1 1 auto;
+  color: var(--color-text-secondary);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.actionHint kbd {
+  border: 1px solid var(--ui-control-border);
+  border-radius: 5px;
+  padding: 2px 5px;
+  background: var(--ui-control-bg);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-weight: 650;
+}
+
+.actionHint span {
+  margin: 0 3px;
+  opacity: .55;
+}
+
+.actionButton {
+  flex: 0 0 auto;
+  border: 1px solid var(--ui-control-border);
+  border-radius: var(--ui-control-radius);
+  padding: 8px 12px;
+  background: var(--ui-control-bg);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.actionButton:hover:not(:disabled) {
+  background: var(--ui-control-bg-hover);
+}
+
+.actionButton:disabled {
+  cursor: default;
+  opacity: .36;
+}
+
+.primary {
+  border-color: color-mix(in srgb, var(--fusion-accent) 80%, transparent);
+  background: var(--fusion-accent);
+  color: white;
+  box-shadow: var(--fusion-shadow-sm);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--fusion-accent);
+  filter: brightness(1.04);
+}
+
+.danger {
+  color: #ef4444;
+}
+
+@media (max-width: 720px) {
+  .backdrop {
+    padding: 10px;
+  }
+
+  .modal {
+    max-height: calc(100vh - 20px);
+  }
+
+  .body {
+    grid-template-columns: 154px minmax(0, 1fr);
+  }
+
+  .header {
+    padding: 15px 16px 13px;
+  }
+
+  .sidebar {
+    padding: 12px 8px;
+  }
+
+  .targetGroupButton,
+  .anchorQuickButton {
+    grid-template-columns: 26px minmax(0, 1fr) 10px;
+    gap: 7px;
+    padding: 7px;
+  }
+
+  .targetGroupIcon,
+  .anchorQuickIcon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .targetGroupText small,
+  .anchorQuickText small {
+    display: none;
+  }
+
+  .main {
+    padding: 15px 14px 16px;
+  }
+
+  .pageModes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pageModesThree {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .grid3 {
+    grid-template-columns: 1fr;
+  }
+
+  .actionHint {
+    display: none;
+  }
+
+  .actions {
+    padding: 10px 14px;
+  }
+
+  .danger {
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .modal {
+    width: 100%;
+  }
+
+  .subtitle,
+  .headerEyebrow {
+    display: none;
+  }
+
+  .body {
+    display: block;
+    overflow: auto;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    overflow-x: auto;
+    padding: 9px 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--ui-panel-divider);
+    background: var(--ui-panel-bg);
+  }
+
+  .sidebarLabel,
+  .sidebarDivider {
+    display: none;
+  }
+
+  .targetGroups {
+    display: flex;
+    gap: 5px;
+  }
+
+  .targetGroupButton,
+  .anchorQuickButton {
+    width: auto;
+    min-width: max-content;
+    grid-template-columns: 24px auto;
+    padding: 6px 9px 6px 7px;
+  }
+
+  .anchorQuickButton {
+    margin-left: 4px;
+  }
+
+  .targetGroupIcon,
+  .anchorQuickIcon {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+
+  .targetGroupText b,
+  .anchorQuickText b {
+    font-size: 10px;
+  }
+
+  .targetGroupChevron {
+    display: none;
+  }
+
+  .main {
+    overflow: visible;
+  }
+
+  .pageModesThree {
+    grid-template-columns: 1fr;
+  }
+
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+  }
+
+  .danger {
+    order: 2;
+  }
+}

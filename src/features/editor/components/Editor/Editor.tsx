@@ -9,7 +9,7 @@ interface EditorProps {
 
 export const Editor: React.FC<EditorProps> = ({ onClick, visible = false, isEditMode = false }) => {
   return (
-    <header className={styles.editor} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none' }}>
+    <header className={`${styles.editor} ${isEditMode ? styles.active : ''}`} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none' }}>
       <div className={styles.innerContainer} onClick={onClick}>
         <div className={styles.icon}>
           {/* 普通模式：编辑图标，编辑模式：完成图标 */}

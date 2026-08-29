@@ -1,0 +1,130 @@
+.clickAway {
+  position: fixed;
+  inset: 0;
+  z-index: 1000000010;
+  background: transparent;
+}
+
+.editor {
+  position: fixed;
+  z-index: 1000000011;
+  width: 324px;
+  box-sizing: border-box;
+  border: 1px solid var(--context-menu-border);
+  border-radius: var(--radius-default);
+  padding: 14px;
+  background: var(--context-menu-bg);
+  color: var(--context-menu-text);
+  box-shadow: var(--context-menu-shadow);
+  backdrop-filter: blur(var(--context-menu-blur)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--context-menu-blur)) saturate(1.08);
+  font-family: var(--font-family);
+}
+
+.title {
+  margin-bottom: 12px;
+  color: var(--context-menu-text);
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold, 650);
+}
+
+.sizeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sizeRow label {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 7px;
+  color: var(--context-menu-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sizeRow input {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  box-sizing: border-box;
+  border: 1px solid var(--context-menu-border);
+  border-radius: 9px;
+  padding: 0 9px;
+  outline: none;
+  background: color-mix(in srgb, var(--context-menu-hover) 55%, transparent);
+  color: var(--context-menu-text);
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sizeRow input:focus {
+  border-color: color-mix(in srgb, var(--fusion-accent) 68%, var(--context-menu-border));
+  box-shadow: 0 0 0 2px var(--fusion-accent-soft);
+}
+
+.multiply {
+  color: var(--context-menu-muted);
+  font-size: 13px;
+}
+
+.lockRow {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--context-menu-text);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.lockRow input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--fusion-accent);
+}
+
+.lockDisabled {
+  cursor: default;
+  opacity: .78;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.actions button {
+  min-height: 34px;
+  border: 1px solid var(--context-menu-border);
+  border-radius: 9px;
+  padding: 0 12px;
+  background: color-mix(in srgb, var(--context-menu-hover) 62%, transparent);
+  color: var(--context-menu-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.actions button:hover:not(:disabled) { background: var(--context-menu-hover); }
+.actions button:disabled { cursor: not-allowed; opacity: .42; }
+
+.actions .applyButton {
+  border-color: color-mix(in srgb, var(--fusion-accent) 56%, var(--context-menu-border));
+  background: var(--fusion-accent);
+  color: var(--fusion-on-accent);
+}
+
+/* ===== 全局菜单几何与控件规范 ===== */
+.editor { border-radius: var(--ui-menu-radius); }
+.sizeRow input,
+.actions button { border-radius: var(--ui-control-radius); }

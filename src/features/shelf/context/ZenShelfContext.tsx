@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Sticker, StickerInput, DEFAULT_TEXT_STYLE } from '@/shared/types';
 import { storage } from '@/shared/utils/storage';
 import { db } from '@/shared/utils/db';
+import { PERSISTENCE_RESTORE_APPLIED_EVENT, PERSISTENCE_RESTORE_FAILED_EVENT, PERSISTENCE_RESTORE_START_EVENT } from '@/shared/utils/persistenceLifecycle';
+import { useThemeData } from '@/features/theme/context/ThemeContext';
 
 // 防抖保存延迟 (ms)
 const SAVE_DEBOUNCE_MS = 500;
@@ -13,14 +15,17 @@ const SAVE_DEBOUNCE_MS = 500;
 interface ZenShelfContextType {
     // 状态
     stickers: Sticker[];
+    allStickers: Sticker[];
     deletedStickers: Sticker[];
     selectedStickerId: string | null;
+    currentPageIndex: number;
 
     // 操作
-    addSticker: (input: StickerInput) => void;
+    addSticker: (input: StickerInput) => string;
     updateSticker: (id: string, updates: Partial<Sticker>) => void;
     deleteSticker: (id: string) => void;
     selectSticker: (id: string | null) => void;
+    setCurrentPageIndex: (pageIndex: number) => void;
     bringToTop: (id: string) => void;
     restoreSticker: (sticker: Sticker) => void;
     permanentlyDeleteSticker: (id: string) => void;
@@ -40,51 +45,217 @@ const generateId = (): string => {
     return `sticker-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 };
 
+const getPageId = (pageIndex: number) => `page-${pageIndex}`;
+
+const belongsToPage = (sticker: Sticker, pageId: string) => (sticker.pageId ?? 'page-0') === pageId;
+const isVisibleOnPage = (sticker: Sticker, pageId: string) => sticker.positionMode === 'viewport' || belongsToPage(sticker, pageId);
+
+const migrateStickersToHorizontalPages = (stickers: Sticker[]): Sticker[] => {
+    const viewportHeight = Math.max(320, window.innerHeight);
+    return stickers.map((sticker) => {
+        if (sticker.positionMode === 'viewport') {
+            return { ...sticker };
+        }
+        const rawPage = Number.parseInt((sticker.pageId ?? 'page-0').replace('page-', ''), 10);
+        const sourcePage = Number.isFinite(rawPage) ? Math.max(0, rawPage) : 0;
+        if (sourcePage === 0) {
+            return { ...sticker, pageId: 'page-0' };
+        }
+        const pageOffset = sticker.y < 0 ? 0 : Math.floor(sticker.y / viewportHeight);
+        const pageIndex = Math.max(1, sourcePage + pageOffset);
+        return {
+            ...sticker,
+            pageId: `page-${pageIndex}`,
+            y: sticker.y - pageOffset * viewportHeight,
+        };
+    });
+};
+
+const scheduleStickerImageCleanup = (ids: string[]) => {
+    if (ids.length === 0) return;
+    window.setTimeout(() => {
+        const referenced = new Set<string>();
+        for (const mode of ['vertical', 'horizontal'] as const) {
+            [...storage.getStickers(mode), ...storage.getDeletedStickers(mode)].forEach((sticker) => {
+                if (sticker.type === 'image' && sticker.content && !sticker.content.startsWith('data:')) referenced.add(sticker.content);
+                if (sticker.type === 'image' && sticker.iconSwapContent && !sticker.iconSwapContent.startsWith('data:')) referenced.add(sticker.iconSwapContent);
+            });
+        }
+        const orphaned = Array.from(new Set(ids)).filter((id) => !referenced.has(id));
+        if (orphaned.length > 0) db.removeStickerImages(orphaned).catch(console.error);
+    }, SAVE_DEBOUNCE_MS + 180);
+};
+
+const loadStickerLayout = (mode: 'vertical' | 'horizontal') => {
+    if (mode === 'horizontal' && !storage.hasStickerLayout('horizontal')) {
+        const migrated = migrateStickersToHorizontalPages(storage.getStickers('vertical'));
+        const migratedDeleted = migrateStickersToHorizontalPages(storage.getDeletedStickers('vertical'));
+        storage.saveStickers(migrated, 'horizontal');
+        storage.saveDeletedStickers(migratedDeleted, 'horizontal');
+    }
+    return {
+        active: storage.getStickers(mode),
+        deleted: storage.getDeletedStickers(mode),
+    };
+};
+
 // ============================================================================
 // Provider 实现
 // ============================================================================
 
 export const ZenShelfProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // 状态初始化：从 localStorage 加载
-    const [stickers, setStickers] = useState<Sticker[]>(() => storage.getStickers());
-    const [deletedStickers, setDeletedStickers] = useState<Sticker[]>(() => storage.getDeletedStickers());
+    const { pageSlideDirection } = useThemeData();
+    const initialLayoutRef = useRef<'vertical' | 'horizontal'>(pageSlideDirection);
+    const initialLayout = useMemo(() => loadStickerLayout(initialLayoutRef.current), []);
+    // 上下/左右模式使用两套布局，避免无限横向分页与纵向长画布互相改写坐标。
+    const [allStickers, setAllStickers] = useState<Sticker[]>(initialLayout.active);
+    const [allDeletedStickers, setAllDeletedStickers] = useState<Sticker[]>(initialLayout.deleted);
     const [selectedStickerId, setSelectedStickerId] = useState<string | null>(null);
+    const [currentPageIndex, setCurrentPageIndex] = useState(0);
+    const pageIndex = currentPageIndex;
+    const currentPageId = useMemo(() => getPageId(pageIndex), [pageIndex]);
+    const stickers = useMemo(() => allStickers.filter(sticker => isVisibleOnPage(sticker, currentPageId)), [allStickers, currentPageId]);
+    const deletedStickers = useMemo(() => allDeletedStickers.filter(sticker => isVisibleOnPage(sticker, currentPageId)), [allDeletedStickers, currentPageId]);
 
-    // 防抖保存 refs
-    const stickersSaveTimeoutRef = useRef<number>();
-    const deletedStickersSaveTimeoutRef = useRef<number>();
+    // 防抖保存 refs；latest refs 用于在标签页关闭前同步落盘最新数据。
+    const stickersSaveTimeoutRef = useRef<number | null>(null);
+    const deletedStickersSaveTimeoutRef = useRef<number | null>(null);
+    // 快照恢复期间禁止把当前页面的旧内存状态写回 localStorage。
+    // 否则 import 完成后的 reload/pagehide 会把刚恢复的贴纸再次覆盖掉。
+    const persistenceSuspendedRef = useRef(false);
+    const latestStickersRef = useRef(allStickers);
+    const latestDeletedStickersRef = useRef(allDeletedStickers);
+    latestStickersRef.current = allStickers;
+    latestDeletedStickersRef.current = allDeletedStickers;
+
+    useEffect(() => {
+        const cancelPendingStickerSaves = () => {
+            if (stickersSaveTimeoutRef.current !== null) {
+                window.clearTimeout(stickersSaveTimeoutRef.current);
+                stickersSaveTimeoutRef.current = null;
+            }
+            if (deletedStickersSaveTimeoutRef.current !== null) {
+                window.clearTimeout(deletedStickersSaveTimeoutRef.current);
+                deletedStickersSaveTimeoutRef.current = null;
+            }
+        };
+
+        const handleRestoreStart = () => {
+            persistenceSuspendedRef.current = true;
+            cancelPendingStickerSaves();
+        };
+
+        const handleRestoreApplied = () => {
+            // applySnapshot 已经把结构化贴纸写入 storage。这里同步刷新 refs，
+            // 确保紧随其后的 reload/pagehide 即使触发保存，也只会写回恢复后的数据。
+            const restored = loadStickerLayout(initialLayoutRef.current);
+            latestStickersRef.current = restored.active;
+            latestDeletedStickersRef.current = restored.deleted;
+            setAllStickers(restored.active);
+            setAllDeletedStickers(restored.deleted);
+            persistenceSuspendedRef.current = false;
+        };
+
+        const handleRestoreFailed = () => {
+            persistenceSuspendedRef.current = false;
+        };
+
+        window.addEventListener(PERSISTENCE_RESTORE_START_EVENT, handleRestoreStart);
+        window.addEventListener(PERSISTENCE_RESTORE_APPLIED_EVENT, handleRestoreApplied);
+        window.addEventListener(PERSISTENCE_RESTORE_FAILED_EVENT, handleRestoreFailed);
+        return () => {
+            window.removeEventListener(PERSISTENCE_RESTORE_START_EVENT, handleRestoreStart);
+            window.removeEventListener(PERSISTENCE_RESTORE_APPLIED_EVENT, handleRestoreApplied);
+            window.removeEventListener(PERSISTENCE_RESTORE_FAILED_EVENT, handleRestoreFailed);
+        };
+    }, []);
 
     // 持久化：stickers 变化时防抖保存到 localStorage
     useEffect(() => {
-        if (stickersSaveTimeoutRef.current) {
-            clearTimeout(stickersSaveTimeoutRef.current);
+        if (stickersSaveTimeoutRef.current !== null) {
+            window.clearTimeout(stickersSaveTimeoutRef.current);
         }
         stickersSaveTimeoutRef.current = window.setTimeout(() => {
-            storage.saveStickers(stickers);
+            stickersSaveTimeoutRef.current = null;
+            if (persistenceSuspendedRef.current) return;
+            storage.saveStickers(latestStickersRef.current, initialLayoutRef.current);
         }, SAVE_DEBOUNCE_MS);
 
         return () => {
-            if (stickersSaveTimeoutRef.current) {
-                clearTimeout(stickersSaveTimeoutRef.current);
+            if (stickersSaveTimeoutRef.current !== null) {
+                window.clearTimeout(stickersSaveTimeoutRef.current);
+                stickersSaveTimeoutRef.current = null;
             }
         };
-    }, [stickers]);
+    }, [allStickers]);
 
     // 持久化：deletedStickers 变化时防抖保存到 localStorage
     useEffect(() => {
-        if (deletedStickersSaveTimeoutRef.current) {
-            clearTimeout(deletedStickersSaveTimeoutRef.current);
+        if (deletedStickersSaveTimeoutRef.current !== null) {
+            window.clearTimeout(deletedStickersSaveTimeoutRef.current);
         }
         deletedStickersSaveTimeoutRef.current = window.setTimeout(() => {
-            storage.saveDeletedStickers(deletedStickers);
+            deletedStickersSaveTimeoutRef.current = null;
+            if (persistenceSuspendedRef.current) return;
+            storage.saveDeletedStickers(latestDeletedStickersRef.current, initialLayoutRef.current);
         }, SAVE_DEBOUNCE_MS);
 
         return () => {
-            if (deletedStickersSaveTimeoutRef.current) {
-                clearTimeout(deletedStickersSaveTimeoutRef.current);
+            if (deletedStickersSaveTimeoutRef.current !== null) {
+                window.clearTimeout(deletedStickersSaveTimeoutRef.current);
+                deletedStickersSaveTimeoutRef.current = null;
             }
         };
-    }, [deletedStickers]);
+    }, [allDeletedStickers]);
+
+    useEffect(() => {
+        const flushPendingStickerChanges = () => {
+            if (persistenceSuspendedRef.current) return;
+            if (stickersSaveTimeoutRef.current !== null) {
+                window.clearTimeout(stickersSaveTimeoutRef.current);
+                stickersSaveTimeoutRef.current = null;
+            }
+            if (deletedStickersSaveTimeoutRef.current !== null) {
+                window.clearTimeout(deletedStickersSaveTimeoutRef.current);
+                deletedStickersSaveTimeoutRef.current = null;
+            }
+            storage.saveStickers(latestStickersRef.current, initialLayoutRef.current);
+            storage.saveDeletedStickers(latestDeletedStickersRef.current, initialLayoutRef.current);
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') flushPendingStickerChanges();
+        };
+
+        window.addEventListener('pagehide', flushPendingStickerChanges);
+        window.addEventListener('eclipin:flush-persistent-state', flushPendingStickerChanges);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            window.removeEventListener('pagehide', flushPendingStickerChanges);
+            window.removeEventListener('eclipin:flush-persistent-state', flushPendingStickerChanges);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            flushPendingStickerChanges();
+        };
+    }, []);
+
+    useEffect(() => {
+        const nextMode = pageSlideDirection;
+        if (initialLayoutRef.current === nextMode) return;
+        if (!persistenceSuspendedRef.current) {
+            storage.saveStickers(latestStickersRef.current, initialLayoutRef.current);
+            storage.saveDeletedStickers(latestDeletedStickersRef.current, initialLayoutRef.current);
+        }
+        const nextLayout = loadStickerLayout(nextMode);
+        initialLayoutRef.current = nextMode;
+        setAllStickers(nextLayout.active);
+        setAllDeletedStickers(nextLayout.deleted);
+        setSelectedStickerId(null);
+        setCurrentPageIndex(0);
+    }, [pageSlideDirection]);
+
+    useEffect(() => {
+        setSelectedStickerId(null);
+    }, [currentPageId]);
 
     // ========================================================================
     // 数据迁移：将旧的 base64 图片贴纸迁移到 IndexedDB
@@ -95,8 +266,8 @@ export const ZenShelfProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const migrateStickers = async () => {
             try {
                 // 迁移活跃贴纸
-                const activeStickers = storage.getStickers();
-                const deletedStickersList = storage.getDeletedStickers();
+                const activeStickers = storage.getStickers(initialLayoutRef.current);
+                const deletedStickersList = storage.getDeletedStickers(initialLayoutRef.current);
                 let hasChanges = false;
 
                 const migrateList = async (list: Sticker[]): Promise<Sticker[]> => {
@@ -124,10 +295,10 @@ export const ZenShelfProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 const migratedDeleted = await migrateList(deletedStickersList);
 
                 if (hasChanges) {
-                    storage.saveStickers(migratedActive);
-                    storage.saveDeletedStickers(migratedDeleted);
-                    setStickers(migratedActive);
-                    setDeletedStickers(migratedDeleted);
+                    storage.saveStickers(migratedActive, initialLayoutRef.current);
+                    storage.saveDeletedStickers(migratedDeleted, initialLayoutRef.current);
+                    setAllStickers(migratedActive);
+                    setAllDeletedStickers(migratedDeleted);
                 }
 
                 storage.markStickerImagesMigrated();
@@ -144,44 +315,49 @@ export const ZenShelfProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // ========================================================================
 
     const addSticker = useCallback((input: StickerInput) => {
-        setStickers(prev => {
+        const newId = generateId();
+        setAllStickers(prev => {
+            const pageStickers = prev.filter(sticker => belongsToPage(sticker, currentPageId));
             // 计算下一个 zIndex (比当前最大值高 1)
-            const maxZ = Math.max(...prev.map(s => s.zIndex || 1), 0);
+            const maxZ = Math.max(...pageStickers.map(s => s.zIndex || 1), 0);
             const newSticker: Sticker = {
                 ...input,
-                id: generateId(),
+                id: newId,
+                pageId: currentPageId,
                 zIndex: maxZ + 1,
                 // 确保文字贴纸有默认样式
-                style: input.type === 'text' ? (input.style || DEFAULT_TEXT_STYLE) : undefined,
+                style: input.type === 'text' ? (input.style || DEFAULT_TEXT_STYLE) : input.style,
             };
             return [...prev, newSticker];
         });
-    }, []);
+        return newId;
+    }, [currentPageId]);
 
     const updateSticker = useCallback((id: string, updates: Partial<Sticker>) => {
-        setStickers(prev => prev.map(sticker =>
+        setAllStickers(prev => prev.map(sticker =>
             sticker.id === id ? { ...sticker, ...updates } : sticker
         ));
     }, []);
 
     const deleteSticker = useCallback((id: string) => {
-        setStickers(prev => {
+        setAllStickers(prev => {
             const stickerToDelete = prev.find(s => s.id === id);
 
             if (stickerToDelete) {
-                setDeletedStickers(prevDeleted => {
+                setAllDeletedStickers(prevDeleted => {
                     const newDeleted = [stickerToDelete, ...prevDeleted];
-                    // Limit to 30 items
-                    if (newDeleted.length > 30) {
+                    const pageDeleted = newDeleted.filter(sticker => isVisibleOnPage(sticker, currentPageId));
+                    if (pageDeleted.length > 30) {
                         // 清理被截断的贴纸的 IndexedDB 图片数据
-                        const truncated = newDeleted.slice(30);
-                        const imageIds = truncated
-                            .filter(s => s.type === 'image' && !s.content.startsWith('data:'))
-                            .map(s => s.content);
-                        if (imageIds.length > 0) {
-                            db.removeStickerImages(imageIds).catch(console.error);
-                        }
-                        return newDeleted.slice(0, 30);
+                        const truncated = pageDeleted.slice(30);
+                        const imageIds = truncated.flatMap((s) => {
+                            if (s.type !== 'image') return [];
+                            return [s.content, s.iconSwapContent]
+                                .filter((id): id is string => Boolean(id && !id.startsWith('data:')));
+                        });
+                        scheduleStickerImageCleanup(imageIds);
+                        const truncatedIds = new Set(truncated.map(sticker => sticker.id));
+                        return newDeleted.filter(sticker => !truncatedIds.has(sticker.id));
                     }
                     return newDeleted;
                 });
@@ -192,53 +368,61 @@ export const ZenShelfProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         // 如果删除的是选中的贴纸，取消选中
         setSelectedStickerId(prev => prev === id ? null : prev);
-    }, []);
+    }, [currentPageId]);
 
     const restoreSticker = useCallback((stickerToRestore: Sticker) => {
         // Remove from deleted
-        setDeletedStickers(prev => prev.filter(s => s.id !== stickerToRestore.id));
+        setAllDeletedStickers(prev => prev.filter(s => s.id !== stickerToRestore.id));
 
         // Add back to active stickers
-        setStickers(prev => {
+        setAllStickers(prev => {
+            const restoredPageId = stickerToRestore.pageId ?? currentPageId;
+            const pageStickers = prev.filter(sticker => belongsToPage(sticker, restoredPageId));
             // Recalculate zIndex to be on top
-            const maxZ = Math.max(...prev.map(s => s.zIndex || 1), 0);
-            return [...prev, { ...stickerToRestore, zIndex: maxZ + 1 }];
+            const maxZ = Math.max(...pageStickers.map(s => s.zIndex || 1), 0);
+            return [...prev, { ...stickerToRestore, pageId: restoredPageId, zIndex: maxZ + 1 }];
         });
-    }, []);
+    }, [currentPageId]);
 
     const permanentlyDeleteSticker = useCallback((id: string) => {
-        setDeletedStickers(prev => {
+        setAllDeletedStickers(prev => {
             const sticker = prev.find(s => s.id === id);
             // 清理 IndexedDB 中的图片数据
-            if (sticker && sticker.type === 'image' && !sticker.content.startsWith('data:')) {
-                db.removeStickerImage(sticker.content).catch(console.error);
+            if (sticker && sticker.type === 'image') {
+                scheduleStickerImageCleanup([sticker.content, sticker.iconSwapContent]
+                    .filter((imageId): imageId is string => Boolean(imageId && !imageId.startsWith('data:'))));
             }
             return prev.filter(s => s.id !== id);
         });
     }, []);
 
     const clearRecycleBin = useCallback(() => {
-        setDeletedStickers(prev => {
+        setAllDeletedStickers(prev => {
             // 清理所有图片贴纸的 IndexedDB 数据
             const imageIds = prev
-                .filter(s => s.type === 'image' && !s.content.startsWith('data:'))
-                .map(s => s.content);
-            if (imageIds.length > 0) {
-                db.removeStickerImages(imageIds).catch(console.error);
-            }
-            return [];
+                .filter(sticker => isVisibleOnPage(sticker, currentPageId))
+                .flatMap((s) => {
+                    if (s.type !== 'image') return [];
+                    return [s.content, s.iconSwapContent]
+                        .filter((imageId): imageId is string => Boolean(imageId && !imageId.startsWith('data:')));
+                });
+            scheduleStickerImageCleanup(imageIds);
+            return prev.filter(sticker => !isVisibleOnPage(sticker, currentPageId));
         });
-    }, []);
+    }, [currentPageId]);
 
     const bringToTop = useCallback((id: string) => {
-        setStickers(prev => {
+        setAllStickers(prev => {
+            const stickerToTop = prev.find(sticker => sticker.id === id);
+            const pageId = stickerToTop?.pageId ?? currentPageId;
+            const pageStickers = prev.filter(sticker => belongsToPage(sticker, pageId));
             // 计算当前最大 zIndex
-            const maxZ = Math.max(...prev.map(s => s.zIndex || 1), 0);
+            const maxZ = Math.max(...pageStickers.map(s => s.zIndex || 1), 0);
             return prev.map(sticker =>
                 sticker.id === id ? { ...sticker, zIndex: maxZ + 1 } : sticker
             );
         });
-    }, []);
+    }, [currentPageId]);
 
     const selectSticker = useCallback((id: string | null) => {
         setSelectedStickerId(id);
@@ -251,8 +435,10 @@ export const ZenShelfProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const contextValue: ZenShelfContextType = useMemo(() => ({
         stickers,
+        allStickers,
         deletedStickers,
         selectedStickerId,
+        currentPageIndex,
         addSticker,
         updateSticker,
         deleteSticker,
@@ -260,11 +446,14 @@ export const ZenShelfProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         permanentlyDeleteSticker,
         clearRecycleBin,
         selectSticker,
+        setCurrentPageIndex,
         bringToTop,
     }), [
         stickers,
+        allStickers,
         deletedStickers,
         selectedStickerId,
+        currentPageIndex,
         addSticker,
         updateSticker,
         deleteSticker,
@@ -272,6 +461,7 @@ export const ZenShelfProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         permanentlyDeleteSticker,
         clearRecycleBin,
         selectSticker,
+        setCurrentPageIndex,
         bringToTop,
     ]);
 

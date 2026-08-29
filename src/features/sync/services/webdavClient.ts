@@ -43,7 +43,8 @@ export async function testWebDAVConnection(config: WebDAVConfig): Promise<{ ok: 
     }
 }
 
-const SYNC_DIR = 'EclipseTab';
+const SYNC_DIR = 'Eclipin';
+const LEGACY_SYNC_DIR = 'EclipseTab';
 export const LEGACY_SYNC_FILENAME = 'eclipse_tab_backup.json';
 export const LEGACY_ASSETS_PREFIX = 'eclipse_tab_assets/';
 export const SNAPSHOT_DIR = 'snapshot';
@@ -91,7 +92,10 @@ export async function uploadFile(config: WebDAVConfig, path: string, body: BodyI
 
 export async function downloadFile(config: WebDAVConfig, path: string): Promise<{ ok: boolean; blob?: Blob; message: string }> {
     try {
-        const response = await request(config, `${SYNC_DIR}/${path}`, { method: 'GET' });
+        const readFromDir = async (dir: string): Promise<Response> => request(config, `${dir}/${path}`, { method: 'GET' });
+        let response = await readFromDir(SYNC_DIR);
+        // Existing EclipseTab cloud folders remain readable after the rename.
+        if (response.status === 404) response = await readFromDir(LEGACY_SYNC_DIR);
         if (response.ok) {
             return { ok: true, blob: await response.blob(), message: 'Download successful' };
         }

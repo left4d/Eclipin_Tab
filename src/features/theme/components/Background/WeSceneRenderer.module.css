@@ -1,0 +1,60 @@
+.root {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.stage {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform-origin: center center;
+}
+
+.postProcessDefinitions {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.layer {
+    position: absolute;
+    max-width: none;
+    max-height: none;
+    object-fit: fill;
+    transform-origin: center center;
+    user-select: none;
+    pointer-events: none;
+}
+
+.preload {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.textLayer {
+    display: flex;
+    box-sizing: border-box;
+    /*
+     * WE's authored text box is an alignment/reference frame. When width/row
+     * limiting is disabled the glyph surface is allowed to grow beyond that
+     * frame, so clipping belongs on the inner text surface rather than here.
+     */
+    overflow: visible;
+    line-height: 1.2;
+}
+
+.textContent {
+    display: block;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    line-height: inherit;
+}

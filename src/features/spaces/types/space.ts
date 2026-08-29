@@ -4,6 +4,7 @@
  */
 
 import { DockItem } from '@/features/dock/types/dock';
+import { createId } from '@/shared/utils/id';
 
 /**
  * 单个空间定义
@@ -23,6 +24,9 @@ export interface Space {
 
     /** 该空间下的应用/文件夹列表 */
     apps: DockItem[];
+
+    /** 是否显示在首页快捷网址栏和空间切换器中，旧数据缺省视为 true */
+    showInDock?: boolean;
 
     /** 创建时间戳 (ms) */
     createdAt: number;
@@ -47,80 +51,37 @@ export interface SpacesState {
  */
 export function createDefaultSpace(name: string = 'Main', apps: DockItem[] = []): Space {
     return {
-        id: crypto.randomUUID(),
+        id: createId(),
         name,
         iconType: 'text',
         apps,
+        showInDock: true,
         createdAt: Date.now(),
     };
 }
 
 /**
- * 创建默认空间状态
- * Main 空间初始为空（DockContext 会填充默认应用并自动获取图标）
- * Google 空间包含 6 个常用 Google 服务
+ * 创建默认空间状态。
+ * 全新安装只创建一个精简的 Main 空间；迁移时传入的 apps（包括空数组）会被原样保留。
  */
-export function createDefaultSpacesState(initialApps: DockItem[] = []): SpacesState {
-    // Create Main space (apps will be filled by DockContext if empty)
-    const defaultSpace = createDefaultSpace('Main', initialApps);
-    // Create Google space with 6 popular Google services
-    const googleSpace = createDefaultSpace('Google', createGoogleApps());
+export function createDefaultSpacesState(initialApps?: DockItem[]): SpacesState {
+    const defaultSpace = createDefaultSpace('Main', initialApps ?? createDefaultDockApps());
 
     return {
-        spaces: [defaultSpace, googleSpace],
+        spaces: [defaultSpace],
         activeSpaceId: defaultSpace.id,
         version: 1,
     };
 }
 
-/**
- * 创建 Google 空间的默认应用列表
- */
-function createGoogleApps(): DockItem[] {
+/** 首次安装时的 Main 空间快捷网站，保持精简并优先选择中国大陆常用站点。 */
+export function createDefaultDockApps(): DockItem[] {
     return [
-        {
-            id: crypto.randomUUID(),
-            name: 'Gmail',
-            url: 'https://mail.google.com',
-            icon: 'https://www.google.com/gmail/about/static-2.0/images/logo-gmail.png',
-            type: 'app',
-        },
-        {
-            id: crypto.randomUUID(),
-            name: 'Drive',
-            url: 'https://drive.google.com',
-            icon: 'https://ssl.gstatic.com/images/branding/product/2x/drive_2020q4_48dp.png',
-            type: 'app',
-        },
-        {
-            id: crypto.randomUUID(),
-            name: 'Calendar',
-            url: 'https://calendar.google.com',
-            icon: 'https://ssl.gstatic.com/calendar/images/dynamiclogo_2020q4/calendar_31_2x.png',
-            type: 'app',
-        },
-        {
-            id: crypto.randomUUID(),
-            name: 'Maps',
-            url: 'https://maps.google.com',
-            icon: 'https://www.google.com/images/branding/product/2x/maps_96dp.png',
-            type: 'app',
-        },
-        {
-            id: crypto.randomUUID(),
-            name: 'YouTube',
-            url: 'https://www.youtube.com',
-            icon: 'https://www.youtube.com/favicon.ico',
-            iconSmall: true,
-            type: 'app',
-        },
-        {
-            id: crypto.randomUUID(),
-            name: 'Photos',
-            url: 'https://photos.google.com',
-            icon: 'https://www.gstatic.com/images/branding/product/2x/photos_96dp.png',
-            iconSmall: true,
-            type: 'app',
-        },
+        { id: 'baidu', name: '百度', url: 'https://www.baidu.com/', type: 'app' },
+        { id: 'bilibili', name: '哔哩哔哩', url: 'https://www.bilibili.com/', type: 'app' },
+        { id: 'zhihu', name: '知乎', url: 'https://www.zhihu.com/', type: 'app' },
+        { id: 'taobao', name: '淘宝', url: 'https://www.taobao.com/', type: 'app' },
+        { id: 'jd', name: '京东', url: 'https://www.jd.com/', type: 'app' },
+        { id: 'xiaohongshu', name: '小红书', url: 'https://www.xiaohongshu.com/explore', type: 'app' },
     ];
 }

@@ -1,41 +1,53 @@
 import { DockItem, SearchEngine, SpacesState, createDefaultSpacesState, Sticker } from '@/shared/types';
+import { isNavigationAction, parseNavigationAction } from '@/shared/navigation';
 
 const STORAGE_KEYS = {
-  DOCK_ITEMS: 'EclipseTab_dockItems',
-  SEARCH_ENGINE: 'EclipseTab_searchEngine',
+  DOCK_ITEMS: 'Eclipin_dockItems',
+  SEARCH_ENGINE: 'Eclipin_searchEngine',
   // Config (Unified settings)
-  CONFIG: 'EclipseTab_config',
+  CONFIG: 'Eclipin_config',
 
   // Legacy Keys (kept for reference, strictly used for migration)
-  // THEME: 'EclipseTab_theme',
-  // FOLLOW_SYSTEM: 'EclipseTab_followSystem',
-  // DOCK_POSITION: 'EclipseTab_dockPosition',
-  // ICON_SIZE: 'EclipseTab_iconSize',
-  // GRADIENT: 'EclipseTab_gradient',
-  // TEXTURE: 'EclipseTab_texture',
+  // THEME: 'Eclipin_theme',
+  // FOLLOW_SYSTEM: 'Eclipin_followSystem',
+  // DOCK_POSITION: 'Eclipin_dockPosition',
+  // ICON_SIZE: 'Eclipin_iconSize',
+  // GRADIENT: 'Eclipin_gradient',
+  // TEXTURE: 'Eclipin_texture',
 
-  WALLPAPER_ID: 'EclipseTab_wallpaperId',
+  WALLPAPER_ID: 'Eclipin_wallpaperId',
 
   // Focus Spaces
-  SPACES: 'EclipseTab_spaces',
+  SPACES: 'Eclipin_spaces',
   // Zen Shelf Stickers
-  STICKERS: 'EclipseTab_stickers',
+  STICKERS: 'Eclipin_stickers',
+  HORIZONTAL_STICKERS: 'Eclipin_stickers_horizontal',
   // Deleted Stickers (Recycle Bin)
-  DELETED_STICKERS: 'EclipseTab_deletedStickers',
+  DELETED_STICKERS: 'Eclipin_deletedStickers',
+  HORIZONTAL_DELETED_STICKERS: 'Eclipin_deletedStickers_horizontal',
   // 贴纸图片迁移标记
-  STICKER_IMAGES_MIGRATED: 'EclipseTab_stickerImagesMigrated',
+  STICKER_IMAGES_MIGRATED: 'Eclipin_stickerImagesMigrated',
 } as const;
-
 // Unified Configuration Interface
+type StoredContainerStyle = 'classic' | 'frame' | 'ambient' | 'veil';
+type StoredPageScrollMode = 'continuous' | 'paged';
+type StoredPageSlideDirection = 'vertical' | 'horizontal';
+export type LayoutStorageMode = StoredPageSlideDirection;
+
 interface AppConfig {
   theme: string;
   followSystem: boolean;
-  dockPosition: 'center' | 'bottom';
+  dockPosition: 'top' | 'center' | 'bottom';
   iconSize: 'large' | 'small';
   texture: string;
   gradient: string | null;
   solidGradient: string | null;
   openInNewTab: boolean;
+  appearancePalette: string;
+  containerStyle: StoredContainerStyle;
+  pageScrollMode: StoredPageScrollMode;
+  pageSlideDirection: StoredPageSlideDirection;
+  quickLinksBarEnabled: boolean;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -47,6 +59,11 @@ const DEFAULT_CONFIG: AppConfig = {
   gradient: null,
   solidGradient: null,
   openInNewTab: true,
+  appearancePalette: 'sage',
+  containerStyle: 'classic',
+  pageScrollMode: 'continuous',
+  pageSlideDirection: 'vertical',
+  quickLinksBarEnabled: true,
 };
 
 // ============================================================================
@@ -60,7 +77,9 @@ interface CacheEntry<T> {
 const memoryCache = {
   spaces: null as CacheEntry<SpacesState> | null,
   stickers: null as CacheEntry<Sticker[]> | null,
+  horizontalStickers: null as CacheEntry<Sticker[]> | null,
   deletedStickers: null as CacheEntry<Sticker[]> | null,
+  horizontalDeletedStickers: null as CacheEntry<Sticker[]> | null,
   config: null as CacheEntry<AppConfig> | null,
 };
 
@@ -79,6 +98,85 @@ function getCached<T>(key: string, cache: CacheEntry<T> | null): T | null {
   }
   return null;
 }
+
+const migrateDockItemNavigationAction = (item: DockItem): { item: DockItem; changed: boolean } => {
+  let childChanged = false;
+  const migratedItems = item.items?.map((child) => {
+    const result = migrateDockItemNavigationAction(child);
+    if (result.changed) childChanged = true;
+    return result.item;
+  });
+
+  if (isNavigationAction(item.action)) {
+    const url = item.action.type === 'url' ? item.action.url : undefined;
+    const ownChanged = item.url !== url;
+    if (!childChanged && !ownChanged) return { item, changed: false };
+    return {
+      item: {
+        ...item,
+        url,
+        items: childChanged ? migratedItems : item.items,
+      },
+      changed: true,
+    };
+  }
+
+  const action = parseNavigationAction(item.url ?? '');
+  if (!action) {
+    if (!childChanged) return { item, changed: false };
+    return { item: { ...item, items: migratedItems }, changed: true };
+  }
+
+  return {
+    item: {
+      ...item,
+      action,
+      // 外链继续保留规范化 URL，供图标/域名展示等非执行逻辑使用。
+      url: action.type === 'url' ? action.url : undefined,
+      items: childChanged ? migratedItems : item.items,
+    },
+    changed: true,
+  };
+};
+
+const migrateDockItemsNavigationActions = (items: DockItem[]): { items: DockItem[]; changed: boolean } => {
+  let changed = false;
+  const migrated = items.map((item) => {
+    const result = migrateDockItemNavigationAction(item);
+    if (result.changed) changed = true;
+    return result.item;
+  });
+  return { items: migrated, changed };
+};
+
+const migrateSpacesNavigationActions = (state: SpacesState): { state: SpacesState; changed: boolean } => {
+  let changed = false;
+  const spaces = state.spaces.map((space) => {
+    const migrated = migrateDockItemsNavigationActions(space.apps);
+    if (!migrated.changed) return space;
+    changed = true;
+    return { ...space, apps: migrated.items };
+  });
+  return changed ? { state: { ...state, spaces }, changed: true } : { state, changed: false };
+};
+
+const migrateStickerNavigationActions = (stickers: Sticker[]): { stickers: Sticker[]; changed: boolean } => {
+  let changed = false;
+  const migrated = stickers.map((sticker) => {
+    if (isNavigationAction(sticker.action)) {
+      if (sticker.linkTarget === undefined && sticker.imageLinkUrl === undefined) return sticker;
+      changed = true;
+      const { linkTarget: _linkTarget, imageLinkUrl: _imageLinkUrl, ...rest } = sticker;
+      return rest as Sticker;
+    }
+    const action = parseNavigationAction(sticker.linkTarget ?? sticker.imageLinkUrl ?? '');
+    if (!action) return sticker;
+    changed = true;
+    const { linkTarget: _linkTarget, imageLinkUrl: _imageLinkUrl, ...rest } = sticker;
+    return { ...rest, action } as Sticker;
+  });
+  return { stickers: migrated, changed };
+};
 
 export const storage = {
   // ==========================================================================
@@ -102,25 +200,25 @@ export const storage = {
       // Migration: Try to read legacy keys
       const config = { ...DEFAULT_CONFIG };
 
-      const legacyTheme = localStorage.getItem('EclipseTab_theme');
+      const legacyTheme = localStorage.getItem('Eclipin_theme');
       if (legacyTheme) config.theme = legacyTheme;
 
-      const legacyFollow = localStorage.getItem('EclipseTab_followSystem');
+      const legacyFollow = localStorage.getItem('Eclipin_followSystem');
       if (legacyFollow !== null) config.followSystem = legacyFollow === 'true';
 
-      const legacyDockPos = localStorage.getItem('EclipseTab_dockPosition');
-      if (legacyDockPos === 'center' || legacyDockPos === 'bottom') config.dockPosition = legacyDockPos;
+      const legacyDockPos = localStorage.getItem('Eclipin_dockPosition');
+      if (legacyDockPos === 'top' || legacyDockPos === 'center' || legacyDockPos === 'bottom') config.dockPosition = legacyDockPos;
 
-      const legacyIconSize = localStorage.getItem('EclipseTab_iconSize');
+      const legacyIconSize = localStorage.getItem('Eclipin_iconSize');
       if (legacyIconSize === 'small' || legacyIconSize === 'large') config.iconSize = legacyIconSize;
 
-      const legacyTexture = localStorage.getItem('EclipseTab_texture');
+      const legacyTexture = localStorage.getItem('Eclipin_texture');
       if (legacyTexture) config.texture = legacyTexture;
 
-      const legacyGradient = localStorage.getItem('EclipseTab_gradient');
+      const legacyGradient = localStorage.getItem('Eclipin_gradient');
       if (legacyGradient) config.gradient = legacyGradient;
 
-      const legacyOpenInNewTab = localStorage.getItem('EclipseTab_openInNewTab');
+      const legacyOpenInNewTab = localStorage.getItem('Eclipin_openInNewTab');
       if (legacyOpenInNewTab !== null) config.openInNewTab = legacyOpenInNewTab === 'true';
 
       // Save migrated config
@@ -178,11 +276,12 @@ export const storage = {
     this.updateConfig({ followSystem });
   },
 
-  getDockPosition(): 'center' | 'bottom' {
-    return this.getConfig().dockPosition;
+  getDockPosition(): 'top' | 'center' | 'bottom' {
+    const value = this.getConfig().dockPosition;
+    return value === 'top' || value === 'center' ? value : 'bottom';
   },
 
-  saveDockPosition(dockPosition: 'center' | 'bottom'): void {
+  saveDockPosition(dockPosition: 'top' | 'center' | 'bottom'): void {
     this.updateConfig({ dockPosition });
   },
 
@@ -218,14 +317,55 @@ export const storage = {
     this.updateConfig({ openInNewTab });
   },
 
+  getAppearancePalette(): string {
+    return this.getConfig().appearancePalette;
+  },
+
+  saveAppearancePalette(appearancePalette: string): void {
+    this.updateConfig({ appearancePalette });
+  },
+
+  getContainerStyle(): 'classic' | 'frame' | 'ambient' | 'veil' {
+    const value = this.getConfig().containerStyle;
+    return value === 'frame' || value === 'ambient' || value === 'veil' ? value : 'classic';
+  },
+
+  saveContainerStyle(containerStyle: 'classic' | 'frame' | 'ambient' | 'veil'): void {
+    this.updateConfig({ containerStyle });
+  },
+
+  getPageScrollMode(): StoredPageScrollMode {
+    return this.getConfig().pageScrollMode === 'paged' ? 'paged' : 'continuous';
+  },
+
+  savePageScrollMode(pageScrollMode: StoredPageScrollMode): void {
+    this.updateConfig({ pageScrollMode });
+  },
+
+  getPageSlideDirection(): StoredPageSlideDirection {
+    return this.getConfig().pageSlideDirection === 'horizontal' ? 'horizontal' : 'vertical';
+  },
+
+  savePageSlideDirection(pageSlideDirection: StoredPageSlideDirection): void {
+    this.updateConfig({
+      pageSlideDirection,
+      ...(pageSlideDirection === 'horizontal' ? { pageScrollMode: 'paged' as const } : {}),
+    });
+  },
+
   // ==========================================================================
   // Large Data / Independent Storage
   // ==========================================================================
 
   getDockItems(): DockItem[] {
     try {
-      const items = localStorage.getItem(STORAGE_KEYS.DOCK_ITEMS);
-      return items ? JSON.parse(items) : [];
+      const raw = localStorage.getItem(STORAGE_KEYS.DOCK_ITEMS);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      const migrated = migrateDockItemsNavigationActions(parsed);
+      if (migrated.changed) this.saveDockItems(migrated.items);
+      return migrated.items;
     } catch {
       return [];
     }
@@ -233,7 +373,8 @@ export const storage = {
 
   saveDockItems(items: DockItem[]): void {
     try {
-      localStorage.setItem(STORAGE_KEYS.DOCK_ITEMS, JSON.stringify(items));
+      const migrated = migrateDockItemsNavigationActions(items).items;
+      localStorage.setItem(STORAGE_KEYS.DOCK_ITEMS, JSON.stringify(migrated));
     } catch (error) {
       console.error('Failed to save dock items:', error);
     }
@@ -288,9 +429,14 @@ export const storage = {
       const spacesJson = localStorage.getItem(STORAGE_KEYS.SPACES);
       if (spacesJson) {
         const parsed = JSON.parse(spacesJson);
-        if (parsed && parsed.spaces && parsed.spaces.length > 0) {
-          memoryCache.spaces = { data: parsed, raw: spacesJson };
-          return parsed;
+        if (parsed && Array.isArray(parsed.spaces) && parsed.spaces.length > 0) {
+          const migrated = migrateSpacesNavigationActions(parsed as SpacesState);
+          if (migrated.changed) {
+            this.saveSpaces(migrated.state);
+            return migrated.state;
+          }
+          memoryCache.spaces = { data: migrated.state, raw: spacesJson };
+          return migrated.state;
         }
       }
 
@@ -315,9 +461,10 @@ export const storage = {
 
   saveSpaces(state: SpacesState): void {
     try {
-      const json = JSON.stringify(state);
+      const normalizedState = migrateSpacesNavigationActions(state).state;
+      const json = JSON.stringify(normalizedState);
       localStorage.setItem(STORAGE_KEYS.SPACES, json);
-      memoryCache.spaces = { data: state, raw: json };
+      memoryCache.spaces = { data: normalizedState, raw: json };
     } catch (error) {
       console.error('Failed to save spaces:', error);
     }
@@ -336,57 +483,84 @@ export const storage = {
   // Zen Shelf Stickers
   // ==========================================================================
 
-  getStickers(): Sticker[] {
+  hasStickerLayout(mode: LayoutStorageMode = 'vertical'): boolean {
     try {
-      const cached = getCached(STORAGE_KEYS.STICKERS, memoryCache.stickers);
-      if (cached) return cached;
+      const key = mode === 'horizontal' ? STORAGE_KEYS.HORIZONTAL_STICKERS : STORAGE_KEYS.STICKERS;
+      return localStorage.getItem(key) !== null;
+    } catch {
+      return false;
+    }
+  },
 
-      const stickersJson = localStorage.getItem(STORAGE_KEYS.STICKERS);
-      if (stickersJson) {
-        const parsed = JSON.parse(stickersJson);
-        memoryCache.stickers = { data: parsed, raw: stickersJson };
-        return parsed;
+  getStickers(mode: LayoutStorageMode = 'vertical'): Sticker[] {
+    try {
+      const key = mode === 'horizontal' ? STORAGE_KEYS.HORIZONTAL_STICKERS : STORAGE_KEYS.STICKERS;
+      const cacheKey = mode === 'horizontal' ? 'horizontalStickers' : 'stickers';
+      const cached = getCached(key, memoryCache[cacheKey]);
+      if (cached) return cached;
+      const raw = localStorage.getItem(key);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as Sticker[];
+      const migrated = migrateStickerNavigationActions(parsed);
+      if (migrated.changed) {
+        const migratedRaw = JSON.stringify(migrated.stickers);
+        localStorage.setItem(key, migratedRaw);
+        memoryCache[cacheKey] = { data: migrated.stickers, raw: migratedRaw };
+      } else {
+        memoryCache[cacheKey] = { data: migrated.stickers, raw };
       }
-      return [];
+      return migrated.stickers;
     } catch (error) {
       console.error('Failed to get stickers:', error);
       return [];
     }
   },
 
-  saveStickers(stickers: Sticker[]): void {
+  saveStickers(stickers: Sticker[], mode: LayoutStorageMode = 'vertical'): void {
     try {
-      const json = JSON.stringify(stickers);
-      localStorage.setItem(STORAGE_KEYS.STICKERS, json);
-      memoryCache.stickers = { data: stickers, raw: json };
+      const key = mode === 'horizontal' ? STORAGE_KEYS.HORIZONTAL_STICKERS : STORAGE_KEYS.STICKERS;
+      const cacheKey = mode === 'horizontal' ? 'horizontalStickers' : 'stickers';
+      const normalized = migrateStickerNavigationActions(stickers).stickers;
+      const json = JSON.stringify(normalized);
+      localStorage.setItem(key, json);
+      memoryCache[cacheKey] = { data: normalized, raw: json };
     } catch (error) {
       console.error('Failed to save stickers:', error);
     }
   },
 
-  getDeletedStickers(): Sticker[] {
+  getDeletedStickers(mode: LayoutStorageMode = 'vertical'): Sticker[] {
     try {
-      const cached = getCached(STORAGE_KEYS.DELETED_STICKERS, memoryCache.deletedStickers);
+      const key = mode === 'horizontal' ? STORAGE_KEYS.HORIZONTAL_DELETED_STICKERS : STORAGE_KEYS.DELETED_STICKERS;
+      const cacheKey = mode === 'horizontal' ? 'horizontalDeletedStickers' : 'deletedStickers';
+      const cached = getCached(key, memoryCache[cacheKey]);
       if (cached) return cached;
-
-      const deletedStickersJson = localStorage.getItem(STORAGE_KEYS.DELETED_STICKERS);
-      if (deletedStickersJson) {
-        const parsed = JSON.parse(deletedStickersJson);
-        memoryCache.deletedStickers = { data: parsed, raw: deletedStickersJson };
-        return parsed;
+      const raw = localStorage.getItem(key);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as Sticker[];
+      const migrated = migrateStickerNavigationActions(parsed);
+      if (migrated.changed) {
+        const migratedRaw = JSON.stringify(migrated.stickers);
+        localStorage.setItem(key, migratedRaw);
+        memoryCache[cacheKey] = { data: migrated.stickers, raw: migratedRaw };
+      } else {
+        memoryCache[cacheKey] = { data: migrated.stickers, raw };
       }
-      return [];
+      return migrated.stickers;
     } catch (error) {
       console.error('Failed to get deleted stickers:', error);
       return [];
     }
   },
 
-  saveDeletedStickers(stickers: Sticker[]): void {
+  saveDeletedStickers(stickers: Sticker[], mode: LayoutStorageMode = 'vertical'): void {
     try {
-      const json = JSON.stringify(stickers);
-      localStorage.setItem(STORAGE_KEYS.DELETED_STICKERS, json);
-      memoryCache.deletedStickers = { data: stickers, raw: json };
+      const key = mode === 'horizontal' ? STORAGE_KEYS.HORIZONTAL_DELETED_STICKERS : STORAGE_KEYS.DELETED_STICKERS;
+      const cacheKey = mode === 'horizontal' ? 'horizontalDeletedStickers' : 'deletedStickers';
+      const normalized = migrateStickerNavigationActions(stickers).stickers;
+      const json = JSON.stringify(normalized);
+      localStorage.setItem(key, json);
+      memoryCache[cacheKey] = { data: normalized, raw: json };
     } catch (error) {
       console.error('Failed to save deleted stickers:', error);
     }
@@ -417,8 +591,8 @@ export const storage = {
    */
   cleanupLegacyWallpaper(): void {
     try {
-      localStorage.removeItem('EclipseTab_wallpaper');
-      localStorage.removeItem('EclipseTab_lastWallpaper');
+      localStorage.removeItem('Eclipin_wallpaper');
+      localStorage.removeItem('Eclipin_lastWallpaper');
     } catch {
       // ignore
     }

@@ -1,20 +1,10 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Sticker } from '@/shared/types';
+import alignLeftIcon from '@/assets/icons/align-left.svg';
+import alignCenterIcon from '@/assets/icons/align-center.svg';
+import alignRightIcon from '@/assets/icons/align-right.svg';
+import { areStickerColorsEquivalent, DEFAULT_STICKER_COLOR, STICKER_COLOR_PRESETS } from '@/features/shelf/constants/colorPresets';
 import styles from './ZenShelf.module.css';
-
-// ============================================================================
-// Color Palette for Text Stickers
-// ============================================================================
-
-export const TEXT_COLORS = [
-    '#1C1C1E', // Dark gray (default)
-    '#FF3B30', // Red
-    '#007AFF', // Blue
-    '#34C759', // Green
-    '#FF9500', // Orange
-    '#AF52DE', // Purple
-    '#FFFFFF', // White
-];
 
 // ============================================================================
 // FloatingToolbar Component - 浮动样式工具栏
@@ -28,52 +18,71 @@ interface FloatingToolbarProps {
 
 const FloatingToolbarComponent: React.FC<FloatingToolbarProps> = ({ sticker, stickerRect, onStyleChange }) => {
     const currentAlign = sticker.style?.textAlign || 'left';
-    const currentColor = sticker.style?.color || TEXT_COLORS[0];
+    const currentColor = sticker.style?.color || DEFAULT_STICKER_COLOR;
+    const toolbarRef = useRef<HTMLDivElement>(null);
+    const desiredCenter = stickerRect.left + stickerRect.width / 2;
+    const [toolbarCenter, setToolbarCenter] = useState(desiredCenter);
 
-    // Position toolbar above the sticker
+    // 默认显示在贴纸上方；靠近视口顶部时自动放到下方，避免工具栏被裁掉。
+    const toolbarMargin = 10;
+    const placeBelow = stickerRect.top < 76;
+
+    useLayoutEffect(() => {
+        const toolbarWidth = toolbarRef.current?.getBoundingClientRect().width ?? 0;
+        const viewportMargin = 12;
+        const halfWidth = Math.min(toolbarWidth, Math.max(0, window.innerWidth - viewportMargin * 2)) / 2;
+        const minCenter = viewportMargin + halfWidth;
+        const maxCenter = Math.max(minCenter, window.innerWidth - viewportMargin - halfWidth);
+        setToolbarCenter(Math.min(maxCenter, Math.max(minCenter, desiredCenter)));
+    }, [desiredCenter, stickerRect.height, stickerRect.width]);
+
     const toolbarStyle: React.CSSProperties = {
-        left: stickerRect.left + stickerRect.width / 2,
-        top: stickerRect.top - 50,
-        transform: 'translateX(-50%)',
+        left: toolbarCenter,
+        top: placeBelow ? stickerRect.bottom + toolbarMargin : stickerRect.top - toolbarMargin,
+        transform: placeBelow ? 'translateX(-50%)' : 'translate(-50%, -100%)',
     };
 
     return (
-        <div className={styles.floatingToolbar} style={toolbarStyle}>
+        <div ref={toolbarRef} className={styles.floatingToolbar} style={toolbarStyle}>
             {/* Alignment buttons */}
-            <button
-                className={`${styles.alignButton} ${currentAlign === 'left' ? styles.active : ''}`}
-                onClick={() => onStyleChange({ textAlign: 'left' })}
-                title="Align Left"
-            >
-                ☰
-            </button>
-            <button
-                className={`${styles.alignButton} ${currentAlign === 'center' ? styles.active : ''}`}
-                onClick={() => onStyleChange({ textAlign: 'center' })}
-                title="Center"
-            >
-                ≡
-            </button>
-            <button
-                className={`${styles.alignButton} ${currentAlign === 'right' ? styles.active : ''}`}
-                onClick={() => onStyleChange({ textAlign: 'right' })}
-                title="Align Right"
-            >
-                ≡
-            </button>
+            {([
+                { value: 'left', label: '左对齐', icon: alignLeftIcon },
+                { value: 'center', label: '居中对齐', icon: alignCenterIcon },
+                { value: 'right', label: '右对齐', icon: alignRightIcon },
+            ] as const).map((option) => (
+                <button
+                    key={option.value}
+                    type="button"
+                    className={`${styles.alignButton} ${currentAlign === option.value ? styles.active : ''}`}
+                    onClick={() => onStyleChange({ textAlign: option.value })}
+                    title={option.label}
+                    aria-label={option.label}
+                    aria-pressed={currentAlign === option.value}
+                >
+                    <span
+                        className={styles.floatingToolbarIcon}
+                        style={{ WebkitMaskImage: `url(${option.icon})`, maskImage: `url(${option.icon})` }}
+                    />
+                </button>
+            ))}
 
             <div className={styles.toolbarDivider} />
 
             {/* Color buttons */}
-            {TEXT_COLORS.map((color) => (
-                <button
-                    key={color}
-                    className={`${styles.colorButton} ${currentColor === color ? styles.active : ''}`}
-                    style={{ background: color }}
-                    onClick={() => onStyleChange({ color })}
-                    title={color}
-                />
-            ))}
+            <div className={styles.floatingColorGroup} role="group" aria-label="文字颜色预设">
+                {STICKER_COLOR_PRESETS.map((preset) => (
+                    <button
+                        key={preset.value}
+                        type="button"
+                        className={`${styles.colorButton} ${areStickerColorsEquivalent(currentColor, preset.value) ? styles.active : ''}`}
+                        style={{ background: preset.value }}
+                        onClick={() => onStyleChange({ color: preset.value })}
+                        title={preset.label}
+                        aria-label={`文字颜色：${preset.label}`}
+                        aria-pressed={areStickerColorsEquivalent(currentColor, preset.value)}
+                    />
+                ))}
+            </div>
         </div>
     );
 };
@@ -89,7 +98,8 @@ const arePropsEqual = (prev: FloatingToolbarProps, next: FloatingToolbarProps) =
         prev.sticker.style?.textAlign === next.sticker.style?.textAlign &&
         prev.stickerRect.left === next.stickerRect.left &&
         prev.stickerRect.top === next.stickerRect.top &&
-        prev.stickerRect.width === next.stickerRect.width
+        prev.stickerRect.width === next.stickerRect.width &&
+        prev.stickerRect.height === next.stickerRect.height
     );
 };
 

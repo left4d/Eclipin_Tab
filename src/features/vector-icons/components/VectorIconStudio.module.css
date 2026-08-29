@@ -1,0 +1,566 @@
+.studioSection {
+  display: flex;
+  width: 100%;
+  max-width: 760px;
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 10px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.sectionHeader h2 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1;
+  letter-spacing: -0.06em;
+}
+
+.sectionHeader p {
+  max-width: 620px;
+  margin: 8px 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  line-height: 1.55;
+}
+
+.memoryBadge {
+  flex: 0 0 auto;
+  border: 1px solid var(--fusion-border-accent);
+  border-radius: 999px;
+  padding: 6px 9px;
+  background: var(--fusion-accent-soft);
+  color: var(--fusion-accent);
+  font-size: 9px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: .09em;
+}
+
+.importCard,
+.editorCard,
+.libraryCard,
+.canvasCard,
+.runtimeNote {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-default-in);
+  background: var(--color-bg-primary);
+  box-shadow: var(--shadow-small);
+}
+
+.importCard,
+.editorCard,
+.libraryCard,
+.canvasCard {
+  padding: 14px;
+}
+
+.importCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.importHeader,
+.cardHeading,
+.editorActions,
+.canvasToolbar,
+.canvasInspector,
+.importActions {
+  display: flex;
+  align-items: center;
+}
+
+.importHeader,
+.cardHeading,
+.canvasToolbar {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.importHeader > div:first-child,
+.cardHeading > div:first-child {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.importHeader strong,
+.cardHeading strong,
+.runtimeNote strong {
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+}
+
+.importHeader span,
+.cardHeading span,
+.cardHeading small,
+.runtimeNote span {
+  color: var(--color-text-tertiary);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.cardHeading small {
+  flex: 0 0 auto;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.importActions,
+.editorActions {
+  gap: 7px;
+}
+
+.importActions button,
+.editorActions button,
+.codeImportRow button,
+.canvasToolbar button,
+.canvasInspector button,
+.libraryActions button {
+  min-height: 32px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 9px;
+  padding: 0 11px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.importActions button:hover,
+.editorActions button:hover,
+.codeImportRow button:hover:not(:disabled),
+.canvasToolbar button:hover:not(:disabled),
+.canvasInspector button:hover,
+.libraryActions button:hover {
+  border-color: var(--fusion-border-accent);
+  background: var(--fusion-accent-soft);
+  color: var(--fusion-accent);
+}
+
+.importActions button:active,
+.editorActions button:active,
+.canvasToolbar button:active:not(:disabled),
+.canvasInspector button:active {
+  transform: scale(.98);
+}
+
+.primaryButton {
+  border-color: var(--fusion-border-accent) !important;
+  background: var(--fusion-accent) !important;
+  color: var(--fusion-on-accent) !important;
+}
+
+.codeImportRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.codeImportRow textarea {
+  width: 100%;
+  height: 72px;
+  resize: vertical;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 11px;
+  padding: 10px 11px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font: 10px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  outline: none;
+}
+
+.codeImportRow textarea:focus,
+.editorControls input:focus,
+.editorControls select:focus {
+  border-color: var(--fusion-accent);
+  box-shadow: 0 0 0 3px var(--fusion-focus-ring);
+}
+
+.codeImportRow button {
+  align-self: stretch;
+}
+
+.codeImportRow button:disabled,
+.canvasToolbar button:disabled {
+  cursor: default;
+  opacity: .42;
+}
+
+.workspaceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(250px, .88fr);
+  gap: 12px;
+}
+
+.editorCard,
+.libraryCard {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editorMain {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.editorPreview {
+  display: grid;
+  min-height: 176px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 14px;
+  padding: 24px;
+  box-sizing: border-box;
+  background:
+    linear-gradient(45deg, var(--color-bg-secondary) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-bg-secondary) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-bg-secondary) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-bg-secondary) 75%),
+    var(--color-bg-primary);
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+  background-size: 12px 12px;
+}
+
+.editorPreview > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 112px;
+  max-height: 112px;
+}
+
+.editorControls {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.editorControls label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.editorControls label > span {
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+}
+
+.editorControls input[type='text'],
+.editorControls input:not([type]),
+.editorControls select,
+.nameField input {
+  width: 100%;
+  min-height: 32px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 9px;
+  padding: 0 9px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 10px;
+  outline: none;
+}
+
+.editorControls select {
+  cursor: pointer;
+}
+
+.editorControls input[type='range'],
+.canvasInspector input[type='range'] {
+  width: 100%;
+  accent-color: var(--fusion-accent);
+}
+
+.colorControl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.colorControl input[type='color'] {
+  width: 42px;
+  height: 30px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+  padding: 3px;
+  background: var(--color-bg-secondary);
+  cursor: pointer;
+}
+
+.colorControl code {
+  color: var(--color-text-tertiary);
+  font-size: 10px;
+}
+
+.editorActions {
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+.editorEmpty,
+.libraryEmpty {
+  display: flex;
+  min-height: 176px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px dashed var(--color-border);
+  border-radius: 14px;
+  padding: 18px;
+  box-sizing: border-box;
+  color: var(--color-text-tertiary);
+  text-align: center;
+}
+
+.editorEmpty strong,
+.libraryEmpty strong {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.editorEmpty span,
+.libraryEmpty span {
+  max-width: 290px;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.libraryCard {
+  max-height: 374px;
+}
+
+.libraryGrid {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+  align-content: start;
+  gap: 6px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+}
+
+.libraryItem {
+  position: relative;
+  min-width: 0;
+  content-visibility: auto;
+  contain-intrinsic-size: 88px 78px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-bg-secondary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.libraryItem:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-border);
+}
+
+.libraryItemActive {
+  border-color: var(--fusion-accent);
+  box-shadow: 0 0 0 2px var(--fusion-focus-ring);
+}
+
+.libraryPreviewButton {
+  width: 100%;
+  border: 0;
+  padding: 6px 6px 5px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.libraryPreview {
+  display: grid;
+  height: 48px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--color-bg-primary);
+  pointer-events: none;
+}
+
+.libraryPreview > div {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+}
+
+.libraryPreview svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 34px;
+  max-height: 34px;
+}
+
+.libraryPreview > span {
+  width: 20px;
+  height: 20px;
+  border-radius: 7px;
+  background: var(--color-bg-tertiary);
+}
+
+.libraryName {
+  display: block;
+  overflow: hidden;
+  margin-top: 5px;
+  color: var(--color-text-secondary);
+  font-size: 9px;
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.libraryActions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 3px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.libraryItem:hover .libraryActions,
+.libraryItem:focus-within .libraryActions {
+  opacity: 1;
+}
+
+.libraryActions button {
+  display: grid;
+  width: 22px;
+  min-height: 22px;
+  place-items: center;
+  padding: 0;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--color-bg-primary) 88%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.canvasCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.runtimeNote {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 11px 12px;
+  background: var(--color-bg-secondary);
+}
+
+.runtimeNote strong {
+  font-size: 10px;
+}
+
+.statusLine {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  align-self: center;
+  max-width: min(620px, calc(100% - 24px));
+  border: 1px solid var(--fusion-border-accent);
+  border-radius: 999px;
+  padding: 7px 11px;
+  background: color-mix(in srgb, var(--color-bg-primary) 92%, transparent);
+  color: var(--color-text-secondary);
+  box-shadow: var(--shadow-medium);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-size: 10px;
+}
+
+@media (max-width: 760px) {
+  .sectionHeader { align-items: flex-start; flex-direction: column; }
+  .workspaceGrid { grid-template-columns: 1fr; }
+  .libraryCard { max-height: none; }
+  .libraryGrid { max-height: 300px; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .importHeader { align-items: stretch; flex-direction: column; }
+  .codeImportRow { grid-template-columns: 1fr; }
+  .editorMain { grid-template-columns: 1fr; }
+  .editorPreview { min-height: 150px; }
+  .libraryGrid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); }
+  .runtimeNote { grid-template-columns: 1fr; }
+}
+
+/* ===== 图标工作台跟随统一界面材质 ===== */
+.importCard,
+.editorCard,
+.libraryCard,
+.canvasCard,
+.runtimeNote {
+  border-color: var(--ui-panel-divider);
+  background: var(--ui-panel-card-bg);
+  box-shadow: none;
+}
+.importActions button:not(.primaryButton),
+.editorActions button:not(.primaryButton),
+.codeImportRow button:not(.primaryButton),
+.canvasToolbar button:not(.primaryButton),
+.canvasInspector button:not(.primaryButton),
+.libraryActions button,
+.editorControls input[type='text'],
+.editorControls input:not([type]),
+.editorControls select,
+.nameField input,
+.colorControl input[type='color'] {
+  border-color: var(--ui-control-border);
+  border-radius: var(--ui-control-radius);
+  background: var(--ui-control-bg);
+}
+.codeImportRow textarea {
+  border-color: var(--ui-control-border);
+  border-radius: var(--ui-control-radius);
+  background: var(--ui-control-bg);
+}
+.importActions button:not(.primaryButton):hover,
+.editorActions button:not(.primaryButton):hover,
+.codeImportRow button:not(.primaryButton):hover:not(:disabled),
+.canvasToolbar button:not(.primaryButton):hover:not(:disabled),
+.canvasInspector button:not(.primaryButton):hover,
+.libraryActions button:hover { background: var(--ui-control-bg-hover); }
+.libraryItem { border-color: var(--ui-panel-divider); background: var(--ui-control-bg); }
+.libraryPreview { background: var(--ui-panel-inner-bg); }
+.statusLine {
+  border-color: var(--ui-menu-border);
+  background: var(--ui-menu-bg);
+  box-shadow: var(--ui-menu-shadow);
+  backdrop-filter: blur(var(--ui-menu-blur)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--ui-menu-blur)) saturate(1.08);
+}

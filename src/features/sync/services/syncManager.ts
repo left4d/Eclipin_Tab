@@ -46,18 +46,18 @@ const DATA_PATH = `${SNAPSHOT_DIR}/data.json`;
 /** 获取同步选项 */
 function getSyncOptions(): SyncOptions {
     return {
-        syncWallpaper: localStorage.getItem('EclipseTab_syncWallpaper') === 'true',
-        syncStickers: localStorage.getItem('EclipseTab_syncStickers') === 'true',
+        syncWallpaper: localStorage.getItem('Eclipin_syncWallpaper') === 'true',
+        syncStickers: localStorage.getItem('Eclipin_syncStickers') === 'true',
     };
 }
 
 /** 自动同步是否启用 */
 export function isAutoSyncEnabled(): boolean {
-    return localStorage.getItem('EclipseTab_autoSync') === 'true';
+    return localStorage.getItem('Eclipin_autoSync') === 'true';
 }
 
 export function setAutoSyncEnabled(enabled: boolean): void {
-    localStorage.setItem('EclipseTab_autoSync', String(enabled));
+    localStorage.setItem('Eclipin_autoSync', String(enabled));
 }
 
 async function blobToJson<T>(blob: Blob): Promise<T> {
@@ -221,9 +221,9 @@ async function ensureHostPermission(config: WebDAVConfig): Promise<boolean> {
 /** 获取当前 WebDAV 配置 */
 export function getWebDAVConfig(): WebDAVConfig | null {
     try {
-        const url = localStorage.getItem('EclipseTab_webdav_url');
-        const username = localStorage.getItem('EclipseTab_webdav_user');
-        const password = localStorage.getItem('EclipseTab_webdav_pass');
+        const url = localStorage.getItem('Eclipin_webdav_url');
+        const username = localStorage.getItem('Eclipin_webdav_user');
+        const password = localStorage.getItem('Eclipin_webdav_pass');
         if (url && username && password) return { url, username, password };
         return null;
     } catch {
@@ -268,7 +268,7 @@ export async function uploadToCloud(): Promise<SyncResult> {
     const result = await uploadSnapshot(config, snapshot);
     if (!result.ok) return result;
 
-    localStorage.setItem('EclipseTab_lastSyncTime', String(snapshot.manifest.lastUpdated));
+    localStorage.setItem('Eclipin_lastSyncTime', String(snapshot.manifest.lastUpdated));
     saveUploadFingerprint();
     return result;
 }
@@ -309,7 +309,7 @@ export async function downloadFromCloud(force = false): Promise<SyncResult & { h
         }
 
         await applySnapshot(snapshot, false);
-        localStorage.setItem('EclipseTab_lastSyncTime', String(remoteTime));
+        localStorage.setItem('Eclipin_lastSyncTime', String(remoteTime));
         saveUploadFingerprint();
 
         const source = snapshot.isLegacy ? 'legacy cloud backup' : 'cloud backup';

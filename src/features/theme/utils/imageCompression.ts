@@ -203,6 +203,56 @@ export async function compressStickerImage(dataUrl: string): Promise<string> {
 }
 
 /**
+ * Render a complex SVG sticker to a transparent session preview. The caller
+ * keeps the original SVG in IndexedDB; this Blob exists only to avoid repeatedly
+ * rasterizing thousands of vector paths while scrolling/zooming.
+ */
+export async function rasterizeSvgStickerPreview(
+    file: Blob,
+    width: number,
+    height: number,
+): Promise<Blob | null> {
+    if (file.type !== 'image/svg+xml' || width <= 0 || height <= 0) return null;
+
+    try {
+        return await runInWorker<Blob>('rasterizeSvgStickerPreview', { blob: file, width, height });
+    } catch {
+        return new Promise((resolve) => {
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.decoding = 'async';
+            const release = () => URL.revokeObjectURL(url);
+            img.onload = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        release();
+                        resolve(null);
+                        return;
+                    }
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob((blob) => {
+                        release();
+                        resolve(blob);
+                    }, 'image/png');
+                } catch {
+                    release();
+                    resolve(null);
+                }
+            };
+            img.onerror = () => {
+                release();
+                resolve(null);
+            };
+            img.src = url;
+        });
+    }
+}
+
+/**
  * 压缩贴纸图片并直接返回 Blob
  * @param file 图片 File 或 Blob
  * @returns 压缩后的 Blob

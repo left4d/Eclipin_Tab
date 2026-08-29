@@ -9,6 +9,18 @@
     overflow: hidden;
 }
 
+
+/*
+ * 基础背景与纹理必须处于两个稳定的堆叠层。
+ * 之前 layerWrapper 没有定位，切换背景色后新基础层的递增 z-index
+ * 会盖住旧纹理；重新选择纹理时才会生成更高 z-index，所以看起来才恢复。
+ */
+.layerWrapper {
+    position: absolute;
+    inset: 0;
+    isolation: isolate;
+}
+
 .layer {
     position: absolute;
     top: 0;

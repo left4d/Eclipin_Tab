@@ -1,7 +1,7 @@
 {
-  "name": "eclipse-tab",
+  "name": "eclipin-tab",
   "version": "1.2.6",
-  "description": "Eclipse Tab - 个人化新标签页浏览器扩展",
+  "description": "Eclipin Tab - 个性化新标签页浏览器扩展",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -9,6 +9,9 @@
     "zip": "npm run build && cd dist && zip -r ../extension.zip *"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "colord": "^2.9.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
@@ -20,5 +23,12 @@
     "@vitejs/plugin-react": "^4.0.0",
     "typescript": "^5.0.0",
     "vite": "^4.3.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/left4d/Eclipin_Tab.git"
+  },
+  "homepage": "https://github.com/left4d/Eclipin_Tab",
+  "license": "GPL-3.0-only",
+  "author": "left4d"
 }

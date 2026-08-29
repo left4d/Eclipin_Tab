@@ -1,0 +1,241 @@
+.contextMenu {
+  position: fixed;
+  z-index: 1000000004;
+  display: flex;
+  min-width: 184px;
+  max-width: min(220px, calc(100vw - 20px));
+  max-height: calc(100vh - 20px);
+  box-sizing: border-box;
+  flex-direction: column;
+  overflow: visible;
+  border: 1px solid var(--context-menu-border);
+  border-radius: var(--radius-default);
+  padding: var(--spacing-padding-small);
+  background: var(--context-menu-bg);
+  color: var(--context-menu-text);
+  box-shadow: var(--context-menu-shadow);
+  backdrop-filter: blur(var(--context-menu-blur)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--context-menu-blur)) saturate(1.08);
+  pointer-events: auto;
+}
+
+.menuLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: var(--spacing-padding-extrasmall);
+  color: var(--context-menu-muted);
+  font-family: var(--font-family);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-none);
+  white-space: nowrap;
+}
+
+.menuLabel strong {
+  flex: 0 0 auto;
+  border: 1px solid var(--context-menu-border);
+  border-radius: 999px;
+  padding: 2px 7px;
+  background: color-mix(in srgb, var(--context-menu-hover) 72%, transparent);
+  color: var(--context-menu-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.menuDivider {
+  position: relative;
+  width: 100%;
+  height: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--spacing-padding-extrasmall);
+}
+
+.menuDivider::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--context-menu-border);
+}
+
+.menuOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.menuItem {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--spacing-gap-small);
+  border: 0;
+  border-radius: var(--radius-small);
+  margin: 0;
+  padding: var(--spacing-padding-small);
+  background: transparent;
+  color: var(--context-menu-text);
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: var(--font-size-medium);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-none);
+  text-align: left;
+  white-space: nowrap;
+  transition: background var(--transition-medium), transform var(--transition-instant);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.menuItem:hover { background: var(--context-menu-hover); }
+.menuItem:active { transform: scale(.99); background: var(--context-menu-active); }
+.menuItem:focus-visible { outline: 2px solid var(--fusion-accent); outline-offset: 2px; }
+
+.menuIcon,
+.textIcon {
+  display: inline-grid;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  place-items: center;
+}
+
+.menuIcon {
+  background: currentColor;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+}
+
+.textIcon {
+  color: var(--context-menu-muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.menuItem small {
+  max-width: 78px;
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--context-menu-muted);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.containerStyleGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  padding: 3px 4px 5px 28px;
+}
+
+.containerStyleOption {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--context-menu-border);
+  border-radius: 9px;
+  padding: 6px 7px;
+  background: color-mix(in srgb, var(--context-menu-hover) 55%, transparent);
+  color: var(--context-menu-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  line-height: 1.15;
+  text-align: left;
+}
+
+.containerStyleOption:hover {
+  background: var(--context-menu-hover);
+  color: var(--context-menu-text);
+}
+
+.containerStyleOptionActive {
+  border-color: color-mix(in srgb, var(--fusion-accent) 58%, var(--context-menu-border));
+  background: var(--fusion-accent-soft);
+  color: var(--context-menu-text);
+}
+
+.containerStyleSwatch {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 13px;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 4px;
+  background: var(--color-bg-secondary);
+  box-shadow: inset 0 1px rgba(255,255,255,.2);
+}
+
+.containerStyleSwatch[data-style="frame"] { border-radius: 5px; background: linear-gradient(180deg, color-mix(in srgb, var(--color-bg-secondary) 86%, #303238), color-mix(in srgb, var(--color-bg-primary) 88%, #202226)); }
+.containerStyleSwatch[data-style="ambient"] { border-radius: 3px; background: linear-gradient(90deg, var(--fusion-accent-soft) 0 3px, var(--color-bg-secondary) 3px); }
+.containerStyleSwatch[data-style="veil"] { border-radius: 2px; background: color-mix(in srgb, var(--color-bg-primary) 35%, transparent); }
+
+.sizeMenuWrap {
+  position: relative;
+}
+
+.menuChevron {
+  margin-left: 2px;
+  color: var(--context-menu-muted);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.sizeSubmenu {
+  position: absolute;
+  top: -4px;
+  left: calc(100% + 8px);
+  z-index: 1000000005;
+  display: none;
+  width: 164px;
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--context-menu-border);
+  border-radius: var(--radius-default);
+  padding: var(--spacing-padding-small);
+  background: var(--context-menu-bg);
+  box-shadow: var(--context-menu-shadow);
+  backdrop-filter: blur(var(--context-menu-blur)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--context-menu-blur)) saturate(1.08);
+}
+
+.sizeSubmenuLeft {
+  right: calc(100% + 8px);
+  left: auto;
+}
+
+.sizeMenuWrap:hover .sizeSubmenu,
+.sizeMenuWrap:focus-within .sizeSubmenu,
+.sizeSubmenu:hover {
+  display: flex;
+}
+
+.sizeSubmenu .menuItem:disabled {
+  cursor: not-allowed;
+  opacity: .42;
+}
+.sizeSubmenu::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -9px;
+  width: 9px;
+}
+.sizeSubmenuLeft::before { right: -9px; left: auto; }
+
+/* ===== 全局菜单几何规范 ===== */
+.contextMenu,
+.sizeSubmenu { border-radius: var(--ui-menu-radius); }
+.menuItem { border-radius: var(--ui-menu-item-radius); }

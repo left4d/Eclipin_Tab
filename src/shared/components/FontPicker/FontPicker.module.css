@@ -1,0 +1,170 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.importButton {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px dashed var(--fusion-border-accent);
+  border-radius: 10px;
+  background: var(--fusion-accent-softer);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-family);
+}
+
+.importButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fusion-accent) 14%, var(--color-bg-primary));
+}
+
+.importButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.importIcon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--fusion-accent);
+  color: var(--fusion-on-accent);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.importButton > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.importButton strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.importButton small {
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  white-space: normal;
+}
+
+.message {
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: color-mix(in srgb, #d97706 12%, transparent);
+  color: color-mix(in srgb, #d97706 78%, var(--color-text-primary));
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: min(360px, calc(100vh - 250px));
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.optionRow {
+  position: relative;
+  min-width: 0;
+}
+
+.option {
+  width: 100%;
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 38px 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.option:hover {
+  background: var(--fusion-accent-softer);
+  border-color: var(--fusion-border-accent);
+}
+
+.active {
+  border-color: var(--fusion-accent);
+  box-shadow: 0 0 0 1px var(--fusion-accent);
+}
+
+.optionHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-family);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.optionHeader em {
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--fusion-accent-softer);
+  color: var(--fusion-accent-strong);
+  font-size: 9px;
+  font-style: normal;
+}
+
+.option strong {
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.deleteButton {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  transform: translateY(-50%);
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.deleteButton:hover {
+  background: color-mix(in srgb, #ef4444 12%, transparent);
+  color: #ef4444;
+}
+
+/* ===== 字体选择器使用统一次级控件材质 ===== */
+.option {
+  border-color: var(--ui-control-border);
+  border-radius: var(--ui-control-radius);
+  background: var(--ui-control-bg);
+}
+.option:hover { background: var(--ui-control-bg-hover); }

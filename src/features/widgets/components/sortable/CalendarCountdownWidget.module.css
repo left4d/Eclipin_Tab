@@ -1,0 +1,203 @@
+.calendarBody,
+.countdownBody {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  color: var(--widget-text-primary, rgba(22, 24, 30, 0.9));
+}
+
+.calendarBody {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 8px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.calendarBody:active {
+  cursor: grabbing;
+}
+
+.calendarToolbar {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 6px;
+}
+
+.calendarToolbar strong {
+  overflow: hidden;
+  color: var(--widget-text-primary, inherit);
+  font-size: 0.82rem;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendarToolbar button,
+.calendarTodayButton {
+  border: 1px solid var(--widget-border-subtle, rgba(20, 24, 31, 0.1));
+  border-radius: 9px;
+  background: var(--widget-control-surface, rgba(20, 24, 31, 0.055));
+  color: var(--widget-text-primary, inherit);
+  cursor: pointer;
+  font: inherit;
+  transition: background 150ms ease, transform 150ms ease, border-color 150ms ease;
+}
+
+.calendarToolbar button {
+  width: 30px;
+  height: 28px;
+  padding: 0;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.calendarToolbar button:hover,
+.calendarTodayButton:hover {
+  border-color: color-mix(in srgb, var(--utility-accent) 35%, var(--widget-border-subtle, transparent));
+  background: var(--widget-control-hover, rgba(20, 24, 31, 0.1));
+  transform: translateY(-1px);
+}
+
+.calendarWeekdays,
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.calendarWeekdays span {
+  color: var(--widget-text-tertiary, rgba(20, 24, 31, 0.42));
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.calendarGrid {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: repeat(6, minmax(22px, 1fr));
+}
+
+.calendarGrid span {
+  display: flex;
+  min-width: 0;
+  min-height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--widget-text-secondary, rgba(20, 24, 31, 0.68));
+  font-size: clamp(0.62rem, 1.2vw, 0.75rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.calendarOtherMonth {
+  opacity: 0.3;
+}
+
+.calendarToday {
+  background: var(--utility-accent);
+  color: #fff !important;
+  font-weight: 800;
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--utility-accent) 28%, transparent);
+}
+
+.calendarTodayButton {
+  align-self: center;
+  min-height: 25px;
+  padding: 0 10px;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.countdownBody {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+  text-align: center;
+}
+
+.countdownNumber {
+  color: var(--widget-text-primary, inherit);
+  font-size: clamp(2.3rem, 8vw, 4.8rem);
+  font-weight: 850;
+  letter-spacing: -0.075em;
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdownPast {
+  color: var(--widget-text-secondary, inherit);
+}
+
+.countdownUnit {
+  color: var(--utility-accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.countdownDate {
+  margin-top: 2px;
+  color: var(--widget-text-tertiary, rgba(20, 24, 31, 0.45));
+  font-size: 0.64rem;
+}
+
+.countdownEmpty {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--widget-text-tertiary, rgba(20, 24, 31, 0.45));
+}
+
+.countdownEmpty strong {
+  color: var(--widget-text-secondary, rgba(20, 24, 31, 0.65));
+  font-size: 0.82rem;
+}
+
+.countdownEmpty span {
+  font-size: 0.65rem;
+}
+
+.countdownEditor {
+  display: grid;
+  width: 100%;
+  gap: 10px;
+}
+
+.countdownEditor label {
+  display: grid;
+  gap: 5px;
+  text-align: left;
+}
+
+.countdownEditor label > span {
+  color: var(--widget-text-tertiary, rgba(20, 24, 31, 0.45));
+  font-size: 0.62rem;
+  font-weight: 750;
+}
+
+.countdownEditor input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--widget-border-subtle, rgba(20, 24, 31, 0.1));
+  border-radius: 10px;
+  padding: 8px 9px;
+  background: var(--widget-control-surface, rgba(20, 24, 31, 0.055));
+  color: var(--widget-text-primary, inherit);
+  outline: none;
+  font: inherit;
+  font-size: 0.72rem;
+}
+
+.countdownEditor input:focus {
+  border-color: color-mix(in srgb, var(--utility-accent) 48%, var(--widget-border-subtle, transparent));
+  box-shadow: 0 0 0 3px var(--fusion-focus-ring);
+}

@@ -1,5 +1,6 @@
 import { Sticker } from '@/shared/types';
 import { markdownToPlainText } from '@/shared/utils/markdownLinks';
+import { ensureBuiltInFontLoaded, getBuiltInFontFamily } from '@/shared/constants/builtInFonts';
 
 /**
  * 将 Blob 作为文件下载，并指定文件名。
@@ -54,12 +55,13 @@ export function imageToBlob(img: HTMLImageElement): Promise<Blob | null> {
  * 为文字贴纸生成 PNG Blob。
  * 处理样式、内边距和文本绘制。
  */
-export function createTextStickerImage(sticker: Sticker): Promise<Blob | null> {
+export async function createTextStickerImage(sticker: Sticker): Promise<Blob | null> {
+    if (sticker.type !== 'text') return null;
+
+    await ensureBuiltInFontLoaded(sticker.style?.fontFamily);
+    const fontFamily = getBuiltInFontFamily(sticker.style?.fontFamily);
+
     return new Promise((resolve) => {
-        if (sticker.type !== 'text') {
-            resolve(null);
-            return;
-        }
 
         // 从 CSS 变量获取描边颜色
         const strokeColor = getComputedStyle(document.documentElement)
@@ -68,7 +70,7 @@ export function createTextStickerImage(sticker: Sticker): Promise<Blob | null> {
         const MIN_HEIGHT = 600;
         const BASE_FONT_SIZE = 48;
         // const PADDING_RATIO = 0.5; // 已移除：未使用
-        const STROKE_RATIO = 0.25;
+        const DEFAULT_STROKE_VISUAL_WIDTH = 6;
 
         // 创建用于测量的临时画布
         const measureCanvas = document.createElement('canvas');
@@ -79,7 +81,7 @@ export function createTextStickerImage(sticker: Sticker): Promise<Blob | null> {
         }
 
         // 匹配 CSS 样式: font-weight 900, line-height 0.95, Bricolage Grotesque
-        measureCtx.font = `900 ${BASE_FONT_SIZE}px "Bricolage Grotesque", sans-serif`;
+        measureCtx.font = `900 ${BASE_FONT_SIZE}px ${fontFamily}`;
 
         // 测量文本内容
         const lines = markdownToPlainText(sticker.content).split('\n');
@@ -95,7 +97,9 @@ export function createTextStickerImage(sticker: Sticker): Promise<Blob | null> {
         // 计算包含描边缓冲的内容维度
         // CSS 内边距: 垂直 12px, 水平 16px
         // 描边: 12px (外侧 6px)
-        const strokeWidth = BASE_FONT_SIZE * STROKE_RATIO;
+        const strokeVisualWidth = sticker.hideStroke ? 0 : Math.max(1, Math.min(20, sticker.strokeWidth ?? DEFAULT_STROKE_VISUAL_WIDTH));
+        // Canvas stroke is centered on glyph edges, so use 2× the desired outward visual border.
+        const strokeWidth = strokeVisualWidth * 2;
         const strokeBuffer = strokeWidth / 2;
 
         const paddingX = 16 + strokeBuffer;
@@ -130,7 +134,7 @@ export function createTextStickerImage(sticker: Sticker): Promise<Blob | null> {
 
         if (ctx) {
             // 设置文本样式
-            ctx.font = `900 ${fontSize}px "Bricolage Grotesque", sans-serif`;
+            ctx.font = `900 ${fontSize}px ${fontFamily}`;
             ctx.textBaseline = 'middle';
 
             // 根据对齐方式计算文本位置
@@ -157,9 +161,11 @@ export function createTextStickerImage(sticker: Sticker): Promise<Blob | null> {
             // 在画布中居中
             let y = (canvasHeight - totalTextHeight) / 2 + finalLineHeight / 2;
 
-            for (const line of lines) {
-                ctx.strokeText(line, textX, y);
-                y += finalLineHeight;
+            if (!sticker.hideStroke) {
+                for (const line of lines) {
+                    ctx.strokeText(line, textX, y);
+                    y += finalLineHeight;
+                }
             }
 
             // 绘制填充颜色
@@ -196,8 +202,10 @@ export function createImageStickerImage(sticker: Sticker): Promise<Blob | null> 
             const strokeColor = getComputedStyle(document.documentElement)
                 .getPropertyValue('--color-sticker-stroke').trim() || 'white';
 
-            const BORDER_RADIUS = 16;
-            const STROKE_WIDTH = 6;
+            // 保持旧版本导出的默认 16px 圆角；只有用户显式调整时才使用自定义值。
+            const requestedCornerRadius = Number.isFinite(sticker.cornerRadius) ? sticker.cornerRadius! : 16;
+            const BORDER_RADIUS = Math.max(0, Math.min(80, requestedCornerRadius, img.width / 2, img.height / 2));
+            const STROKE_WIDTH = sticker.hideStroke ? 0 : Math.max(1, Math.min(20, sticker.strokeWidth ?? 6));
             const SHADOW_BLUR = 12;
             const SHADOW_OFFSET = 6;
             const PADDING = STROKE_WIDTH + SHADOW_BLUR;
@@ -241,10 +249,12 @@ export function createImageStickerImage(sticker: Sticker): Promise<Blob | null> 
                 ctx.restore();
 
                 // 使用 --color-sticker-stroke 绘制描边/轮廓
-                createRoundedPath(imgX, imgY, img.width, img.height, BORDER_RADIUS);
-                ctx.strokeStyle = strokeColor;
-                ctx.lineWidth = STROKE_WIDTH * 2; // 双倍宽度，因为有一半会被裁剪掉
-                ctx.stroke();
+                if (!sticker.hideStroke) {
+                    createRoundedPath(imgX, imgY, img.width, img.height, BORDER_RADIUS);
+                    ctx.strokeStyle = strokeColor;
+                    ctx.lineWidth = STROKE_WIDTH * 2; // 双倍宽度，因为有一半会被裁剪掉
+                    ctx.stroke();
+                }
 
                 // 裁剪到圆角矩形并绘制图片
                 ctx.save();

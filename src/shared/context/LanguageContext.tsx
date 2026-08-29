@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { applyRuntimeEnglishLocalization } from '../i18n/runtimeEnglishLocalization';
 
 type Language = 'en' | 'zh';
 
@@ -38,7 +39,9 @@ interface Translations {
     };
     contextMenu: {
         addSticker: string;
+        drawing: string;
         uploadImage: string;
+        svgLibrary: string;
         editMode: string;
         exitEditMode: string;
         settings: string;
@@ -56,6 +59,8 @@ interface Translations {
         restore: string;
         pinSticker: string;
         unpinSticker: string;
+        changeFont: string;
+        rotateSticker: string;
     };
     modal: {
         edit: string;
@@ -64,6 +69,7 @@ interface Translations {
         name: string;
         icon: string;
         getFromWebsite: string;
+        useSvgIcon: string;
         useTextIcon: string;
         uploadNewIcon: string;
         cancel: string;
@@ -175,7 +181,7 @@ const translations: Record<Language, Translations> = {
             fixIconsTooltip: 'Re-fetch icons for the current space. Useful for missing icons, fallback text icons, or old icons from previous versions.',
             exportBackup: 'Export Backup',
             importBackup: 'Import Backup',
-            importBackupConfirm: 'Importing will overwrite current spaces, links, stickers, wallpaper, and settings. Continue?',
+            importBackupConfirm: 'Importing will overwrite the current full local state, including widgets, stickers, layouts, custom fonts/icons, and saved settings or credentials. Continue?',
             backupFailed: 'Backup failed',
             restoreFailed: 'Restore failed',
         },
@@ -186,7 +192,9 @@ const translations: Record<Language, Translations> = {
         },
         contextMenu: {
             addSticker: 'Add Sticker',
+            drawing: 'Drawing',
             uploadImage: 'Upload Image',
+            svgLibrary: 'SVG Library',
             editMode: 'Edit Mode',
             exitEditMode: 'Exit Edit Mode',
             settings: 'Settings',
@@ -204,6 +212,8 @@ const translations: Record<Language, Translations> = {
             restore: 'Restore',
             pinSticker: 'Pin Sticker',
             unpinSticker: 'Unpin Sticker',
+            changeFont: 'Change Font',
+            rotateSticker: 'Rotate Sticker',
         },
         modal: {
             edit: 'Edit',
@@ -212,6 +222,7 @@ const translations: Record<Language, Translations> = {
             name: 'Name',
             icon: 'Icon',
             getFromWebsite: 'Get from website',
+            useSvgIcon: 'Use SVG icon',
             useTextIcon: 'Use Text Icon',
             uploadNewIcon: 'Upload new icon',
             cancel: 'Cancel',
@@ -321,7 +332,7 @@ const translations: Record<Language, Translations> = {
             fixIconsTooltip: '重新获取当前空间的图标。适用于图标缺失、显示为文字兜底图标，或旧版本遗留图标需要更新的情况。',
             exportBackup: '导出备份',
             importBackup: '导入备份',
-            importBackupConfirm: '导入会覆盖当前空间、链接、贴纸、壁纸和设置。确定继续吗？',
+            importBackupConfirm: '导入会覆盖当前完整本地状态，包括组件、贴纸、横纵布局、自定义字体/图标，以及已保存的设置或凭据。确定继续吗？',
             backupFailed: '备份失败',
             restoreFailed: '恢复失败',
         },
@@ -332,7 +343,9 @@ const translations: Record<Language, Translations> = {
         },
         contextMenu: {
             addSticker: '添加贴纸',
+            drawing: '画图',
             uploadImage: '上传图片',
+            svgLibrary: 'SVG 图标库',
             editMode: '编辑模式',
             exitEditMode: '退出编辑',
             settings: '设置',
@@ -350,6 +363,8 @@ const translations: Record<Language, Translations> = {
             restore: '还原',
             pinSticker: '固定贴纸',
             unpinSticker: '解除固定',
+            changeFont: '切换字体',
+            rotateSticker: '旋转贴纸',
         },
         modal: {
             edit: '编辑',
@@ -358,6 +373,7 @@ const translations: Record<Language, Translations> = {
             name: '名称',
             icon: '图标',
             getFromWebsite: '获取网站图标',
+            useSvgIcon: '使用 SVG 图标',
             useTextIcon: '使用文字图标',
             uploadNewIcon: '上传新图标',
             cancel: '取消',
@@ -463,6 +479,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     useEffect(() => {
         localStorage.setItem('app_language', language);
     }, [language]);
+
+    useEffect(() => applyRuntimeEnglishLocalization(language), [language]);
 
     const value = useMemo(() => ({
         language,

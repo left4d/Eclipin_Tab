@@ -7,6 +7,7 @@ import { SpaceSwitcher } from './SpaceSwitcher';
 import { DockContextMenu } from './DockContextMenu';
 import { SpaceManageMenu } from '@/features/spaces/components/Modal/SpaceManageMenu';
 import { DragPreview } from '@/features/dock/components/DragPreview';
+import { createId } from '@/shared/utils/id';
 
 import { useDragAndDrop } from '@/features/dock/hooks/useDragAndDrop';
 import { useDockDrag, useDockUI } from '@/features/dock/context/DockContext';
@@ -37,6 +38,8 @@ interface DockProps {
     externalDragItem?: DockItemType | null;
     onDragStart?: (item: DockItemType) => void;
     onDragEnd?: () => void;
+    onPageDown?: () => void;
+    pageSlideDirection?: 'vertical' | 'horizontal';
 }
 
 export const Dock: React.FC<DockProps> = ({
@@ -55,6 +58,8 @@ export const Dock: React.FC<DockProps> = ({
     externalDragItem,
     onDragStart,
     onDragEnd,
+    onPageDown,
+    pageSlideDirection = 'vertical',
 }) => {
     const innerRef = useRef<HTMLDivElement>(null);
     const { folderPlaceholderActive } = useDockDrag();
@@ -64,8 +69,10 @@ export const Dock: React.FC<DockProps> = ({
     // Focus Spaces 集成
     const {
         spaces,
+        dockSpaces,
         currentSpace,
         currentIndex,
+        dockCurrentIndex,
         isSwitching,
         setIsSwitching,
         switchToNextSpace,
@@ -88,7 +95,7 @@ export const Dock: React.FC<DockProps> = ({
 
     // 空间切换处理 - 包含宽度锁定和动画序列逻辑
     const handleSpaceSwitch = useCallback(() => {
-        if (isSwitching || spaces.length <= 1) return;
+        if (isSwitching || dockSpaces.length <= 1) return;
 
         // 保存当前宽度（切换前）用于过渡
         const startWidth = dockContentRef.current
@@ -165,7 +172,7 @@ export const Dock: React.FC<DockProps> = ({
                 }, enterDuration);
             }, 10);
         }, EXIT_DURATION);
-    }, [isSwitching, spaces.length, items.length, switchToNextSpace, setIsSwitching]);
+    }, [isSwitching, dockSpaces.length, items.length, switchToNextSpace, setIsSwitching]);
 
     // 空间管理菜单状态
     const [showSpaceMenu, setShowSpaceMenu] = useState(false);
@@ -176,9 +183,9 @@ export const Dock: React.FC<DockProps> = ({
     const navigatorRef = useRef<HTMLDivElement>(null);
 
     const handleNavigatorLongPress = useCallback(() => {
-        if (spaces.length <= 1) return;
+        if (dockSpaces.length <= 1) return;
         setShowSpaceSwitcher(true);
-    }, [spaces.length]);
+    }, [dockSpaces.length]);
 
     const handleSpaceSwitcherSelect = useCallback((spaceId: string) => {
         if (spaceId === currentSpace.id) return;
@@ -305,7 +312,7 @@ export const Dock: React.FC<DockProps> = ({
                 onItemsReorder(newItems);
             } else {
                 const newFolder: DockItemType = {
-                    id: `folder-${Date.now()}`,
+                    id: createId('folder'),
                     name: 'Folder',
                     type: 'folder',
                     items: [target, item],
@@ -495,22 +502,32 @@ export const Dock: React.FC<DockProps> = ({
             {/* DockNavigator - 空间切换器，使用绝对定位始终靠右 */}
             <div
                 ref={navigatorRef}
-                className={`${styles.dockNavigator} ${animationPhase === 'exiting' || animationPhase === 'hidden' ? styles.navigatorTransitioning : ''} ${showSpaceSwitcher ? styles.navigatorHidden : ''}`}
+                className={`${styles.dockNavigator} ${onPageDown ? styles.withPageDown : ''} ${animationPhase === 'exiting' || animationPhase === 'hidden' ? styles.navigatorTransitioning : ''} ${showSpaceSwitcher ? styles.navigatorHidden : ''}`}
             >
                 <DockNavigator
                     currentSpace={currentSpace}
-                    totalSpaces={spaces.length}
-                    currentIndex={currentIndex}
+                    totalSpaces={dockSpaces.length}
+                    currentIndex={Math.max(0, dockCurrentIndex)}
                     onSwitch={handleSpaceSwitch}
                     onContextMenu={handleSpaceContextMenu}
                     onLongPress={handleNavigatorLongPress}
                     disabled={isSwitching}
                 />
+                {onPageDown && (
+                    <button
+                        className={`${styles.pageDownButton} ${pageSlideDirection === 'horizontal' ? styles.pageNextHorizontal : ''}`} type="button" onClick={onPageDown}
+                        aria-label={pageSlideDirection === 'horizontal' ? 'Next page to the right' : 'Next page below'} title={pageSlideDirection === 'horizontal' ? '向右切换到下一页' : '向下切换到下一页'}
+                    >
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d={pageSlideDirection === 'horizontal' ? 'M9 6L15 12L9 18' : 'M6 9L12 15L18 9'} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    </button>
+                )}
             </div>
             {/* SpaceSwitcher - 长按 Navigator 弹出的空间快速切换器 */}
             {showSpaceSwitcher && (
                 <SpaceSwitcher
-                    spaces={spaces}
+                    spaces={dockSpaces}
                     onSelect={handleSpaceSwitcherSelect}
                     onClose={handleSpaceSwitcherClose}
                     anchorRect={navigatorRef.current?.getBoundingClientRect() ?? null}

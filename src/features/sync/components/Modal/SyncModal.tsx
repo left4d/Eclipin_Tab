@@ -15,16 +15,16 @@ interface SyncModalProps {
 export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose, anchorPosition }) => {
     const { t } = useLanguage();
 
-    const [serverUrl, setServerUrl] = useState(localStorage.getItem('EclipseTab_webdav_url') || '');
-    const [username, setUsername] = useState(localStorage.getItem('EclipseTab_webdav_user') || '');
-    const [password, setPassword] = useState(localStorage.getItem('EclipseTab_webdav_pass') || '');
+    const [serverUrl, setServerUrl] = useState(localStorage.getItem('Eclipin_webdav_url') || '');
+    const [username, setUsername] = useState(localStorage.getItem('Eclipin_webdav_user') || '');
+    const [password, setPassword] = useState(localStorage.getItem('Eclipin_webdav_pass') || '');
     const [status, setStatus] = useState<'untested' | 'success' | 'failed'>('untested');
     const [statusMsg, setStatusMsg] = useState('');
     const [isTesting, setIsTesting] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
-    const [syncWallpaper, setSyncWallpaper] = useState(() => localStorage.getItem('EclipseTab_syncWallpaper') === 'true');
-    const [syncStickers, setSyncStickers] = useState(() => localStorage.getItem('EclipseTab_syncStickers') === 'true');
+    const [syncWallpaper, setSyncWallpaper] = useState(() => localStorage.getItem('Eclipin_syncWallpaper') === 'true');
+    const [syncStickers, setSyncStickers] = useState(() => localStorage.getItem('Eclipin_syncStickers') === 'true');
     const [autoSync, setAutoSync] = useState(() => isAutoSyncEnabled());
     const [isBackupBusy, setIsBackupBusy] = useState(false);
     const backupInputRef = React.useRef<HTMLInputElement>(null);
@@ -167,7 +167,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose, anchorPos
                         className={styles.inputField}
                         value={serverUrl}
                         onChange={(e) => setServerUrl(e.target.value)}
-                        onBlur={(e) => saveToStorage('EclipseTab_webdav_url', e.target.value)}
+                        onBlur={(e) => saveToStorage('Eclipin_webdav_url', e.target.value)}
                         placeholder="https://dav.jianguoyun.com/dav/"
                     />
                 </div>
@@ -178,7 +178,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose, anchorPos
                         className={styles.inputField}
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        onBlur={(e) => saveToStorage('EclipseTab_webdav_user', e.target.value)}
+                        onBlur={(e) => saveToStorage('Eclipin_webdav_user', e.target.value)}
                         placeholder="user@example.com"
                     />
                 </div>
@@ -189,7 +189,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose, anchorPos
                         className={styles.inputField}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        onBlur={(e) => saveToStorage('EclipseTab_webdav_pass', e.target.value)}
+                        onBlur={(e) => saveToStorage('Eclipin_webdav_pass', e.target.value)}
                         placeholder={t.sync.password}
                     />
                 </div>
@@ -243,7 +243,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose, anchorPos
                         onClick={() => {
                             const next = !syncWallpaper;
                             setSyncWallpaper(next);
-                            localStorage.setItem('EclipseTab_syncWallpaper', String(next));
+                            localStorage.setItem('Eclipin_syncWallpaper', String(next));
                         }}
                     >
                         <div className={styles.toggleKnob} />
@@ -256,7 +256,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose, anchorPos
                         onClick={() => {
                             const next = !syncStickers;
                             setSyncStickers(next);
-                            localStorage.setItem('EclipseTab_syncStickers', String(next));
+                            localStorage.setItem('Eclipin_syncStickers', String(next));
                         }}
                     >
                         <div className={styles.toggleKnob} />

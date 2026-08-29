@@ -4,6 +4,8 @@ import styles from './Searcher.module.css';
 import { useSearchSuggestions } from '@/features/search/hooks/useSearchSuggestions';
 import { useLanguage } from '@/shared/context/LanguageContext';
 import { SuggestionsList } from './SuggestionsList';
+import { executeNavigationInput } from '@/shared/navigation';
+import { AdvancedSearchPanel } from '@/features/search/components/AdvancedSearch/AdvancedSearchPanel';
 
 interface SearcherProps {
   searchEngine: SearchEngine;
@@ -11,6 +13,7 @@ interface SearcherProps {
   onSearchEngineClick: (anchorRect: DOMRect) => void;
   openInNewTab?: boolean;
   containerStyle?: React.CSSProperties;
+  suggestionsPlacement?: 'above' | 'below';
 }
 
 export const Searcher: React.FC<SearcherProps> = ({
@@ -19,16 +22,18 @@ export const Searcher: React.FC<SearcherProps> = ({
   onSearchEngineClick,
   openInNewTab = true,
   containerStyle,
+  suggestionsPlacement = 'above',
 }) => {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { suggestions } = useSearchSuggestions(query);
 
   // 动画状态管理
-  const showSuggestions = isFocused && suggestions.length > 0;
+  const showSuggestions = !isAdvancedOpen && isFocused && suggestions.length > 0;
   const [shouldRender, setShouldRender] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
@@ -52,18 +57,23 @@ export const Searcher: React.FC<SearcherProps> = ({
   }, []);
 
   useEffect(() => {
-    const handleSpaceFocus = (e: KeyboardEvent) => {
-      if (e.key !== ' ' || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.isComposing) return;
+    const handleSearchShortcut = (event: KeyboardEvent) => {
+      if (event.isComposing) return;
 
-      const target = e.target as HTMLElement | null;
-      if (target?.closest('input, textarea, select, button, a, [contenteditable="true"]')) return;
+      const target = event.target as HTMLElement | null;
+      const isTyping = Boolean(target?.closest('input, textarea, select, [contenteditable="true"]'));
+      const isCommandShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k';
+      const isDirectShortcut = !isTyping && !event.altKey && !event.ctrlKey && !event.metaKey
+        && !event.shiftKey && (event.key === '/' || event.key === ' ');
 
-      e.preventDefault();
+      if (!isCommandShortcut && !isDirectShortcut) return;
+      event.preventDefault();
       inputRef.current?.focus();
+      inputRef.current?.select();
     };
 
-    window.addEventListener('keydown', handleSpaceFocus);
-    return () => window.removeEventListener('keydown', handleSpaceFocus);
+    window.addEventListener('keydown', handleSearchShortcut);
+    return () => window.removeEventListener('keydown', handleSearchShortcut);
   }, []);
 
   // 当建议列表变化时重置激活索引
@@ -72,18 +82,14 @@ export const Searcher: React.FC<SearcherProps> = ({
   }, [suggestions]);
 
   const handleSearch = (searchQuery: string) => {
-    if (!searchQuery.trim()) return;
+    const trimmedQuery = searchQuery.trim();
+    if (!trimmedQuery) return;
 
-    // 检查是否是 URL
-    try {
-      const url = new URL(searchQuery);
-      window.open(url.toString(), openInNewTab ? '_blank' : '_self');
-    } catch {
-      // 不是 URL，进行搜索
-      onSearch(searchQuery);
+    if (!executeNavigationInput(trimmedQuery, { openInNewTab })) {
+      onSearch(trimmedQuery);
     }
-    setQuery(''); // 可选：搜索后清空查询内容
-    // 强制关闭建议列表
+
+    setQuery('');
     setIsFocused(false);
   };
 
@@ -119,7 +125,7 @@ export const Searcher: React.FC<SearcherProps> = ({
     }
   };
 
-  const containerRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLFormElement>(null);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
@@ -132,7 +138,19 @@ export const Searcher: React.FC<SearcherProps> = ({
   const { t } = useLanguage();
 
   return (
-    <header ref={containerRef} className={styles.searcher} style={containerStyle}>
+    <form ref={containerRef} className={styles.searcher} style={containerStyle} role="search" onSubmit={handleSubmit}>
+      {isAdvancedOpen && (
+        <AdvancedSearchPanel
+          query={query}
+          onQueryChange={setQuery}
+          onSearch={handleSearch}
+          onClose={() => {
+            setIsAdvancedOpen(false);
+            requestAnimationFrame(() => inputRef.current?.focus());
+          }}
+          openInNewTab={openInNewTab}
+        />
+      )}
       {/* 建议列表 */}
       {shouldRender && suggestions.length > 0 && (
         <SuggestionsList
@@ -142,6 +160,7 @@ export const Searcher: React.FC<SearcherProps> = ({
           onHover={(index) => setActiveIndex(index)}
           isExiting={isExiting}
           anchorRect={anchorRect}
+          placement={suggestionsPlacement}
         />
       )}
 
@@ -150,7 +169,8 @@ export const Searcher: React.FC<SearcherProps> = ({
         <div className={styles.searchInfo}>
           <p className={styles.label}>{t.search.searchBy}</p>
           <div className={styles.searchTool}>
-            <p
+            <button
+              type="button"
               className={styles.searchEngine}
               onClick={(e) => {
                 const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -160,7 +180,19 @@ export const Searcher: React.FC<SearcherProps> = ({
               {/* 对于默认搜索引擎使用本地化的名称 */}
               {searchEngine.name}
               {t.search.searchBySuffix}
-            </p>
+            </button>
+            <button
+              type="button"
+              className={`${styles.advancedSearchButton} ${isAdvancedOpen ? styles.advancedSearchButtonActive : ''}`}
+              onClick={() => {
+                setIsAdvancedOpen((current) => !current);
+              }}
+              aria-expanded={isAdvancedOpen}
+              aria-label="高级搜索"
+              title="高级搜索"
+            >
+              高级
+            </button>
           </div>
         </div>
         <div className={styles.textInputContainer}>
@@ -172,6 +204,11 @@ export const Searcher: React.FC<SearcherProps> = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={shouldRender && suggestions.length > 0}
+            aria-controls="search-suggestions"
+            aria-activedescendant={activeIndex >= 0 ? `search-suggestion-${activeIndex}` : undefined}
             onFocus={() => setIsFocused(true)}
             onBlur={() => {
               // 延迟隐藏建议列表以允许点击事件触发
@@ -179,7 +216,7 @@ export const Searcher: React.FC<SearcherProps> = ({
             }}
           />
         </div>
-        <div className={styles.iconContainer} onClick={handleSubmit}>
+        <button type="submit" className={styles.iconContainer} aria-label={t.search.searchButton}>
           <div className={styles.asteriskIcon}>
             {/* search.svg */}
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -194,8 +231,8 @@ export const Searcher: React.FC<SearcherProps> = ({
               <path d="M15 2.25C15.1989 2.25 15.3897 2.32902 15.5303 2.46967C15.671 2.61032 15.75 2.80109 15.75 3V4.083C15.75 5.31525 15.75 6.28575 15.6863 7.0665C15.6211 7.86375 15.4861 8.529 15.1778 9.1335C14.7043 10.1214 13.9009 10.9246 12.9128 11.4278C12.3083 11.7353 11.6431 11.871 10.8458 11.9363C10.0651 12 9.09461 12 7.86236 12H4.83986L7.30961 14.4697C7.4463 14.6112 7.52189 14.8007 7.52019 14.9973C7.51848 15.1939 7.43959 15.3821 7.30054 15.5211C7.16148 15.6602 6.97338 15.739 6.77672 15.7408C6.58007 15.7425 6.39062 15.6669 6.24911 15.5302L2.49911 11.7802C2.35851 11.6396 2.27952 11.4488 2.27952 11.25C2.27952 11.0511 2.35851 10.8604 2.49911 10.7197L6.24911 6.96975C6.39062 6.83313 6.58007 6.75754 6.77672 6.75924C6.97338 6.76095 7.16148 6.83983 7.30054 6.97889C7.43959 7.11794 7.51848 7.30605 7.52019 7.5027C7.52189 7.69935 7.4463 7.8888 7.30961 8.03025L4.83986 10.5H7.82936C9.10211 10.5 10.0111 10.5 10.7243 10.4415C11.4278 10.3837 11.8741 10.2735 12.2318 10.0913C12.9373 9.73173 13.5109 9.15808 13.8705 8.4525C14.0528 8.09475 14.1631 7.6485 14.2208 6.945C14.2786 6.23175 14.2793 5.32275 14.2793 4.05V3C14.2793 2.80109 14.3583 2.61032 14.499 2.46967C14.6396 2.32902 14.8304 2.25 15.0293 2.25H15Z" fill="currentColor" />
             </svg>
           </div>
-        </div>
+        </button>
       </div>
-    </header>
+    </form>
   );
 };

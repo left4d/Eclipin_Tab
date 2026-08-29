@@ -6,7 +6,7 @@
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
     overflow: hidden;
-    z-index: 2002;
+    z-index: 1000000001;
     padding: 8px 8px;
     display: flex;
     flex-direction: column-reverse;
@@ -38,3 +38,24 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.suggestionsListBelow {
+    flex-direction: column;
+    transform-origin: top center;
+}
+
+/* ===== 搜索建议与全局菜单材质一致 ===== */
+.suggestionsList {
+    border-color: var(--ui-menu-border);
+    background: var(--ui-menu-bg);
+    box-shadow: var(--ui-menu-shadow);
+    backdrop-filter: blur(var(--ui-menu-blur)) saturate(1.08);
+    -webkit-backdrop-filter: blur(var(--ui-menu-blur)) saturate(1.08);
+}
+
+.suggestionItem:hover,
+.suggestionItem.active {
+    background-color: var(--ui-menu-hover);
+}
+.suggestionsList { border-radius: var(--ui-menu-radius); }
+.suggestionItem { border-radius: var(--ui-menu-item-radius); }

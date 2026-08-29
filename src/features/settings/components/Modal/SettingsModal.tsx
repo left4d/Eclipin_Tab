@@ -1,602 +1,164 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Theme, useTheme, Texture } from '@/features/theme/context/ThemeContext';
-import { useSystemTheme } from '@/features/theme/hooks/useSystemTheme';
-import { useLanguage } from '@/shared/context/LanguageContext';
-import { GRADIENT_PRESETS } from '@/features/theme/constants/gradients';
+import { lazy, Suspense, type WheelEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { scaleFadeIn, scaleFadeOut } from '@/shared/utils/animations';
+import type { WidgetPageId } from '@/features/widgets/types/widget';
+import { useWidgetSettingsController } from '../../hooks/useWidgetSettingsController';
+import { AppearanceSettingsSection } from '../sections/AppearanceSettingsSection';
+import { LayoutSettingsSection } from '../sections/LayoutSettingsSection';
+import { SpacesSettingsSection } from '../sections/SpacesSettingsSection';
+import { WidgetsSettingsSection } from '../sections/WidgetsSettingsSection';
+import { ApiSettingsSection } from '../sections/ApiSettingsSection';
+import { AboutSettingsSection } from '../sections/AboutSettingsSection';
+import type { SettingsNavigationItem, SettingsSectionId } from '../../types/settings';
 import styles from './SettingsModal.module.css';
-import { TEXTURE_PATTERNS } from '@/features/theme/constants/textures';
-import defaultIcon from '@/assets/icons/star3.svg';
-import lightIcon from '@/assets/icons/sun.svg';
-import darkIcon from '@/assets/icons/moon.svg';
-import autoIcon from '@/assets/icons/monitor.svg';
-import slashIcon from '@/assets/icons/slash.svg';
-import asteriskIcon from '@/assets/icons/asterisk.svg';
-import circleIcon from '@/assets/icons/texture background/circle-preview.svg';
-import crossIcon from '@/assets/icons/texture background/cross-preview.svg';
-import { WallpaperGallery } from '@/features/theme/components/WallpaperGallery/WallpaperGallery';
-import { useSpaces } from '@/features/spaces/context/SpacesContext';
-import { fetchAndProcessIcon } from '@/features/dock/utils/iconFetcher';
-import { FAVICON_PREFIX, getDomainFromRef } from '@/features/dock/utils/iconCache';
-import { normalizeUrl } from '@/shared/utils/url';
-import { db } from '@/shared/utils/db';
-import { DockItem } from '@/shared/types';
 
+const VectorIconStudio = lazy(() => import('@/features/vector-icons/components/VectorIconStudio')); 
 
 interface SettingsModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    anchorPosition: { x: number; y: number };
+  isOpen: boolean;
+  onClose: () => void;
+  anchorPosition: { x: number; y: number };
+  currentPage?: WidgetPageId;
 }
 
-// 简单的权限切换组件
-const PermissionToggle: React.FC = () => {
-    const [enabled, setEnabled] = useState<boolean | null>(null);
-    const [loading, setLoading] = useState(false);
-    const { t } = useLanguage();
+const NAVIGATION_ITEMS: SettingsNavigationItem[] = [
+  { id: 'appearance', icon: '◐', label: '外观', description: '主题与背景' },
+  { id: 'layout', icon: '⌘', label: '布局', description: 'Dock 与行为' },
+  { id: 'spaces', icon: '▤', label: '空间', description: '显示与网址' },
+  { id: 'widgets', icon: '▦', label: '组件', description: '页面与组件' },
+  { id: 'vectors', icon: '◇', label: '矢量图标', description: 'SVG 与画布' },
+  { id: 'api', icon: '⌁', label: '接口', description: '权限与密钥' },
+  { id: 'about', icon: 'i', label: '关于', description: '项目、致谢与许可' },
+];
 
-    // 一致地定义所有必需的源域
-    const REQUIRED_ORIGINS = [
-        'https://suggestqueries.google.com/*',
-        'https://www.google.com/*',
-        'https://suggestion.baidu.com/*'
-    ];
+export const SettingsModal = ({ isOpen, onClose, currentPage = 0 }: SettingsModalProps) => {
+  const [isVisible, setIsVisible] = useState(isOpen);
+  const [activeSection, setActiveSection] = useState<SettingsSectionId>('appearance');
+  const modalRef = useRef<HTMLDivElement>(null);
+  const contentPaneRef = useRef<HTMLElement>(null);
+  const isClosingRef = useRef(false);
+  const widgetController = useWidgetSettingsController(currentPage, isOpen);
 
-    useEffect(() => {
-        // 检查初始权限状态
-        if (typeof chrome !== 'undefined' && chrome.permissions) {
-            chrome.permissions.contains({
-                origins: REQUIRED_ORIGINS
-            }, (result) => {
-                setEnabled(result);
-            });
-        } else {
-            // 开发模式回退 - 检查本地存储
-            const savedState = localStorage.getItem('search_suggestions_enabled');
-            setEnabled(savedState === 'true');
-        }
-    }, []);
-
-    const handleToggle = () => {
-        if (loading || enabled === null) return;
-        setLoading(true);
-
-        // 开发模式回退：如果缺少 chrome API，模拟切换并保存到本地存储
-        if (typeof chrome === 'undefined' || !chrome.permissions) {
-            setTimeout(() => {
-                const newState = !enabled;
-                setEnabled(newState);
-                localStorage.setItem('search_suggestions_enabled', String(newState));
-                setLoading(false);
-            }, 300);
-            return;
-        }
-
-        if (enabled) {
-            // 移除权限
-            chrome.permissions.remove({ origins: REQUIRED_ORIGINS }, (removed) => {
-                if (removed) {
-                    setEnabled(false);
-                }
-                setLoading(false);
-            });
-        } else {
-            // 请求权限
-            chrome.permissions.request({ origins: REQUIRED_ORIGINS }, (granted) => {
-                if (granted) {
-                    setEnabled(true);
-                }
-                setLoading(false);
-            });
-        }
-    };
-
-    return (
-        <div className={styles.layoutToggleGroup}>
-            {enabled !== null && (
-                <div
-                    className={styles.layoutHighlight}
-                    style={{
-                        transform: `translateX(${enabled ? 0 : 100}%)`,
-                    }}
-                />
-            )}
-            <button
-                className={styles.layoutToggleOption}
-                onClick={enabled === true ? undefined : handleToggle}
-                title={t.settings.on}
-            >
-                {t.settings.on}
-            </button>
-            <button
-                className={styles.layoutToggleOption}
-                onClick={enabled === false ? undefined : handleToggle}
-                title={t.settings.off}
-            >
-                {t.settings.off}
-            </button>
-        </div>
-    );
-};
-
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, anchorPosition }) => {
-    const {
-        theme,
-        setTheme,
-        followSystem,
-        setFollowSystem,
-        wallpaper,
-        setWallpaper,
-        wallpaperId,
-        setWallpaperId,
-        uploadWallpaper,
-        gradientId,
-        setGradientId,
-        solidId,
-        setSolidId,
-        texture,
-        setTexture,
-        dockPosition,
-        setDockPosition,
-        iconSize,
-        setIconSize,
-        openInNewTab,
-        setOpenInNewTab,
-    } = useTheme();
-
-    const { language, setLanguage, t } = useLanguage();
-    const { currentSpace, updateSpaceApps } = useSpaces();
-
-    const systemTheme = useSystemTheme();
-    const [isVisible, setIsVisible] = useState(isOpen);
-    const modalRef = useRef<HTMLDivElement>(null);
-    const isClosingRef = useRef(false);
-    const [isFixingIcons, setIsFixingIcons] = useState(false);
-
-    // 确定我们是处于“默认”模式还是“浅色/深色”模式的逻辑
-    const isDefaultTheme = theme === 'default' && !followSystem;
-
-    // 注意：纹理仅在非默认主题中显示（在 ThemeContext 中处理）
-    // 我们不再在切换到默认主题时重置纹理，这样它就可以被记住
-
-    // 动画效果 - 打开
-    useEffect(() => {
-        if (isOpen) {
-            isClosingRef.current = false;
-            setIsVisible(true);
-        }
-    }, [isOpen]);
-
-    useEffect(() => {
-        if (isOpen && isVisible && modalRef.current) {
-            scaleFadeIn(modalRef.current);
-        }
-    }, [isOpen, isVisible]);
-
-    // 动画效果 - 关闭（由父组件设置 isOpen=false 触发）
-    useEffect(() => {
-        if (!isOpen && isVisible && !isClosingRef.current) {
-            isClosingRef.current = true;
-            if (modalRef.current) {
-                scaleFadeOut(modalRef.current, 300, () => setIsVisible(false));
-            } else {
-                setIsVisible(false);
-            }
-        }
-    }, [isOpen, isVisible]);
-
-    const handleThemeSelect = useCallback((selectedTheme: Theme) => {
-        setTheme(selectedTheme);
-        // 不再需要在 handleThemeSelect 中重置 gradientId，因为它现在是独立的
-        if (followSystem) {
-            setFollowSystem(false);
-        }
-    }, [setTheme, followSystem, setFollowSystem]);
-
-    const handleToggleFollowSystem = useCallback(() => {
-        setFollowSystem(!followSystem);
-    }, [followSystem, setFollowSystem]);
-
-    const handleGradientSelect = useCallback((id: string) => {
-        // 如果有壁纸，只需清除它
-        if (wallpaper) {
-            setWallpaper(null);
-        }
-
-        // 根据当前是否为默认主题，决定更新哪一个 ID
-        if (isDefaultTheme) {
-            if (gradientId === id) {
-                // 强制更新逻辑
-                setGradientId('theme-default');
-                requestAnimationFrame(() => setGradientId(id));
-            } else {
-                setGradientId(id);
-            }
-        } else {
-            setSolidId(id);
-        }
-    }, [wallpaper, setWallpaper, gradientId, setGradientId, setSolidId, isDefaultTheme]);
-
-    const handleTextureSelect = useCallback((selectedTexture: Texture) => {
-        setTexture(selectedTexture);
-    }, [setTexture]);
-
-    const handleFixIcons = async () => {
-        if (isFixingIcons) return;
-        setIsFixingIcons(true);
-
-        // 捕获当前空间 ID，避免异步完成后用户已切换空间导致写入错误目标
-        const targetSpaceId = currentSpace.id;
-        const targetApps = currentSpace.apps;
-
-        try {
-            const processItems = async (items: DockItem[]): Promise<DockItem[]> => {
-                const newItems = [...items];
-                for (let i = 0; i < newItems.length; i++) {
-                    const item = newItems[i];
-                    if (item.type === 'folder' && item.items) {
-                        newItems[i] = { ...item, items: await processItems(item.items) };
-                    } else if (item.url) {
-                        const normalized = normalizeUrl(item.url);
-                        
-                        // 判断是否需要修复：
-                        // 1. 图标为空
-                        // 2. 是生成的文字图标 (data:image/svg)
-                        // 3. 是 favicon: 引用，但在 IndexedDB 中标记为 fallback
-                        let needsFix = !item.icon || item.icon.startsWith('data:image/svg');
-                        
-                        if (!needsFix && item.icon && item.icon.startsWith(FAVICON_PREFIX)) {
-                            const domain = getDomainFromRef(item.icon);
-                            try {
-                                const dbItem = await db.getFavicon(domain);
-                                if (dbItem?.isFallback) {
-                                    needsFix = true;
-                                }
-                            } catch { }
-                        }
-
-                        if (needsFix) {
-                            try {
-                                // 强制重新从网络获取图标
-                                const { url: processedIcon, isFallback, iconSmall } = await fetchAndProcessIcon(normalized, 0, true, true);
-                                if (!isFallback) {
-                                    newItems[i] = { ...item, icon: processedIcon, iconSmall: !!iconSmall };
-                                }
-                            } catch { }
-                        }
-                    }
-                }
-                return newItems;
-            };
-
-            const updatedApps = await processItems(targetApps);
-            // 按捕获的空间 ID 精确写入，而非当前活跃空间
-            updateSpaceApps(targetSpaceId, updatedApps);
-        } finally {
-            setIsFixingIcons(false);
-        }
-    };
-
-    if (!isVisible) return null;
-
-    const modalStyle: React.CSSProperties = {
-        left: `${anchorPosition.x}px`,
-        top: `${anchorPosition.y}px`,
-    };
-
-    // 高亮索引：0 = 自动, 1 = 浅色, 2 = 深色
-    let activeIndex = -1;
-    if (followSystem) {
-        activeIndex = 0;
-    } else if (theme === 'light') {
-        activeIndex = 1;
-    } else if (theme === 'dark') {
-        activeIndex = 2;
+  useEffect(() => {
+    if (isOpen) {
+      isClosingRef.current = false;
+      setIsVisible(true);
     }
+  }, [isOpen]);
 
-    const highlightStyle: React.CSSProperties = {
-        transform: activeIndex >= 0 ? `translateX(${activeIndex * 56}px)` : 'scale(0)',
-        opacity: activeIndex >= 0 ? 1 : 0,
-    };
+  useLayoutEffect(() => {
+    if (isOpen && isVisible && modalRef.current) scaleFadeIn(modalRef.current);
+  }, [isOpen, isVisible]);
 
-    // 处理带有动画的关闭
-    const handleClose = () => {
-        if (isClosingRef.current) return;
-        isClosingRef.current = true;
+  useEffect(() => {
+    if (!isOpen && isVisible && !isClosingRef.current) {
+      isClosingRef.current = true;
+      if (modalRef.current) {
+        scaleFadeOut(modalRef.current, 300, () => setIsVisible(false));
+      } else {
+        setIsVisible(false);
+      }
+    }
+  }, [isOpen, isVisible]);
 
-        if (modalRef.current) {
-            scaleFadeOut(modalRef.current, 300, () => {
-                setIsVisible(false);
-                onClose();
-            });
-        } else {
-            setIsVisible(false);
-            onClose();
-        }
-    };
+  if (!isVisible) return null;
 
-    return (
-        <>
-            <div className={styles.backdrop} onClick={handleClose} onDoubleClick={(e) => e.stopPropagation()} />
-            <div ref={modalRef} className={styles.modal} style={modalStyle} onDoubleClick={(e) => e.stopPropagation()}>
-                <div className={styles.innerContainer}>
-                    {/* 主题部分 */}
-                    <div className={styles.iconContainer}>
-                        {/* 主题组 (自动 / 浅色 / 深色) */}
-                        <div className={styles.themeGroupContainer}>
-                            <div className={styles.highlightBackground} style={highlightStyle} />
-                            <button
-                                className={styles.themeGroupOption}
-                                onClick={handleToggleFollowSystem}
-                                title={t.settings.followSystem}
-                            >
-                                <img src={autoIcon} alt="Follow System" width={24} height={24} />
-                            </button>
-                            <button
-                                className={styles.themeGroupOption}
-                                onClick={() => handleThemeSelect('light')}
-                                title={t.settings.lightTheme}
-                            >
-                                <img src={lightIcon} alt="Light Theme" width={24} height={24} />
-                            </button>
-                            <button
-                                className={styles.themeGroupOption}
-                                onClick={() => handleThemeSelect('dark')}
-                                title={t.settings.darkTheme}
-                            >
-                                <img src={darkIcon} alt="Dark Theme" width={24} height={24} />
-                            </button>
-                        </div>
-                        {/* 默认主题按钮 */}
-                        <button
-                            className={`${styles.defaultTheme} ${isDefaultTheme ? styles.defaultThemeActive : ''}`}
-                            onClick={() => handleThemeSelect('default')}
-                            title={t.settings.defaultTheme}
-                        >
-                            <img src={defaultIcon} alt="Default Theme" width={24} height={24} />
-                        </button>
-                    </div>
+  const handleClose = () => {
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
+    if (modalRef.current) {
+      scaleFadeOut(modalRef.current, 300, () => {
+        setIsVisible(false);
+        onClose();
+      });
+      return;
+    }
+    setIsVisible(false);
+    onClose();
+  };
 
-                    {/* 纹理部分 - 带有动画的包装器 */}
-                    <div
-                        className={`${styles.textureSectionWrapper} ${!isDefaultTheme && !wallpaper ? styles.textureSectionWrapperOpen : ''}`}
-                    >
-                        <div className={styles.textureSection}>
-                            {/* None */}
-                            <button
-                                className={`${styles.textureOption} ${texture === 'none' ? styles.textureOptionActive : ''}`}
-                                onClick={() => handleTextureSelect('none')}
-                                title={t.settings.noTexture}
-                            >
-                                <div className={styles.texturePreviewNone}>
-                                    <img src={slashIcon} alt="No Texture" width={24} height={24} />
-                                </div>
-                            </button>
-                            {/* Dynamic Texture Options */}
-                            {(['point', 'cross'] as const).map(textureId => {
-                                const pattern = TEXTURE_PATTERNS[textureId];
-                                const Icon = textureId === 'point' ? circleIcon : crossIcon;
-                                return (
-                                    <button
-                                        key={textureId}
-                                        className={`${styles.textureOption} ${texture === textureId ? styles.textureOptionActive : ''}`}
-                                        onClick={() => handleTextureSelect(textureId)}
-                                        title={language === 'zh' ? pattern.nameZh : pattern.name}
-                                    >
-                                        <div className={styles.texturePreviewNone}>
-                                            <img
-                                                src={Icon}
-                                                alt={pattern.name}
-                                                width={24}
-                                                height={24}
-                                            />
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
+  const handleSettingsWheelCapture = (event: WheelEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('[data-settings-scroll-container="true"]')) return;
 
-                    {/* 颜色选项部分 - 已移动到壁纸上方 */}
-                    <div className={styles.colorOptionsContainer}>
-                        {GRADIENT_PRESETS.map(preset => {
-                            // 对于 theme-default 预设，根据活动主题使用动态颜色
-                            let displayColor = '';
-                            const isThemeDefault = preset.id === 'theme-default';
+    const pane = contentPaneRef.current;
+    if (!pane || Math.abs(event.deltaY) < Math.abs(event.deltaX)) return;
+    event.preventDefault();
+    const multiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? pane.clientHeight : 1;
+    pane.scrollTop += event.deltaY * multiplier;
+  };
 
-                            if (isThemeDefault) {
-                                displayColor = 'var(--color-bg-secondary)';
-                            } else if (isDefaultTheme) {
-                                displayColor = preset.gradient;
-                            } else {
-                                // 对于非默认主题，根据是否为深色模式选择 solid 或 solidDark
-                                const isDarkTheme = theme === 'dark' || (followSystem && systemTheme === 'dark');
-                                displayColor = isDarkTheme && 'solidDark' in preset ? preset.solidDark : preset.solid;
-                            }
+  const renderSection = () => {
+    if (activeSection === 'appearance') return <AppearanceSettingsSection />;
+    if (activeSection === 'layout') return <LayoutSettingsSection />;
+    if (activeSection === 'spaces') return <SpacesSettingsSection />;
+    if (activeSection === 'widgets') return <WidgetsSettingsSection controller={widgetController} />;
+    if (activeSection === 'vectors') {
+      return (
+        <Suspense fallback={<section className={styles.settingsSection}><div className={styles.settingsCard}>正在加载矢量图标工作台…</div></section>}>
+          <VectorIconStudio />
+        </Suspense>
+      );
+    }
+    if (activeSection === 'api') return <ApiSettingsSection />;
+    return <AboutSettingsSection />;
+  };
 
-                            // 当使用壁纸时，不显示颜色选项的选中状态
-                            const currentActiveId = isDefaultTheme ? gradientId : (solidId || gradientId);
-                            const isActive = !wallpaper && currentActiveId === preset.id;
-
-                            return (
-                                <button
-                                    key={preset.id}
-                                    className={`${styles.colorOption} ${isActive ? styles.colorOptionActive : ''}`}
-                                    onClick={() => handleGradientSelect(preset.id)}
-                                    title={language === 'en' ? preset.nameEn : preset.name}
-                                    style={{
-                                        background: displayColor
-                                    }}
-                                >
-                                    {isThemeDefault && (
-                                        <img
-                                            src={asteriskIcon}
-                                            alt="Default"
-                                            width={24}
-                                            height={24}
-                                            style={{
-                                                filter: (theme === 'dark' || (followSystem && systemTheme === 'dark')) ? 'invert(1)' : 'none'
-                                            }}
-                                        />
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* 壁纸部分 - 已移动到底部 */}
-                    <div className={styles.wallpaperSection}>
-                        <WallpaperGallery
-                            wallpaperId={wallpaperId}
-                            onWallpaperIdChange={setWallpaperId}
-                            onWallpaperClear={() => setWallpaper(null)}
-                            onWallpaperUpload={uploadWallpaper}
-                        />
-                    </div>
-
-                    {/* 布局设置部分 */}
-                    <div className={styles.layoutSection}>
-                        {/* 语言设置 */}
-                        <div className={styles.layoutRow}>
-                            <span className={styles.layoutLabel}>{t.settings.language}</span>
-                            <div className={styles.layoutToggleGroup}>
-                                <div
-                                    className={styles.layoutHighlight}
-                                    style={{
-                                        transform: `translateX(${language === 'zh' ? 0 : 100}%)`,
-                                    }}
-                                />
-                                <button
-                                    className={styles.layoutToggleOption}
-                                    onClick={() => setLanguage('zh')}
-                                    title="中文"
-                                >
-                                    中文
-                                </button>
-                                <button
-                                    className={styles.layoutToggleOption}
-                                    onClick={() => setLanguage('en')}
-                                    title="EN"
-                                >
-                                    EN
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Dock 位置 */}
-                        <div className={styles.layoutRow}>
-                            <span className={styles.layoutLabel}>{t.settings.position}</span>
-                            <div className={styles.layoutToggleGroup}>
-                                <div
-                                    className={styles.layoutHighlight}
-                                    style={{
-                                        transform: `translateX(${dockPosition === 'bottom' ? 0 : 100}%)`,
-                                    }}
-                                />
-                                <button
-                                    className={styles.layoutToggleOption}
-                                    onClick={() => setDockPosition('bottom')}
-                                    title={t.settings.bottom}
-                                >
-                                    {t.settings.bottom}
-                                </button>
-                                <button
-                                    className={styles.layoutToggleOption}
-                                    onClick={() => setDockPosition('center')}
-                                    title={t.settings.center}
-                                >
-                                    {t.settings.center}
-                                </button>
-                            </div>
-                        </div>
-                        {/* 图标大小 */}
-                        <div className={styles.layoutRow}>
-                            <span className={styles.layoutLabel}>{t.settings.iconSize}</span>
-                            <div className={styles.layoutToggleGroup}>
-                                <div
-                                    className={styles.layoutHighlight}
-                                    style={{
-                                        transform: `translateX(${iconSize === 'large' ? 0 : 100}%)`,
-                                    }}
-                                />
-                                <button
-                                    className={styles.layoutToggleOption}
-                                    onClick={() => setIconSize('large')}
-                                    title={t.settings.large}
-                                >
-                                    {t.settings.large}
-                                </button>
-                                <button
-                                    className={styles.layoutToggleOption}
-                                    onClick={() => setIconSize('small')}
-                                    title={t.settings.small}
-                                >
-                                    {t.settings.small}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* 标签页打开方式 */}
-                        <div className={styles.layoutRow}>
-                            <span className={styles.layoutLabel}>{t.settings.tabOpeningBehavior}</span>
-                            <div className={styles.layoutToggleGroup}>
-                                <div
-                                    className={styles.layoutHighlight}
-                                    style={{
-                                        transform: `translateX(${openInNewTab ? 0 : 100}%)`,
-                                    }}
-                                />
-                                <button
-                                    className={styles.layoutToggleOption}
-                                    onClick={() => setOpenInNewTab(true)}
-                                    title={t.settings.openInNewTab}
-                                >
-                                    {t.settings.openInNewTab}
-                                </button>
-                                <button
-                                    className={styles.layoutToggleOption}
-                                    onClick={() => setOpenInNewTab(false)}
-                                    title={t.settings.openInCurrentTab}
-                                >
-                                    {t.settings.openInCurrentTab}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* 搜索建议 (可选权限) */}
-                        <div className={styles.layoutRow}>
-                            <span className={styles.layoutLabel}>{t.settings.suggestions}</span>
-                            <PermissionToggle />
-                        </div>
-
-                        {/* 批量刷新图标 */}
-                        <div className={styles.layoutRow}>
-                            <button 
-                                className={`${styles.layoutToggleOption} ${styles.fixButton}`}
-                                onClick={handleFixIcons}
-                                disabled={isFixingIcons}
-                                title={t.settings.fixIconsTooltip}
-                            >
-                                {isFixingIcons ? '...' : t.settings.fixIcons}
-                            </button>
-                        </div>
-                    </div>
-
-
-                    {/* 页脚 - GitHub 链接 */}
-                    <div className={styles.footer}>
-                        <a
-                            href="https://github.com/ENCRE0520/EclipseTab"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.githubLink}
-                            title="View on GitHub"
-                        >
-                            <span>GitHub</span>
-                        </a>
-                    </div>
-                </div>
+  return (
+    <>
+      <div
+        className={styles.backdrop}
+        data-page-scroll-lock="true"
+        onClick={handleClose}
+        onDoubleClick={(event) => event.stopPropagation()}
+        onWheel={(event) => event.stopPropagation()}
+      />
+      <div
+        className={styles.modal}
+        role="dialog"
+        aria-modal="true"
+        aria-label="设置"
+        data-modal="true"
+        data-page-scroll-lock="true"
+        onDoubleClick={(event) => event.stopPropagation()}
+        onWheel={handleSettingsWheelCapture}
+      >
+        <div ref={modalRef} className={styles.innerContainer}>
+          <aside className={styles.sidebar}>
+            <div className={styles.sidebarBrand}>
+              <span className={styles.sidebarBrandMark}>E</span>
+              <div>
+                <div className={styles.sidebarTitle}>Eclipin</div>
+                <div className={styles.sidebarSubtitle}>Personal workspace</div>
+              </div>
             </div>
-        </>
-    );
+            <nav className={styles.sidebarNavigation} aria-label="设置分类">
+              {NAVIGATION_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  className={`${styles.sidebarItem} ${activeSection === item.id ? styles.sidebarItemActive : ''}`}
+                  onClick={() => setActiveSection(item.id)}
+                >
+                  <span className={styles.sidebarItemIcon}>{item.icon}</span>
+                  <span className={styles.sidebarItemText}><strong>{item.label}</strong><small>{item.description}</small></span>
+                </button>
+              ))}
+            </nav>
+            <div className={styles.sidebarSummary}>
+              <span>小组件</span>
+              <strong>{widgetController.widgetLayouts.length}</strong>
+              <small>{widgetController.pageSlideDirection === 'horizontal' ? `当前第 ${widgetController.currentPage + 1} 页 · ${widgetController.widgetTargetCount} 个` : `首页 ${widgetController.widgetCounts.first} · 第二页 ${widgetController.widgetCounts.second}`}</small>
+            </div>
+          </aside>
+          <main ref={contentPaneRef} className={styles.contentPane} data-widget-scrollable="true" data-settings-scroll-container="true">
+            <div className={styles.contentToolbar}>
+              <span>SETTINGS</span>
+              <button type="button" onClick={handleClose} aria-label="关闭设置" title="关闭设置">×</button>
+            </div>
+            {renderSection()}
+          </main>
+        </div>
+      </div>
+    </>
+  );
 };

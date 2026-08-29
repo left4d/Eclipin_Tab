@@ -1,0 +1,371 @@
+.translatorBody {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  color: var(--widget-text-primary);
+}
+
+.translatorHeader {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.translatorHeader:active {
+  cursor: grabbing;
+}
+
+.translatorMark {
+  flex: 0 0 auto;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--widget-accent);
+  color: var(--widget-on-accent);
+  font-size: 16px;
+  font-weight: 900;
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--widget-accent) 24%, transparent);
+}
+
+.translatorHeading {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.translatorHeading strong {
+  color: var(--widget-text-primary);
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.translatorHeading span {
+  color: var(--widget-text-tertiary);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
+.translatorLanguageBar {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+}
+
+.translatorLanguageBar label {
+  min-width: 0;
+}
+
+.translatorLanguageBar select {
+  box-sizing: border-box;
+  width: 100%;
+  height: 32px;
+  border: 1px solid var(--widget-border-subtle);
+  border-radius: 10px;
+  padding: 0 28px 0 10px;
+  background: var(--widget-surface-muted);
+  color: var(--widget-text-secondary);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.translatorLanguageBar select:hover,
+.translatorLanguageBar select:focus-visible {
+  border-color: color-mix(in srgb, var(--widget-accent) 52%, var(--widget-border));
+  background: var(--widget-surface-hover);
+  color: var(--widget-text-primary);
+}
+
+.translatorLanguageBar select option {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+.translatorSwap {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: var(--widget-accent-soft);
+  color: var(--widget-accent);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.translatorSwap:hover {
+  transform: rotate(180deg);
+  background: color-mix(in srgb, var(--widget-accent) 20%, var(--widget-surface-muted));
+}
+
+.translatorPanels {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(72px, 1fr) minmax(72px, 1fr);
+  gap: 8px;
+}
+
+.translatorInputPanel,
+.translatorOutputPanel {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--widget-border-subtle);
+  border-radius: 14px;
+  background: var(--widget-surface-muted);
+  overflow: hidden;
+}
+
+.translatorInputPanel:focus-within {
+  border-color: var(--widget-accent);
+  box-shadow: 0 0 0 3px var(--fusion-focus-ring);
+}
+
+.translatorInputPanel textarea {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 72px;
+  border: 0;
+  outline: 0;
+  resize: none;
+  padding: 11px 32px 11px 12px;
+  background: transparent;
+  color: var(--widget-text-primary);
+  caret-color: var(--widget-accent);
+  font: inherit;
+  font-size: clamp(13px, 4cqw, 17px);
+  font-weight: 620;
+  line-height: 1.55;
+}
+
+.translatorInputPanel textarea::placeholder {
+  color: var(--widget-text-tertiary);
+}
+
+.translatorClear {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--widget-surface-hover);
+  color: var(--widget-text-secondary);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.translatorClear:hover {
+  background: var(--widget-accent-soft);
+  color: var(--widget-accent);
+}
+
+.translatorOutputPanel {
+  box-sizing: border-box;
+  padding: 11px 12px;
+  background: color-mix(in srgb, var(--widget-accent-soft) 42%, var(--widget-surface-muted));
+  color: var(--widget-text-primary);
+  font-size: clamp(13px, 4cqw, 17px);
+  font-weight: 720;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow: auto;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.translatorOutputLoading {
+  color: var(--widget-text-tertiary);
+  animation: translatorPulse 1.1s ease-in-out infinite alternate;
+}
+
+.translatorFooter {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+  border-top: 1px solid var(--widget-border-subtle);
+  padding-top: 8px;
+}
+
+.translatorStatus {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--widget-text-tertiary);
+  font-size: 10px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.translatorActions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.translatorIconButton,
+.translatorDictionaryButton {
+  height: 27px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--widget-surface-muted);
+  color: var(--widget-text-secondary);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, color 160ms ease, opacity 160ms ease;
+}
+
+.translatorIconButton {
+  width: 27px;
+  padding: 0;
+}
+
+.translatorDictionaryButton {
+  padding: 0 10px;
+  background: var(--widget-accent);
+  color: var(--widget-on-accent);
+}
+
+.translatorIconButton:hover:not(:disabled),
+.translatorDictionaryButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--widget-accent-hover);
+  color: var(--widget-on-accent);
+}
+
+.translatorIconButton:disabled,
+.translatorDictionaryButton:disabled {
+  cursor: default;
+  opacity: 0.36;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@container (min-width: 470px) {
+  .translatorPanels {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+}
+
+
+@keyframes translatorPulse {
+  from { opacity: 0.48; }
+  to { opacity: 0.9; }
+}
+
+/* 翻译组件去除标题后，缩小顶部留白；空白边缘仍可作为拖拽区域。 */
+.translatorBody {
+  gap: 9px;
+  padding-top: 11px;
+  cursor: grab;
+}
+
+.translatorBody:active {
+  cursor: grabbing;
+}
+
+.translatorProviderBar {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.translatorProviderBar:active {
+  cursor: grabbing;
+}
+
+.translatorLanguageBar,
+.translatorPanels,
+.translatorFooter {
+  cursor: default;
+}
+
+.translatorProviderBar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.translatorProviderBar > span {
+  color: var(--widget-text-tertiary);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.translatorProviderSwitch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--widget-border-subtle);
+  border-radius: 999px;
+  padding: 2px;
+  background: var(--widget-surface-muted);
+}
+
+.translatorProviderSwitch button {
+  height: 23px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 8px;
+  background: transparent;
+  color: var(--widget-text-tertiary);
+  font: inherit;
+  font-size: 9px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.translatorProviderSwitch .translatorProviderActive {
+  background: var(--widget-surface-solid);
+  color: var(--widget-accent);
+  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.1);
+}

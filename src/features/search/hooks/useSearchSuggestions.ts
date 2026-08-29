@@ -8,11 +8,7 @@ interface UseSearchSuggestionsResult {
 
 /**
  * 搜索建议 API 配置
- * 使用 fetch 调用（需要浏览器扩展权限）
- */
-/**
- * 搜索建议 API 配置
- * 使用 fetch 调用（需要浏览器扩展权限）
+ * 使用 fetch 调用（扩展环境需要对应主机权限）。
  */
 const SUGGESTION_API = {
     // Google 搜索建议 API (推荐，响应快)
@@ -43,6 +39,41 @@ const SUGGESTION_API = {
     }
 };
 
+const CACHE_TTL_MS = 5 * 60 * 1000;
+const MAX_CACHE_ENTRIES = 50;
+const suggestionCache = new Map<string, { expiresAt: number; values: string[] }>();
+
+function normalizeSuggestions(values: unknown[]): string[] {
+    return Array.from(new Set(
+        values
+            .filter((value): value is string => typeof value === 'string')
+            .map(value => value.trim())
+            .filter(Boolean),
+    )).slice(0, 10);
+}
+
+function readSuggestionCache(query: string): string[] | null {
+    const entry = suggestionCache.get(query);
+    if (!entry) return null;
+    if (entry.expiresAt <= Date.now()) {
+        suggestionCache.delete(query);
+        return null;
+    }
+    // 刷新插入顺序，保持简单的 LRU 行为。
+    suggestionCache.delete(query);
+    suggestionCache.set(query, entry);
+    return entry.values;
+}
+
+function writeSuggestionCache(query: string, values: string[]): void {
+    suggestionCache.set(query, { expiresAt: Date.now() + CACHE_TTL_MS, values });
+    while (suggestionCache.size > MAX_CACHE_ENTRIES) {
+        const oldestKey = suggestionCache.keys().next().value as string | undefined;
+        if (!oldestKey) break;
+        suggestionCache.delete(oldestKey);
+    }
+}
+
 /**
  * 尝试使用 fetch 获取搜索建议
  * 在浏览器扩展环境下，需检查 optional_host_permissions
@@ -50,6 +81,10 @@ const SUGGESTION_API = {
 async function fetchSuggestions(query: string, signal?: AbortSignal): Promise<string[]> {
     const trimmedQuery = query.trim();
     if (!trimmedQuery) return [];
+
+    const cacheKey = trimmedQuery.toLocaleLowerCase();
+    const cached = readSuggestionCache(cacheKey);
+    if (cached) return cached;
 
     // 检查是否有权限 (Chrome Extension 环境)
     // 使用回调函数以此获得最佳兼容性 (Firefox/Edge/Chrome)
@@ -74,10 +109,8 @@ async function fetchSuggestions(query: string, signal?: AbortSignal): Promise<st
             console.warn('Failed to check permissions:', e);
             return [];
         }
-    } else {
-        // 开发环境：如果想在本地调试，可以临时返回 true，或者直接允许
-        return [];
     }
+    // 普通网页预览环境直接尝试请求；若服务端不允许 CORS，会在下方静默降级。
 
     // 优先使用 Google API
     try {
@@ -91,13 +124,15 @@ async function fetchSuggestions(query: string, signal?: AbortSignal): Promise<st
 
         if (response.ok) {
             const data = await response.json();
-            const suggestions = SUGGESTION_API.google.parseResponse(data);
+            const suggestions = normalizeSuggestions(SUGGESTION_API.google.parseResponse(data));
             if (suggestions.length > 0) {
+                writeSuggestionCache(cacheKey, suggestions);
                 return suggestions;
             }
         }
     } catch (error) {
-        // 静默失败
+        if (signal?.aborted) throw error;
+        // 静默失败并尝试备用服务。
     }
 
     // 备选：百度 API
@@ -109,12 +144,16 @@ async function fetchSuggestions(query: string, signal?: AbortSignal): Promise<st
 
         if (response.ok) {
             const data = await response.json();
-            return SUGGESTION_API.baidu.parseResponse(data);
+            const suggestions = normalizeSuggestions(SUGGESTION_API.baidu.parseResponse(data));
+            if (suggestions.length > 0) writeSuggestionCache(cacheKey, suggestions);
+            return suggestions;
         }
     } catch (error) {
-        // 静默失败
+        if (signal?.aborted) throw error;
+        // 静默失败。
     }
 
+    writeSuggestionCache(cacheKey, []);
     return [];
 }
 
@@ -131,7 +170,7 @@ export function useSearchSuggestions(query: string): UseSearchSuggestionsResult 
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
-    const latestRequestRef = useRef<string>('');
+    const latestRequestRef = useRef(0);
     const abortControllerRef = useRef<AbortController | null>(null);
 
     const fetchWithDebounce = useCallback(async (searchQuery: string) => {
@@ -139,20 +178,21 @@ export function useSearchSuggestions(query: string): UseSearchSuggestionsResult 
 
         // 如果查询内容为空，清空建议列表
         if (!trimmedQuery) {
+            latestRequestRef.current += 1;
+            abortControllerRef.current?.abort();
+            abortControllerRef.current = null;
             setSuggestions([]);
+            setIsLoading(false);
             setError(null);
-            latestRequestRef.current = `cleared_${Date.now()}`;
             return;
         }
 
-        // 跟踪当前请求以处理竞态条件
-        const currentRequestId = `req_${Date.now()}`;
+        // 跟踪当前请求以处理竞态条件。
+        const currentRequestId = latestRequestRef.current + 1;
         latestRequestRef.current = currentRequestId;
 
-        // 如果存在之前的请求，则将其取消
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
+        // 如果存在之前的请求，则将其取消。
+        abortControllerRef.current?.abort();
         abortControllerRef.current = new AbortController();
 
         setIsLoading(true);
@@ -167,7 +207,7 @@ export function useSearchSuggestions(query: string): UseSearchSuggestionsResult 
                 setSuggestions(results.slice(0, 10));
             }
         } catch (err) {
-            if (latestRequestRef.current === currentRequestId) {
+            if (latestRequestRef.current === currentRequestId && !(err instanceof DOMException && err.name === 'AbortError')) {
                 setError(err instanceof Error ? err : new Error('Failed to fetch suggestions'));
                 setSuggestions([]);
             }

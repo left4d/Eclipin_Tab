@@ -5,20 +5,23 @@ import { Searcher } from '@/features/search/components/Searcher/Searcher';
 import { Dock } from './Dock/Dock';
 import { DockItem } from '@/shared/types';
 import styles from '@/App.module.css';
+import { executeNavigationAction } from '@/shared/navigation';
 
 interface DockLayoutContainerProps {
     onSearchEngineClick: (rect: DOMRect) => void;
     onItemEdit: (item: DockItem, rect?: DOMRect) => void;
     onItemAdd: (rect?: DOMRect | null) => void;
+    onPageDown?: () => void;
 }
 
 export const DockLayoutContainer: React.FC<DockLayoutContainerProps> = React.memo(({
     onSearchEngineClick,
     onItemEdit,
-    onItemAdd
+    onItemAdd,
+    onPageDown
 }) => {
     // 布局设置 (从全局拆分出来，避免变更导致 App 级别重渲染)
-    const { dockPosition, openInNewTab } = useThemeData();
+    const { dockPosition, quickLinksBarEnabled, openInNewTab, pageSlideDirection } = useThemeData();
 
     // 数据层
     const {
@@ -83,8 +86,8 @@ export const DockLayoutContainer: React.FC<DockLayoutContainerProps> = React.mem
         if (item.type === 'folder') {
             setOpenFolderId(item.id);
             setFolderAnchor(rect ?? null);
-        } else if (item.url) {
-            window.open(item.url, openInNewTab ? '_blank' : '_self');
+        } else if (item.action) {
+            executeNavigationAction(item.action, { openInNewTab });
         }
     }, [setOpenFolderId, setFolderAnchor, openInNewTab]);
 
@@ -95,30 +98,35 @@ export const DockLayoutContainer: React.FC<DockLayoutContainerProps> = React.mem
     }, [setOpenFolderId]);
 
     const handleSearch = useCallback((query: string) => {
+        const trimmedQuery = query.trim();
+        if (!trimmedQuery) return;
+
         if (selectedSearchEngine.id === 'default') {
-            // @ts-ignore
-            if (typeof chrome !== 'undefined' && chrome.search && chrome.search.query) {
-                // @ts-ignore
-                chrome.search.query({ text: query, disposition: 'CURRENT_TAB' });
+            if (typeof chrome !== 'undefined' && chrome.search?.query) {
+                chrome.search.query({
+                    text: trimmedQuery,
+                    disposition: openInNewTab ? 'NEW_TAB' : 'CURRENT_TAB',
+                });
                 return;
             }
-            window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, openInNewTab ? '_blank' : '_self');
+            executeNavigationAction({ type: 'url', url: `https://www.google.com/search?q=${encodeURIComponent(trimmedQuery)}` }, { openInNewTab });
             return;
         }
 
-        const searchUrl = `${selectedSearchEngine.url}${encodeURIComponent(query)}`;
-        window.open(searchUrl, openInNewTab ? '_blank' : '_self');
+        executeNavigationAction({ type: 'url', url: `${selectedSearchEngine.url}${encodeURIComponent(trimmedQuery)}` }, { openInNewTab });
     }, [selectedSearchEngine, openInNewTab]);
 
     return (
         <div
-            className={dockPosition === 'center' ? styles.containerCenter : styles.container}
-            data-ui-zone="bottom"
+            className={dockPosition === 'top' ? styles.containerTop : dockPosition === 'center' ? styles.containerCenter : styles.container}
+            data-ui-zone={dockPosition === 'top' ? 'top' : 'bottom'}
             style={containerScale < 1 ? {
-                transform: dockPosition === 'center'
-                    ? `translate(-50%, -50%) scale(${containerScale})`
-                    : `translate(-50%, -100%) scale(${containerScale})`,
-                transformOrigin: dockPosition === 'center' ? 'center center' : 'bottom center',
+                transform: dockPosition === 'top'
+                    ? `translate(-50%, 0) scale(${containerScale})`
+                    : dockPosition === 'center'
+                        ? `translate(-50%, -50%) scale(${containerScale})`
+                        : `translate(-50%, -100%) scale(${containerScale})`,
+                transformOrigin: dockPosition === 'top' ? 'top center' : dockPosition === 'center' ? 'center center' : 'bottom center',
             } : undefined}
         >
             <Searcher
@@ -127,24 +135,29 @@ export const DockLayoutContainer: React.FC<DockLayoutContainerProps> = React.mem
                 onSearchEngineClick={onSearchEngineClick}
                 openInNewTab={openInNewTab}
                 containerStyle={dockWidth ? { width: `${dockWidth}px` } : undefined}
+                suggestionsPlacement={dockPosition === 'top' ? 'below' : 'above'}
             />
-            <Dock
-                items={dockItems}
-                isEditMode={isEditMode}
-                onItemClick={handleItemClick}
-                onItemEdit={onItemEdit}
-                onItemDelete={handleItemDelete}
-                onItemAdd={onItemAdd}
-                onItemsReorder={handleItemsReorder}
-                onDropToFolder={handleDropOnFolder}
-                onDragToOpenFolder={handleDragToFolder}
-                onHoverOpenFolder={handleHoverOpenFolder}
-                onLongPressEdit={() => setIsEditMode(true)}
-                onWidthChange={(w) => setDockWidth(w)}
-                onDragStart={(item) => setDraggingItem(item)}
-                onDragEnd={() => setDraggingItem(null)}
-                externalDragItem={draggingItem}
-            />
+            {quickLinksBarEnabled && (
+                <Dock
+                    items={dockItems}
+                    isEditMode={isEditMode}
+                    onItemClick={handleItemClick}
+                    onItemEdit={onItemEdit}
+                    onItemDelete={handleItemDelete}
+                    onItemAdd={onItemAdd}
+                    onItemsReorder={handleItemsReorder}
+                    onDropToFolder={handleDropOnFolder}
+                    onDragToOpenFolder={handleDragToFolder}
+                    onHoverOpenFolder={handleHoverOpenFolder}
+                    onLongPressEdit={() => setIsEditMode(true)}
+                    onWidthChange={(w) => setDockWidth(w)}
+                    onDragStart={(item) => setDraggingItem(item)}
+                    onDragEnd={() => setDraggingItem(null)}
+                    externalDragItem={draggingItem}
+                    onPageDown={onPageDown}
+                    pageSlideDirection={pageSlideDirection}
+                />
+            )}
         </div>
     );
 });

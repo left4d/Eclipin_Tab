@@ -13,6 +13,11 @@ interface ModalProps {
   offset?: number;
   hideHeader?: boolean;
   className?: string;
+  popoverPlacement?: 'top' | 'bottom' | 'side';
+  popoverWidth?: number;
+  popoverHeight?: number;
+  /** 覆盖层级；用于需要压过主页搜索/导航等固定层的二级页面。 */
+  zIndex?: number;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -23,10 +28,19 @@ export const Modal: React.FC<ModalProps> = ({
   anchorRect,
   hideHeader,
   className,
+  popoverPlacement = 'top',
+  popoverWidth = 360,
+  popoverHeight = 540,
+  zIndex = 1_000_000_000,
 }) => {
   const [isVisible, setIsVisible] = useState(isOpen);
   const containerRef = useRef<HTMLDivElement>(null);
   const isClosingRef = useRef(false);
+  const lastAnchorRectRef = useRef<DOMRect | null>(null);
+
+  if (anchorRect) {
+    lastAnchorRectRef.current = anchorRect;
+  }
 
   // 处理打开
   useEffect(() => {
@@ -92,17 +106,32 @@ export const Modal: React.FC<ModalProps> = ({
   if (!isVisible) return null;
 
   // 弹出框模式
-  if (anchorRect) {
+  const effectiveAnchorRect = anchorRect ?? (isVisible ? lastAnchorRectRef.current : null);
+
+  if (effectiveAnchorRect) {
+    const preferRight = effectiveAnchorRect.right + 16 + popoverWidth <= window.innerWidth;
+    const sideLeft = preferRight ? effectiveAnchorRect.right + 16 : Math.max(12, effectiveAnchorRect.left - popoverWidth - 16);
+    const sideTop = Math.min(Math.max(12, effectiveAnchorRect.top + effectiveAnchorRect.height / 2 - popoverHeight / 2), Math.max(12, window.innerHeight - popoverHeight - 12));
+    const halfPopoverWidth = Math.max(160, Math.ceil(popoverWidth / 2));
+    const topLeft = Math.min(
+      Math.max(Math.round(effectiveAnchorRect.left + effectiveAnchorRect.width / 2), halfPopoverWidth + 12),
+      Math.max(halfPopoverWidth + 12, window.innerWidth - halfPopoverWidth - 12),
+    );
+    const topTop = Math.round(effectiveAnchorRect.top - 24);
+    const bottomTop = Math.round(effectiveAnchorRect.bottom + 12);
+    const isSide = popoverPlacement === 'side';
+    const isBottom = popoverPlacement === 'bottom';
+
     return createPortal(
       <>
         <div
           data-modal="true"
           style={{
             position: 'fixed',
-            left: `${Math.min(Math.max(Math.round(anchorRect.left + anchorRect.width / 2), 160), window.innerWidth - 160)}px`,
-            top: `${Math.round(anchorRect.top - 24)}px`,
-            transform: 'translate(-50%, -100%)',
-            zIndex: 2001, // 高于遮罩层
+            left: `${isSide ? sideLeft : topLeft}px`,
+            top: `${isSide ? sideTop : isBottom ? bottomTop : topTop}px`,
+            transform: isSide || isBottom ? (isSide ? 'none' : 'translate(-50%, 0)') : 'translate(-50%, -100%)',
+            zIndex: zIndex + 1,
             pointerEvents: 'auto',
           }}
           onClick={(e) => e.stopPropagation()}
@@ -128,15 +157,18 @@ export const Modal: React.FC<ModalProps> = ({
         <div
           className={styles.clickAway}
           onClick={handleClose}
-          style={{ zIndex: 2000 }}
+          style={{ zIndex }}
         />
       </>,
       document.body
     );
   }
 
-  return (
-    <div className={styles.backdrop} onClick={handleBackdropClick}>
+  // 居中模态框也必须挂载到 document.body。
+  // 否则当调用方位于带 transform / pointer-events: none 的容器中时，
+  // position: fixed 会被错误地限制在该容器内，并且弹窗可能无法接收点击。
+  return createPortal(
+    <div className={styles.backdrop} style={{ zIndex }} onClick={handleBackdropClick}>
       <div
         ref={containerRef}
         data-modal="true"
@@ -153,7 +185,7 @@ export const Modal: React.FC<ModalProps> = ({
         )}
         <div className={styles.content}>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
-

@@ -5,6 +5,23 @@ import { SpaceExportData, MultiSpaceExportData, createSpaceFromImport, createSpa
 import { prefetchIcons } from '@/features/dock/utils/iconCache';
 import { generateFolderIcon } from '@/features/dock/utils/iconFetcher';
 
+
+const normalizeSpacesState = (state: SpacesState): SpacesState => {
+    const normalizedSpaces = state.spaces.map(space => ({
+        ...space,
+        showInDock: space.showInDock !== false,
+    }));
+    const dockSpaces = normalizedSpaces.filter(space => space.showInDock !== false);
+    const fallbackSpace = dockSpaces[0] ?? normalizedSpaces[0];
+    const activeIsVisible = dockSpaces.some(space => space.id === state.activeSpaceId);
+
+    return {
+        ...state,
+        spaces: normalizedSpaces,
+        activeSpaceId: activeIsVisible ? state.activeSpaceId : (fallbackSpace?.id ?? state.activeSpaceId),
+    };
+};
+
 function containsDockItem(items: DockItem[], itemId: string): boolean {
     return items.some(item =>
         item.id === itemId ||
@@ -60,12 +77,15 @@ function extractDockItem(
 interface SpacesDataContextType {
     // 状态
     spaces: Space[];
+    /** 参与首页快捷网址栏显示和切换的空间 */
+    dockSpaces: Space[];
     activeSpaceId: string;
     isSwitching: boolean;
 
     // 派生
     currentSpace: Space;
     currentIndex: number;
+    dockCurrentIndex: number;
 }
 
 const SpacesDataContext = createContext<SpacesDataContextType | undefined>(undefined);
@@ -80,6 +100,7 @@ interface SpacesActionsContextType {
     addSpace: (name?: string) => void;
     deleteSpace: (spaceId: string) => void;
     renameSpace: (spaceId: string, newName: string) => void;
+    setSpaceDockVisibility: (spaceId: string, visible: boolean) => void;
     updateCurrentSpaceApps: (apps: DockItem[] | ((prev: DockItem[]) => DockItem[])) => void;
     /** 按指定空间 ID 更新 apps（异步操作安全，不受空间切换影响） */
     updateSpaceApps: (spaceId: string, apps: DockItem[] | ((prev: DockItem[]) => DockItem[])) => void;
@@ -110,7 +131,7 @@ export function SpacesProvider({ children }: SpacesProviderProps) {
     // 初始化状态（从 localStorage 读取，只调用一次）
     const [spacesState, setSpacesState] = useState<SpacesState>(() => {
         const loaded = storage.getSpaces();
-        return loaded;
+        return normalizeSpacesState(loaded);
     });
     const [isSwitching, setIsSwitching] = useState(false);
 
@@ -119,6 +140,12 @@ export function SpacesProvider({ children }: SpacesProviderProps) {
 
     // 解构状态
     const { spaces, activeSpaceId } = spacesState;
+
+    // 派生：首页快捷网址栏可见空间
+    const dockSpaces = useMemo(() => {
+        const visible = spaces.filter(space => space.showInDock !== false);
+        return visible.length > 0 ? visible : spaces.slice(0, 1);
+    }, [spaces]);
 
     // 派生：当前空间
     const currentSpace = useMemo(() => {
@@ -129,6 +156,10 @@ export function SpacesProvider({ children }: SpacesProviderProps) {
     const currentIndex = useMemo(() => {
         return spaces.findIndex(s => s.id === activeSpaceId);
     }, [spaces, activeSpaceId]);
+
+    const dockCurrentIndex = useMemo(() => {
+        return dockSpaces.findIndex(s => s.id === activeSpaceId);
+    }, [dockSpaces, activeSpaceId]);
 
     // 首次加载时预取所有空间的图标到内存缓存
     // 这样切换空间时图标已在缓存中，不需要重新从 IndexedDB 加载
@@ -182,27 +213,40 @@ export function SpacesProvider({ children }: SpacesProviderProps) {
         };
     }, [spacesState]);
 
+    useEffect(() => {
+        const flushPersistentState = () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+                saveTimeoutRef.current = undefined;
+            }
+            storage.saveSpaces(spacesState);
+        };
+        window.addEventListener('eclipin:flush-persistent-state', flushPersistentState);
+        return () => window.removeEventListener('eclipin:flush-persistent-state', flushPersistentState);
+    }, [spacesState]);
+
     // ============================================================================
     // 空间切换操作
     // ============================================================================
 
     const switchToNextSpace = useCallback(() => {
-        if (isSwitching || spaces.length <= 1) return;
+        if (isSwitching || dockSpaces.length <= 1) return;
 
-        const nextIndex = (currentIndex + 1) % spaces.length;
-        const nextSpace = spaces[nextIndex];
+        const safeCurrentIndex = Math.max(0, dockCurrentIndex);
+        const nextIndex = (safeCurrentIndex + 1) % dockSpaces.length;
+        const nextSpace = dockSpaces[nextIndex];
 
         setSpacesState(prev => ({
             ...prev,
             activeSpaceId: nextSpace.id,
         }));
-    }, [isSwitching, spaces, currentIndex]);
+    }, [isSwitching, dockSpaces, dockCurrentIndex]);
 
     const switchToSpace = useCallback((spaceId: string) => {
         if (isSwitching) return;
 
         const targetSpace = spaces.find(s => s.id === spaceId);
-        if (!targetSpace) return;
+        if (!targetSpace || targetSpace.showInDock === false) return;
 
         setSpacesState(prev => ({
             ...prev,
@@ -230,23 +274,29 @@ export function SpacesProvider({ children }: SpacesProviderProps) {
             return;
         }
 
-        const deleteIndex = spaces.findIndex(s => s.id === spaceId);
-        if (deleteIndex === -1) return;
+        setSpacesState(prev => {
+            const deleteIndex = prev.spaces.findIndex(space => space.id === spaceId);
+            if (deleteIndex === -1 || prev.spaces.length <= 1) return prev;
 
-        // 确定删除后要跳转到的空间
-        let newActiveId = activeSpaceId;
-        if (spaceId === activeSpaceId) {
-            // 删除的是当前空间，跳转到上一个（如果是第一个则跳转到下一个）
-            const newIndex = deleteIndex === 0 ? 1 : deleteIndex - 1;
-            newActiveId = spaces[newIndex].id;
-        }
+            let remainingSpaces = prev.spaces.filter(space => space.id !== spaceId);
+            if (!remainingSpaces.some(space => space.showInDock !== false)) {
+                remainingSpaces = remainingSpaces.map((space, index) => index === 0 ? { ...space, showInDock: true } : space);
+            }
 
-        setSpacesState(prev => ({
-            ...prev,
-            spaces: prev.spaces.filter(s => s.id !== spaceId),
-            activeSpaceId: newActiveId,
-        }));
-    }, [spaces, activeSpaceId]);
+            let nextActiveSpaceId = prev.activeSpaceId;
+            if (spaceId === prev.activeSpaceId || !remainingSpaces.some(space => space.id === prev.activeSpaceId && space.showInDock !== false)) {
+                const fallbackIndex = Math.max(0, Math.min(deleteIndex - 1, remainingSpaces.length - 1));
+                const fallback = remainingSpaces.filter(space => space.showInDock !== false)[0] ?? remainingSpaces[fallbackIndex];
+                nextActiveSpaceId = fallback.id;
+            }
+
+            return {
+                ...prev,
+                spaces: remainingSpaces,
+                activeSpaceId: nextActiveSpaceId,
+            };
+        });
+    }, [spaces.length]);
 
     const renameSpace = useCallback((spaceId: string, newName: string) => {
         if (!newName.trim()) return;
@@ -257,6 +307,33 @@ export function SpacesProvider({ children }: SpacesProviderProps) {
                 s.id === spaceId ? { ...s, name: newName.trim() } : s
             ),
         }));
+    }, []);
+
+
+    const setSpaceDockVisibility = useCallback((spaceId: string, visible: boolean) => {
+        setSpacesState(prev => {
+            const target = prev.spaces.find(space => space.id === spaceId);
+            if (!target) return prev;
+
+            const visibleSpaces = prev.spaces.filter(space => space.showInDock !== false);
+            if (!visible && target.showInDock !== false && visibleSpaces.length <= 1) {
+                return prev;
+            }
+
+            const nextSpaces = prev.spaces.map(space =>
+                space.id === spaceId ? { ...space, showInDock: visible } : space
+            );
+            const nextVisibleSpaces = nextSpaces.filter(space => space.showInDock !== false);
+            const nextActiveSpaceId = !visible && prev.activeSpaceId === spaceId
+                ? (nextVisibleSpaces[0]?.id ?? prev.activeSpaceId)
+                : prev.activeSpaceId;
+
+            return {
+                ...prev,
+                spaces: nextSpaces,
+                activeSpaceId: nextActiveSpaceId,
+            };
+        });
     }, []);
 
     // ============================================================================
@@ -374,11 +451,13 @@ export function SpacesProvider({ children }: SpacesProviderProps) {
 
     const dataValue = useMemo<SpacesDataContextType>(() => ({
         spaces,
+        dockSpaces,
         activeSpaceId,
         isSwitching,
         currentSpace,
         currentIndex,
-    }), [spaces, activeSpaceId, isSwitching, currentSpace, currentIndex]);
+        dockCurrentIndex,
+    }), [spaces, dockSpaces, activeSpaceId, isSwitching, currentSpace, currentIndex, dockCurrentIndex]);
 
     const actionsValue = useMemo<SpacesActionsContextType>(() => ({
         switchToNextSpace,
@@ -386,6 +465,7 @@ export function SpacesProvider({ children }: SpacesProviderProps) {
         addSpace,
         deleteSpace,
         renameSpace,
+        setSpaceDockVisibility,
         updateCurrentSpaceApps,
         updateSpaceApps,
         moveItemToSpace,
@@ -399,6 +479,7 @@ export function SpacesProvider({ children }: SpacesProviderProps) {
         addSpace,
         deleteSpace,
         renameSpace,
+        setSpaceDockVisibility,
         updateCurrentSpaceApps,
         updateSpaceApps,
         moveItemToSpace,

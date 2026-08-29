@@ -9,7 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 1000000000;
   background: var(--black-alpha-30);
 }
 
@@ -76,7 +76,7 @@
 .popoverRoot {
   position: fixed;
   inset: 0;
-  z-index: 2000;
+  z-index: 1000000000;
   pointer-events: none;
 }
 
@@ -96,4 +96,53 @@
   pointer-events: auto;
   background: transparent;
   z-index: 0;
+}
+
+/* Web × Pegboard 外围材质 */
+.container {
+  border-color: var(--fusion-border-accent);
+  background:
+    linear-gradient(145deg, var(--fusion-accent-softer), transparent 58%),
+    var(--color-bg-primary);
+  box-shadow: var(--fusion-shadow-md), inset 0 1px 0 color-mix(in srgb, var(--fusion-palette-surface) 46%, transparent);
+}
+
+.closeButton:hover {
+  background: var(--fusion-accent-soft);
+  color: var(--fusion-accent);
+}
+
+/* ===== 统一 Modal / Popover 视觉层 ===== */
+.backdrop {
+  background: var(--ui-overlay-bg);
+  backdrop-filter: blur(var(--ui-overlay-blur)) saturate(var(--ui-overlay-saturate));
+  -webkit-backdrop-filter: blur(var(--ui-overlay-blur)) saturate(var(--ui-overlay-saturate));
+}
+
+.container {
+  border-color: var(--ui-panel-border);
+  border-radius: var(--ui-panel-radius);
+  background: var(--ui-panel-bg);
+  box-shadow: var(--ui-panel-shadow), inset 0 1px 0 color-mix(in srgb, var(--fusion-palette-surface) 30%, transparent);
+  backdrop-filter: blur(var(--ui-panel-blur)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--ui-panel-blur)) saturate(1.08);
+}
+
+.popover {
+  border-color: var(--ui-menu-border);
+  background: var(--ui-menu-bg);
+  box-shadow: var(--ui-menu-shadow);
+  backdrop-filter: blur(var(--ui-menu-blur)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--ui-menu-blur)) saturate(1.08);
+}
+
+.closeButton {
+  border: 1px solid transparent;
+  background: var(--ui-control-bg);
+}
+
+.closeButton:hover {
+  border-color: var(--ui-panel-divider);
+  background: var(--ui-control-bg-hover);
+  color: var(--fusion-accent);
 }

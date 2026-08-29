@@ -109,7 +109,7 @@
 }
 
 .inputField:focus {
-    border-color: var(--blue-500);
+    border-color: var(--fusion-accent);
     background: var(--color-bg-secondary);
 }
 
@@ -328,4 +328,43 @@
   .toggle {
     border-radius: 15px;
   }
+}
+/* Web × Pegboard 表单强调色 */
+.inputField:focus {
+    border-color: var(--fusion-accent);
+    box-shadow: 0 0 0 3px var(--fusion-focus-ring);
+}
+
+.btnPrimary,
+.toggleActive {
+    border-color: var(--fusion-accent);
+    background: var(--fusion-accent);
+    color: var(--fusion-on-accent);
+}
+
+.toggleActive .toggleKnob {
+    background: var(--fusion-on-accent);
+}
+
+/* ===== 同步菜单内部控件统一 ===== */
+.cardSection,
+.iconWrapper {
+    border: 1px solid color-mix(in srgb, var(--ui-menu-border) 68%, transparent);
+    background: color-mix(in srgb, var(--ui-menu-hover) 54%, transparent);
+    box-shadow: none;
+}
+.inputField {
+    border-color: var(--ui-control-border);
+    border-radius: var(--ui-control-radius);
+    background: var(--ui-control-bg);
+}
+.inputField:focus {
+    border-color: var(--ui-control-focus-border);
+    background: var(--ui-control-bg-hover);
+    box-shadow: var(--ui-control-focus-ring);
+}
+.inputField:focus {
+    border-color: var(--ui-control-focus-border);
+    background: var(--ui-control-bg-hover);
+    box-shadow: var(--ui-control-focus-ring);
 }

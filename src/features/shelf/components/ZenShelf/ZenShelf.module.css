@@ -2,22 +2,38 @@
 
 /* 画布容器 - 位于壁纸与 UI 之间 */
 .canvas {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1;
-    isolation: isolate;
-    /* Ensure stickers stay within this stacking context */
     pointer-events: none;
     /* 默认透传指针事件 */
     overflow: hidden;
 }
 
-.canvas.dragging {
-    /* Lift canvas above Recycle Bin (2500) during drag */
-    z-index: 2501;
+
+.logicalStickerLayer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    min-height: 100%;
+    pointer-events: none;
+    /* Avoid transform scaling here: it would isolate sticker z-index from widgets. */
+    zoom: var(--shelf-logical-scale, 1);
+}
+
+.pageStickerLayer,
+.viewportStickerLayer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+/* Page scrolling moves one shared wrapper instead of forcing every sticker to rerender. */
+.pageStickerLayer {
+    bottom: auto;
+    min-height: 100%;
 }
 
 /* 创作模式下的画布 - 不阻挡 UI 层 */
@@ -36,10 +52,152 @@
     pointer-events: auto;
     cursor: grab;
     user-select: none;
-    /* GPU 加速提示 */
-    will-change: transform;
     /* 性能优化：限制布局和样式计算范围 */
     contain: layout style;
+}
+
+.stickerVisual {
+    position: relative;
+    display: inline-block;
+    transform-origin: center center;
+}
+
+
+
+/* ===== 贴纸悬停交互效果 ===== */
+.stickerInteraction {
+    position: relative;
+    display: inline-block;
+    transform-origin: center center;
+    transition:
+        transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        filter 180ms ease;
+}
+
+.stickerInteractionLift:hover {
+    transform: translateY(var(--sticker-hover-lift, -4px));
+    filter: drop-shadow(
+        0
+        var(--sticker-shadow-y, 8px)
+        var(--sticker-shadow-blur, 16px)
+        rgba(0, 0, 0, 0.18)
+    );
+}
+
+.stickerInteractionScale:hover {
+    transform: scale(1.06);
+    filter: drop-shadow(
+        0
+        var(--sticker-shadow-y-light, 6px)
+        var(--sticker-shadow-blur-light, 12px)
+        rgba(0, 0, 0, 0.14)
+    );
+}
+
+.stickerInteractionButton:hover {
+    transform: translateY(var(--sticker-button-lift, -2px)) scale(1.035);
+    filter: drop-shadow(
+        0
+        var(--sticker-shadow-y, 8px)
+        var(--sticker-shadow-blur, 16px)
+        rgba(0, 0, 0, 0.2)
+    );
+}
+
+.stickerInteractionButton:active {
+    transform: translateY(0) scale(0.975);
+    filter: drop-shadow(
+        0
+        var(--sticker-shadow-y-pressed, 2px)
+        var(--sticker-shadow-blur-pressed, 6px)
+        rgba(0, 0, 0, 0.14)
+    );
+    transition-duration: 70ms;
+}
+
+.sticker.dragging .stickerInteraction,
+.sticker.dropDelete .stickerInteraction,
+.sticker.deleting .stickerInteraction {
+    transform: none !important;
+    filter: none !important;
+    transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .stickerInteraction {
+        transition: none;
+    }
+    .stickerInteractionLift:hover,
+    .stickerInteractionScale:hover,
+    .stickerInteractionButton:hover,
+    .stickerInteractionButton:active {
+        transform: none;
+    }
+}
+
+.canvas.pageSlideUp .pageStickerLayer {
+    animation: stickerSlideUp 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.canvas.pageSlideDown .pageStickerLayer {
+    animation: stickerSlideDown 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.canvas.pageSlideLeft .pageStickerLayer {
+    animation: stickerSlideLeft 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.canvas.pageSlideRight .pageStickerLayer {
+    animation: stickerSlideRight 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* 翻页只提升一个共享层；单张贴纸仅在真实拖拽时申请合成层。 */
+.sticker.dragging,
+.canvas.pageSlideUp .pageStickerLayer,
+.canvas.pageSlideDown .pageStickerLayer,
+.canvas.pageSlideLeft .pageStickerLayer,
+.canvas.pageSlideRight .pageStickerLayer {
+    will-change: transform;
+}
+
+@keyframes stickerSlideUp {
+    from {
+        transform: translateY(var(--shelf-logical-viewport-height, 100dvh));
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+@keyframes stickerSlideDown {
+    from {
+        transform: translateY(calc(-1 * var(--shelf-logical-viewport-height, 100dvh)));
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+@keyframes stickerSlideLeft {
+    from {
+        transform: translateX(var(--shelf-logical-viewport-width, 100dvw));
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes stickerSlideRight {
+    from {
+        transform: translateX(calc(-1 * var(--shelf-logical-viewport-width, 100dvw)));
+    }
+
+    to {
+        transform: translateX(0);
+    }
 }
 
 /* 文字贴纸外层容器 - 用于阴影动画 */
@@ -71,7 +229,7 @@
 
 /* 图片贴纸的轮廓 - 通过 outline 实现，颜色与文字贴纸描边一致 */
 .imageSticker {
-    outline: 6px solid var(--color-sticker-stroke);
+    outline: var(--sticker-stroke-render-width, 6px) solid var(--color-sticker-stroke);
     outline-offset: 0;
     /* 默认投影 - 较浅 */
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.08));
@@ -79,10 +237,69 @@
     transition: filter var(--transition-smooth), outline-color var(--transition-smooth);
 }
 
-/* 如果是纯 SVG 贴纸，inner `img` 仅负责外轮廓白边描边滤波器 */
+/*
+ * SVG 图片贴纸不要引用页面内 <filter id=...>。Chromium 在 <img src="blob:...svg">
+ * 这类 replaced element 上应用 url(#filter) 时，部分 SVG 会整张变透明。
+ * 改用纯 CSS drop-shadow 基于 alpha 通道模拟描边，牺牲一点圆润度换取稳定可见。
+ */
 .imageSticker.svgSticker {
     outline: none;
-    filter: url(#text-sticker-stroke);
+    filter:
+        drop-shadow(var(--sticker-stroke-render-width, 3px) 0 0 var(--color-sticker-stroke))
+        drop-shadow(calc(-1 * var(--sticker-stroke-render-width, 3px)) 0 0 var(--color-sticker-stroke))
+        drop-shadow(0 var(--sticker-stroke-render-width, 3px) 0 var(--color-sticker-stroke))
+        drop-shadow(0 calc(-1 * var(--sticker-stroke-render-width, 3px)) 0 var(--color-sticker-stroke));
+}
+
+/* SVG 图标库贴纸使用更轻的描边，避免小图标显得过厚。 */
+.imageSticker.svgSticker.vectorIconSticker {
+    filter: none;
+}
+
+.inlineVectorIconSticker {
+    position: relative;
+    display: block;
+    aspect-ratio: 1 / 1;
+    height: auto;
+    border-radius: var(--sticker-corner-radius-render, 0px);
+    overflow: hidden;
+    /* 兼容 fill/stroke="currentColor" 的 SVG；避免内联后继承到透明/不可见颜色。 */
+    color: var(--color-text-primary);
+}
+
+.inlineVectorIconSticker svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.iconSwapSticker {
+    position: relative;
+}
+
+.iconSwapLayer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: 0;
+    transform: scale(0.72) rotate(-10deg);
+    transform-origin: center center;
+    transition: opacity 180ms ease, transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+}
+
+.iconSwapLayerActive {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .iconSwapLayer {
+        transition: none;
+        transform: scale(1);
+    }
 }
 
 /* SVG 贴纸的外层容器（和文字贴纸的 .stickerText 原理一样，专门处理投影和投影动画） */
@@ -134,12 +351,6 @@
     filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.12));
 }
 
-/* 选中态 */
-.sticker.selected {
-    outline: 2px dashed var(--blue-500);
-    outline-offset: 8px;
-}
-
 /* ===== 文字贴纸 ===== */
 
 .textSticker {
@@ -159,14 +370,59 @@
     -moz-text-size-adjust: none;
     -webkit-text-size-adjust: none;
     text-size-adjust: none;
-    /* SVG filter 描边 (阴影由外层 .stickerText 处理) */
-    filter: url(#text-sticker-stroke);
+    /* 描边宽度由贴纸 scale 的倒数补偿，因此贴纸变大后描边仍保持相同视觉像素。
+       stroke 本身居中绘制，使用 2× 宽度并让 fill 覆盖内半边，得到稳定的向外描边。 */
+    -webkit-text-stroke: calc(var(--sticker-stroke-render-width, 6px) + var(--sticker-stroke-render-width, 6px)) var(--color-sticker-stroke);
+    paint-order: stroke fill;
+    position: relative;
+}
+
+.textSticker.noStickerStroke {
+    -webkit-text-stroke: 0 transparent;
+}
+
+.imageSticker.noStickerStroke {
+    outline: none;
+}
+
+.imageSticker.svgSticker.noStickerStroke {
+    filter: none;
+}
+
+.textStickerContent {
+    position: relative;
+    z-index: 1;
+}
+
+.textStickerDrawingLayer {
+    position: absolute;
+    inset: -24px;
+    width: calc(100% + 48px);
+    height: calc(100% + 48px);
+    overflow: visible;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.drawingSticker {
+    display: block;
+    overflow: visible;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.08));
+    transition: filter var(--transition-smooth);
+}
+
+.drawingSticker.dragging {
+    cursor: grabbing;
+    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.2));
+}
+
+.drawingSticker.creativeHover:hover {
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.12));
 }
 
 /* Firefox 专用样式 - 使用 -moz-appearance 检测 Firefox */
 @supports (-moz-appearance: none) {
     .textSticker {
-        -webkit-text-stroke: 0.3px currentColor;
         line-height: 0.95;
     }
 }
@@ -261,13 +517,18 @@
     display: block;
     max-width: none;
     height: auto;
-    border-radius: var(--radius-medium);
+    /* 圆角使用贴纸 scale 的倒数补偿，保持和尺寸功能加入前相同的视觉半径。 */
+    border-radius: var(--sticker-corner-radius-render, var(--radius-medium));
 }
 
 /* 图片容器 - 用于定位缩放手柄 */
 .imageContainer {
     position: relative;
     display: inline-block;
+}
+
+.linkedImageContainer {
+    cursor: pointer;
 }
 
 /* ===== 缩放手柄 ===== */
@@ -293,8 +554,8 @@
 }
 
 .resizeHandle:hover {
-    border-color: var(--blue-500);
-    background: var(--blue-100, #E3F2FD);
+    border-color: var(--fusion-accent);
+    background: var(--fusion-accent-softer);
 }
 
 
@@ -337,7 +598,7 @@
 
 .textInputPopup {
     position: fixed;
-    z-index: 3000;
+    z-index: 1000000001;
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     background: var(--color-bg-primary);
@@ -394,7 +655,7 @@
 
 .textInput:focus {
     background: var(--color-bg-tertiary);
-    border-color: var(--blue-500);
+    border-color: var(--fusion-accent);
 }
 
 .textInput::placeholder {
@@ -479,8 +740,8 @@
 }
 
 .colorOptionBtn.active {
-    border-color: var(--blue-500);
-    box-shadow: 0 0 0 1px var(--blue-500);
+    border-color: var(--fusion-accent);
+    box-shadow: 0 0 0 1px var(--fusion-accent);
 }
 
 /* 底部操作按钮 */
@@ -517,10 +778,10 @@
 .textInputConfirm {
     flex: 1;
     padding: var(--spacing-padding-small);
-    background: var(--blue-500);
+    background: var(--fusion-accent);
     border: none;
     border-radius: var(--radius-small);
-    color: white;
+    color: var(--fusion-on-accent);
     font-family: var(--font-family);
     font-size: var(--font-size-medium);
     font-weight: var(--font-weight-medium);
@@ -561,7 +822,15 @@
     border-radius: 24px;
     box-shadow: var(--shadow-combined);
     z-index: 200;
+    max-width: calc(100vw - 24px);
+    box-sizing: border-box;
+    overflow-x: auto;
+    scrollbar-width: none;
     pointer-events: auto;
+}
+
+.floatingToolbar::-webkit-scrollbar {
+    display: none;
 }
 
 /* 工具栏分隔线 */
@@ -597,8 +866,27 @@
 }
 
 .alignButton.active {
-    background: var(--blue-500);
-    color: white;
+    background: var(--fusion-accent);
+    color: var(--fusion-on-accent);
+}
+
+.floatingToolbarIcon {
+    width: 16px;
+    height: 16px;
+    background: currentColor;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+.floatingColorGroup {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 0 0 auto;
 }
 
 /* 颜色选择器 */
@@ -621,7 +909,7 @@
 }
 
 .colorButton.active {
-    border-color: var(--blue-500);
+    border-color: var(--fusion-accent);
 }
 
 /* ===== 右键菜单 ===== */
@@ -629,11 +917,11 @@
 
 .contextMenu {
     position: fixed;
-    z-index: 3000;
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    background: var(--color-bg-primary);
-    border: 1px solid var(--color-border);
+    z-index: 1000000004;
+    backdrop-filter: blur(var(--context-menu-blur));
+    -webkit-backdrop-filter: blur(var(--context-menu-blur));
+    background: var(--context-menu-bg);
+    border: 1px solid var(--context-menu-border);
     border-radius: var(--radius-default);
     padding: var(--spacing-padding-small);
     display: flex;
@@ -641,13 +929,16 @@
     min-width: 180px;
     gap: 0;
     pointer-events: auto;
-    box-shadow: var(--shadow-combined);
+    box-shadow: var(--context-menu-shadow);
+    max-height: calc(100vh - 20px);
+    overflow: visible;
+    overscroll-behavior: contain;
 }
 
 .contextMenuClickAway {
     position: fixed;
     inset: 0;
-    z-index: 2999;
+    z-index: 1000000003;
     background: transparent;
     pointer-events: auto;
 }
@@ -659,8 +950,8 @@
     font-size: var(--font-size-small);
     padding: var(--spacing-padding-extrasmall);
     line-height: var(--line-height-none);
-    color: var(--color-text-primary);
-    opacity: 0.6;
+    color: var(--context-menu-muted);
+    opacity: 1;
     white-space: nowrap;
     margin: 0;
 }
@@ -681,7 +972,7 @@
     right: 0;
     top: 0;
     height: 1px;
-    background: var(--color-border);
+    background: var(--context-menu-border);
 }
 
 /* 菜单选项容器 */
@@ -701,7 +992,7 @@
     font-weight: var(--font-weight-medium);
     font-size: var(--font-size-medium);
     line-height: var(--line-height-none);
-    color: var(--color-text-primary);
+    color: var(--context-menu-text);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -715,11 +1006,11 @@
 }
 
 .menuItem:hover {
-    background: var(--color-bg-secondary);
+    background: var(--context-menu-hover);
 }
 
 .menuItem:active {
-    background: var(--color-bg-tertiary);
+    background: var(--context-menu-active);
     transform: scale(0.99);
     transition: background var(--transition-instant), transform var(--transition-instant);
 }
@@ -738,7 +1029,7 @@
     width: 16px;
     height: 16px;
     flex-shrink: 0;
-    background-color: var(--color-text-primary);
+    background-color: var(--context-menu-text);
     -webkit-mask-size: contain;
     mask-size: contain;
     -webkit-mask-repeat: no-repeat;
@@ -751,21 +1042,26 @@
     background-color: var(--red-400);
 }
 
-.sticker.deleting {
+.sticker.deleting .stickerVisual {
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    transform: scale(0.8) rotate(60deg) !important;
+    transform: scale(0.8) rotate(calc(var(--sticker-base-rotation, 0deg) + 60deg)) !important;
+}
+
+.sticker.deleting {
     opacity: 0.8;
 }
 
-.sticker.returningFromDelete {
+.sticker.returningFromDelete .stickerVisual {
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    transform: scale(1) rotate(0deg) !important;
+    transform: scale(1) rotate(var(--sticker-base-rotation, 0deg)) !important;
 }
 
 /* Drop delete animation */
-/* Drop delete animation */
+.sticker.dropDelete .stickerVisual {
+    transform: scale(0.8) rotate(calc(var(--sticker-base-rotation, 0deg) + 60deg)) !important;
+}
+
 .sticker.dropDelete {
-    transform: scale(0.8) rotate(60deg) !important;
     opacity: 0;
     transition: opacity 0.3s ease-in;
     pointer-events: none;
@@ -776,11 +1072,22 @@
 /* 预览容器 - 包含输入框和工具栏 */
 .stickerPreviewContainer {
     position: fixed;
-    z-index: 2000;
+    z-index: 1000000001;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-gap-small);
     pointer-events: auto;
+}
+
+/* 与正式 StickerItem 相同：先以左上角缩放，再围绕内容中心旋转。 */
+.stickerPreviewScaleLayer {
+    width: fit-content;
+    transform-origin: top left;
+}
+
+.stickerPreviewRotationLayer {
+    width: fit-content;
+    transform-origin: center center;
 }
 
 /* 可编辑的贴纸预览 */
@@ -805,8 +1112,8 @@
     -moz-text-size-adjust: none;
     -webkit-text-size-adjust: none;
     text-size-adjust: none;
-    /* 文字贴纸白色轮廓 - 与正式贴纸保持一致 */
-    filter: url(#text-sticker-stroke);
+    /* 描边由 .textSticker / .noStickerStroke 负责，避免编辑态强制出现旧版 SVG 白边。 */
+    filter: none;
     /* 允许在输入框中选择文字 */
     user-select: text;
     -webkit-user-select: text;
@@ -814,10 +1121,51 @@
     transition: font-size var(--transition-smooth);
 }
 
+.stickerPreviewDrawingHost {
+    position: relative;
+    display: inline-block;
+    width: fit-content;
+    min-width: 0;
+    min-height: 0;
+}
+
+.stickerPreviewDrawingHost .stickerPreviewInput {
+    position: relative;
+    z-index: 1;
+}
+
+.fullscreenDrawingCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000000000;
+    cursor: crosshair;
+    pointer-events: auto;
+    overflow: visible;
+}
+
+.drawingToolbar {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    z-index: 1000000001;
+    transform: translateX(-50%);
+    pointer-events: auto;
+}
+
+.drawingToolbarPanel {
+    align-items: center;
+    gap: 10px;
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+}
+
 /* Firefox 专用样式 */
 @supports (-moz-appearance: none) {
     .stickerPreviewInput {
-        -webkit-text-stroke: 0.3px currentColor;
         line-height: 0.95;
     }
 }
@@ -832,6 +1180,8 @@
 /* ===== 跟随工具栏 ===== */
 
 .stickerToolbar {
+    position: relative;
+    z-index: 1000000002;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -856,13 +1206,43 @@
 }
 
 .toolbarSettings {
-    width: 392px;
+    width: 416px;
     overflow: hidden;
     transition: width 220ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .toolbarSettings.withLinkAction {
-    width: 440px;
+    width: 464px;
+}
+
+.toolbarDrawBtn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: var(--radius-default-in);
+    background: var(--color-bg-secondary);
+    box-shadow: var(--shadow-small);
+    color: var(--color-text-primary);
+    font-family: var(--font-family);
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.toolbarDrawBtn:hover:not(:disabled),
+.toolbarDrawBtn.active {
+    background: var(--fusion-accent);
+    color: var(--fusion-on-accent);
+}
+
+.toolbarDrawBtn:active:not(:disabled) {
+    transform: scale(0.96);
+}
+
+.toolbarDrawBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 .toolbarStylePanel {
@@ -933,7 +1313,7 @@
 }
 
 .toolbarAlignBtn:hover {
-    color: var(--blue-500);
+    color: var(--fusion-accent);
 }
 
 /* 字体大小控制 [-][字号][+] */
@@ -1028,18 +1408,27 @@
 .toolbarColorGroup {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     height: 24px;
-    padding: 0;
-    margin: 0;
+    min-width: 0;
+    max-width: 236px;
+    padding: 2px;
+    margin: -2px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+}
+
+.toolbarColorGroup::-webkit-scrollbar {
+    display: none;
 }
 
 .toolbarColorBtn {
-    width: 24px;
-    height: 24px;
-    flex: 0 0 24px;
-    min-width: 24px;
-    min-height: 24px;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    min-width: 20px;
+    min-height: 20px;
     box-sizing: border-box;
     display: block;
     padding: 0;
@@ -1055,8 +1444,8 @@
 }
 
 .toolbarColorBtn.active {
-    border-color: var(--blue-500);
-    box-shadow: 0 0 0 1px var(--blue-500);
+    border-color: var(--fusion-accent);
+    box-shadow: 0 0 0 1px var(--fusion-accent);
 }
 
 /* 操作按钮 */
@@ -1087,11 +1476,11 @@
 .toolbarConfirmBtn {
     height: 44px;
     padding: 0 12px;
-    background: var(--blue-500);
+    background: var(--fusion-accent);
     border: none;
     border-radius: var(--radius-default-in);
     box-shadow: var(--shadow-small);
-    color: white;
+    color: var(--fusion-on-accent);
     font-family: var(--font-family);
     font-size: 16px;
     font-weight: var(--font-weight-medium);
@@ -1100,563 +1489,12 @@
 }
 
 .toolbarConfirmBtn:hover {
-    background: var(--blue-400);
+    background: var(--fusion-accent-strong);
 }
 
 .toolbarConfirmBtn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-}
-
-/* ----------------------------------------------------------------------------
-   Recycle Bin
-   ---------------------------------------------------------------------------- */
-.recycleBin {
-    position: fixed;
-    bottom: -220px;
-    right: 0;
-    width: 200px;
-    height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: bottom 0.4s cubic-bezier(0.34, 1.25, 0.64, 1), transform 0.2s ease;
-    z-index: 2500;
-    /* Below dragging sticker (3000) but above other UI */
-    pointer-events: none;
-    /* Let events pass through to document for drag logic */
-    background: var(--recycle-bin-bg);
-    /* Subtle glow backdrop */
-    border-radius: 50%;
-}
-
-.recycleBin.visible {
-    bottom: -90px;
-    pointer-events: auto;
-}
-
-.recycleIcon {
-    width: 160px;
-    height: 160px;
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
-    transition: transform 0.2s ease;
-}
-
-/* Hover effect handled by JS drag detection, but we can add scale for visual feedback */
-.recycleBin.dragOver .recycleIcon {
-    transform: scale(1.1);
-}
-
-.recycleBin.active {
-    bottom: -90px;
-    pointer-events: auto;
-    cursor: pointer;
-}
-
-.recycleBin.active .recycleIcon {
-    cursor: pointer;
-    transition: transform 0.2s ease;
-}
-
-.recycleBin.active:hover .recycleIcon {
-    transform: scale(1.1);
-}
-
-.recycleBin.peek {
-    bottom: -145px;
-    pointer-events: auto;
-    /* Allow hovering - show ~55px visible */
-}
-
-/* ----------------------------------------------------------------------------
-   Recycle Bin Modal
-   ---------------------------------------------------------------------------- */
-
-
-.recycleBinContent {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    padding-top: 10vh;
-    box-sizing: border-box;
-    /* 使用文件夹弹出动画风格 - smoother ease out */
-    animation: recycleBinPopIn 0.3s ease-out forwards;
-}
-
-.recycleBinHeader {
-    width: 100%;
-    max-width: 960px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: var(--color-text-primary);
-    padding: 0 40px;
-    box-sizing: border-box;
-}
-
-.recycleBinTitle {
-    font-size: 32px;
-    font-weight: 700;
-    margin: 0;
-}
-
-/* Close button wrapper - glassmorphism */
-/* Header text wrapper for title and subtitle */
-.headerTextWrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    align-items: flex-start;
-}
-
-.recycleBinSubtitle {
-    font-size: 14px;
-    color: var(--color-text-secondary);
-    font-weight: 400;
-    opacity: 0.8;
-}
-
-.recycleBinCloseWrapper {
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    background: var(--color-bg-primary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-default);
-    padding: var(--spacing-border-default);
-    cursor: pointer;
-    transition: transform var(--transition-normal);
-    opacity: 1;
-    pointer-events: auto;
-    /* Remove default button styles */
-    border: 1px solid var(--color-border);
-    appearance: none;
-    -webkit-appearance: none;
-}
-
-.recycleBinCloseWrapper:hover {
-    transform: scale(1.05);
-}
-
-/* Close button inner container */
-.recycleBinCloseInner {
-    background: var(--color-bg-secondary);
-    border-radius: var(--radius-default-in);
-    padding: var(--spacing-gap-small);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--shadow-small);
-    width: 40px;
-    height: 40px;
-}
-
-/* Close button icon */
-.recycleBinCloseIcon {
-    width: 24px;
-    height: 24px;
-    color: var(--color-text-primary);
-}
-
-.recycleBinGrid {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    /* gap: 24px; Removed gap to allow margin collapse animation */
-    padding: 24px 40px;
-    width: 100%;
-    max-width: 960px;
-    margin: 0 auto;
-    box-sizing: border-box;
-    overflow-y: auto;
-}
-
-
-
-.recycleBinItem:active {
-    cursor: grabbing;
-    transition: none;
-    /* Instant movement during drag */
-}
-
-/* Tooltip on hover handled via subtitle now, removed styles */
-.recycleBinItem::after {
-    display: none;
-}
-
-.recycleBinItem:hover {
-    transform: scale(1.02);
-    /* No border/shadow changes on hover */
-}
-
-.recycleItemPreview {
-    max-width: 100%;
-    height: auto;
-    max-height: 160px;
-    object-fit: contain;
-    /* Match image sticker style */
-    outline: 6px solid var(--color-sticker-stroke);
-    outline-offset: 0;
-    border-radius: var(--radius-medium);
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.08));
-}
-
-/* 回收站中的 SVG 贴纸内层：移除方框，使用 SVG 滤镜描边 */
-.recycleItemPreview.svgSticker {
-    outline: none;
-    filter: url(#text-sticker-stroke);
-}
-
-/* 回收站中的 SVG 贴纸外层包裹：负责阴影（由于回收站不涉及拖拽交互阴影动画，直接给固定阴影即可） */
-.recycleItemImageContainer.svgStickerWrapper {
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.08));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.emptyState {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    width: 100%;
-    /* Adjust for grid padding */
-    color: var(--color-text-secondary);
-    gap: 6px;
-    padding: 60px 0;
-}
-
-.emptyStateIcon {
-    width: 80px;
-    height: 80px;
-    opacity: 0.4;
-    color: var(--color-text-secondary);
-    margin-bottom: 8px;
-}
-
-.emptyStateText {
-    font-size: 20px;
-    font-weight: 600;
-    text-align: center;
-    opacity: 0.8;
-}
-
-.emptyStateHint {
-    font-size: 15px;
-    opacity: 0.45;
-    text-align: center;
-    line-height: 1.5;
-}
-
-/* ===== Swipe Item Wrapper ===== */
-@keyframes stickerEnter {
-    from {
-        opacity: 0;
-        transform: translateY(30px) scale(0.95);
-        filter: blur(4px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        filter: blur(0px);
-    }
-}
-
-/* Update Modal Animation */
-/* ... (unchanged modal styles) ... */
-
-/* Update Item Animation for staggered entry */
-.recycleBinItemWrapper {
-    position: relative;
-    width: 100%;
-    max-width: 800px;
-    border-radius: var(--radius-medium);
-    margin-bottom: 24px;
-
-    /* Entrance Animation - Refined for smoothness */
-    opacity: 0;
-    /* Uses a confident ease-out curve */
-    animation: stickerEnter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-}
-
-/* ... existing styles ... */
-
-/* Update Item Animation for staggered entry */
-.recycleBinItem {
-    position: relative;
-    /* Remove card styling to look like raw sticker */
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    cursor: grab;
-
-    /* Base state for entrance animation - REMOVED to avoid conflict with drag transform */
-    /* opacity: 0; */
-    /* animation: fadeInUp 0.4s cubic-bezier(0.34, 1.25, 0.64, 1) forwards; */
-
-    transition: transform 0.2s ease;
-    /* Default transition, override during drag */
-    width: 100%;
-    /* Max width constraint is now on the wrapper */
-    max-width: 100%;
-    z-index: 2;
-    /* Above background */
-    touch-action: pan-y;
-    /* Allow vertical scroll, handle horizontal in JS */
-}
-
-.recycleBinItem.thresholdReached {
-    transform: scale(0.98);
-    opacity: 0.9;
-}
-
-/* Swipe background layer */
-.swipeBackground {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 24px;
-    border-radius: var(--radius-medium);
-    z-index: 1;
-    transition: opacity 0.15s ease;
-}
-
-.swipeBackground.delete {
-    background: linear-gradient(90deg, rgba(255, 59, 48, 0.9) 0%, rgba(255, 59, 48, 0.6) 50%, transparent 100%);
-}
-
-.swipeBackground.restore {
-    background: linear-gradient(270deg, rgba(52, 199, 89, 0.9) 0%, rgba(52, 199, 89, 0.6) 50%, transparent 100%);
-}
-
-/* Threshold reached state - enhanced visual feedback */
-.swipeBackground.restore.threshold {
-    background: linear-gradient(270deg, rgba(52, 199, 89, 1) 0%, rgba(52, 199, 89, 0.9) 60%, transparent 100%);
-    box-shadow: inset 0 0 40px rgba(52, 199, 89, 0.2);
-}
-
-.swipeBackground.delete.threshold {
-    background: linear-gradient(90deg, rgba(255, 59, 48, 1) 0%, rgba(255, 59, 48, 0.9) 60%, transparent 100%);
-    box-shadow: inset 0 0 40px rgba(255, 59, 48, 0.2);
-}
-
-/* Swipe action content (icons and text) */
-.swipeActionContent {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: white;
-    font-weight: 600;
-    font-size: 14px;
-    transition: transform 0.2s ease, opacity 0.2s ease;
-}
-
-.swipeActionContent svg {
-    width: 24px;
-    height: 24px;
-    transition: transform 0.2s ease;
-}
-
-.swipeActionIcon {
-    width: 24px;
-    height: 24px;
-    filter: brightness(0) invert(1);
-    /* Make icon white */
-    transition: transform 0.2s ease;
-}
-
-/* Icon scale up when threshold reached */
-.swipeBackground.threshold .swipeActionContent svg,
-.swipeBackground.threshold .swipeActionContent .swipeActionIcon {
-    transform: scale(1.2);
-}
-
-/* ===== Delete/Restore Animations ===== */
-.recycleBinItem.restoring {
-    transition: transform 0.4s cubic-bezier(0.34, 1.25, 0.64, 1), opacity 0.4s ease !important;
-    opacity: 0;
-    pointer-events: none;
-}
-
-.recycleBinItem.permanentlyDeleting {
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease !important;
-    opacity: 0;
-    pointer-events: none;
-}
-
-/* Spring-back animation for when swipe doesn't reach threshold */
-.recycleBinItem.springBack {
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-}
-
-/* ===== Modal Closing Animation ===== */
-.recycleBinModal.closing .recycleBinContent {
-    animation: recycleBinPopOut 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
-}
-
-/* ===== Keyframe Animations ===== */
-/* ===== Keyframe Animations ===== */
-@keyframes recycleBinPopIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-        filter: blur(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1);
-        filter: blur(0px);
-    }
-}
-
-@keyframes recycleBinPopOut {
-    from {
-        opacity: 1;
-        transform: scale(1);
-        filter: blur(0px);
-    }
-
-    to {
-        opacity: 0;
-        transform: scale(0.95);
-        filter: blur(10px);
-    }
-}
-
-@keyframes restoreSlideOut {
-    0% {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-    }
-
-    100% {
-        opacity: 0;
-        transform: translateX(-100px) scale(0.9);
-    }
-}
-
-@keyframes deleteDissolve {
-    0% {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-    }
-
-    100% {
-        opacity: 0;
-        transform: translateX(80px) scale(0.8);
-    }
-}
-
-
-
-@keyframes modalFadeIn {
-    from {
-        opacity: 0;
-        backdrop-filter: blur(0px);
-        -webkit-backdrop-filter: blur(0px);
-    }
-
-    to {
-        opacity: 1;
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-    }
-}
-
-@keyframes modalFadeOut {
-    from {
-        opacity: 1;
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-    }
-
-    to {
-        opacity: 0;
-        backdrop-filter: blur(0px);
-        -webkit-backdrop-filter: blur(0px);
-    }
-}
-
-/* Update Modal Animation */
-.recycleBinModal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 4000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    /* Theme-aware background */
-    background: var(--recycle-bin-modal-bg);
-
-    /* Blur effect - Initial State */
-    backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
-
-    opacity: 0;
-    pointer-events: none;
-}
-
-.recycleBinModal.open {
-    opacity: 1;
-    pointer-events: auto;
-    /* Use animation for more control over blur interpolation if needed, or stick to transition */
-    animation: modalFadeIn 0.3s ease forwards;
-}
-
-.recycleBinModal.closing {
-    /* Ensure opacity fades out when closing */
-    opacity: 1;
-    backdrop-filter: blur(20px);
-    pointer-events: none;
-    animation: modalFadeOut 0.25s ease forwards;
-}
-
-/* Update Item Animation for staggered entry */
-/* Update Item Animation for staggered entry */
-.recycleBinItem {
-    position: relative;
-    /* Remove card styling to look like raw sticker */
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    cursor: grab;
-
-    transition: transform 0.2s ease;
-    /* Default transition, override during drag */
-    width: 100%;
-    /* Max width constraint is now on the wrapper */
-    max-width: 100%;
-    z-index: 2;
-    /* Above background */
-    touch-action: pan-y;
-    /* Allow vertical scroll, handle horizontal in JS */
-}
-
-/* Ensure text stickers have vertical padding for better height/swipe feel while keeping left alignment */
-.recycleBinItem .textSticker {
-    padding: 12px 0;
 }
 
 /* ===== 文本贴纸复选框样式 ===== */
@@ -1727,8 +1565,8 @@
 }
 
 .toolbarCheckboxBtn.active {
-    background: var(--blue-500);
-    color: white;
+    background: var(--fusion-accent);
+    color: var(--fusion-on-accent);
 }
 
 .toolbarCheckboxBtn .toolbarTodoIcon {
@@ -1770,8 +1608,8 @@
 }
 
 .toolbarLinkCardBtn.active {
-    background: var(--blue-500);
-    color: white;
+    background: var(--fusion-accent);
+    color: var(--fusion-on-accent);
 }
 
 .toolbarLinkCardBtn:disabled {
@@ -1813,4 +1651,942 @@
   .toolbarColorBtn {
     border-radius: 6px;
   }
+}
+
+/* ===== 贴纸层叠优先级 ===== */
+.menuItemContent {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.menuItemContent small {
+    flex: 0 0 auto;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 2px 7px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+}
+
+.stickerPriorityEditorClickAway {
+    position: fixed;
+    inset: 0;
+    z-index: 1000000000;
+    background: transparent;
+    pointer-events: auto;
+}
+
+.stickerPriorityEditor,
+.stickerImageLinkEditor {
+    position: fixed;
+    z-index: 1000000001;
+    box-sizing: border-box;
+    width: 280px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-default);
+    padding: 16px;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-large, 0 24px 64px rgba(0, 0, 0, 0.26));
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    pointer-events: auto;
+}
+
+.stickerImageLinkEditor {
+    width: 320px;
+}
+
+.stickerPriorityEditorTitle {
+    font-size: 15px;
+    font-weight: var(--font-weight-bold, 700);
+}
+
+.stickerPriorityEditor p,
+.stickerImageLinkEditor p {
+    margin: 7px 0 14px;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.stickerPriorityInputRow,
+.stickerImageLinkInputRow {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: var(--font-weight-medium, 500);
+}
+
+.stickerPriorityInputRow input,
+.stickerImageLinkInputRow input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 38px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-small, 10px);
+    padding: 0 11px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    font: inherit;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    outline: none;
+}
+
+.stickerPriorityInputRow input:focus,
+.stickerImageLinkInputRow input:focus {
+    border-color: var(--fusion-accent);
+    box-shadow: 0 0 0 3px var(--fusion-focus-ring);
+}
+
+.stickerPriorityEditorActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.stickerPriorityEditorActions button {
+    min-width: 68px;
+    height: 34px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-small, 10px);
+    padding: 0 12px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    font: inherit;
+    font-size: 12px;
+    font-weight: var(--font-weight-medium, 500);
+    cursor: pointer;
+}
+
+.stickerPriorityEditorActions button:hover {
+    filter: brightness(1.04);
+}
+
+.stickerPriorityEditorActions .stickerPrioritySaveButton {
+    border-color: transparent;
+    background: var(--fusion-accent);
+    color: var(--fusion-on-accent);
+}
+
+.stickerPriorityBadge {
+    position: absolute;
+    left: 4px;
+    bottom: -24px;
+    z-index: 2;
+    min-width: 24px;
+    box-sizing: border-box;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 3px 7px;
+    background: var(--color-bg-primary);
+    color: var(--color-text-secondary);
+    box-shadow: var(--shadow-small);
+    font-size: 9px;
+    font-weight: var(--font-weight-bold, 700);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+
+/* ===== 贴纸字体与旋转编辑器 ===== */
+.stickerOptionEditorClickAway {
+    position: fixed;
+    inset: 0;
+    z-index: 1000000000;
+    background: transparent;
+    pointer-events: auto;
+}
+
+.stickerFontEditor,
+.stickerRotationEditor {
+    position: fixed;
+    z-index: 1000000001;
+    box-sizing: border-box;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-default);
+    padding: 16px;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-large, 0 24px 64px rgba(0, 0, 0, 0.26));
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    pointer-events: auto;
+}
+
+.stickerFontEditor {
+    width: 310px;
+}
+
+.stickerRotationEditor {
+    width: 320px;
+}
+
+.stickerOptionEditorTitle {
+    font-size: 15px;
+    font-weight: var(--font-weight-bold, 700);
+}
+
+.stickerFontEditor>p,
+.stickerRotationEditor>p {
+    margin: 7px 0 14px;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.stickerFontList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stickerFontOption {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 50px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-small, 10px);
+    padding: 8px 10px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.stickerFontOption:hover {
+    border-color: color-mix(in srgb, var(--fusion-accent) 55%, var(--color-border));
+    transform: translateY(-1px);
+}
+
+.stickerFontOptionActive {
+    border-color: var(--fusion-accent);
+    background: color-mix(in srgb, var(--fusion-accent) 12%, var(--color-bg-secondary));
+    box-shadow: 0 0 0 3px var(--fusion-focus-ring);
+}
+
+.stickerFontOption span {
+    font-family: var(--font-family);
+    font-size: 12px;
+    font-weight: var(--font-weight-medium, 500);
+}
+
+.stickerFontOption strong {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stickerRotationValueRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 82px;
+    align-items: center;
+    gap: 12px;
+}
+
+.stickerRotationValueRow>input[type='range'] {
+    width: 100%;
+    accent-color: var(--fusion-accent);
+}
+
+.stickerRotationValueRow label {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 18px;
+    align-items: center;
+    height: 38px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-small, 10px);
+    background: var(--color-bg-secondary);
+    overflow: hidden;
+}
+
+.stickerRotationValueRow label:focus-within {
+    border-color: var(--fusion-accent);
+    box-shadow: 0 0 0 3px var(--fusion-focus-ring);
+}
+
+.stickerRotationValueRow label input {
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    padding: 0 0 0 10px;
+    background: transparent;
+    color: var(--color-text-primary);
+    font: inherit;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    outline: none;
+}
+
+.stickerRotationValueRow label span {
+    color: var(--color-text-secondary);
+    font-size: 13px;
+}
+
+.stickerRotationActions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.stickerRotationActions button {
+    height: 34px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-small, 10px);
+    padding: 0 9px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    font: inherit;
+    font-size: 12px;
+    font-weight: var(--font-weight-medium, 500);
+    cursor: pointer;
+}
+
+.stickerRotationActions button:hover {
+    filter: brightness(1.04);
+}
+
+.stickerRotationActions .stickerRotationDoneButton {
+    grid-column: 1 / -1;
+    border-color: transparent;
+    background: var(--fusion-accent);
+    color: var(--fusion-on-accent);
+}
+
+/* 绘图工具栏：线条粗细控制 */
+.drawingStrokeControl {
+    height: 24px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 4px;
+    color: var(--color-text-primary);
+    font-size: 12px;
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+}
+
+.drawingStrokeControl input[type="range"] {
+    width: 88px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--fusion-accent);
+}
+
+.drawingStrokeControl output {
+    min-width: 30px;
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+/* ===== 颜色增多后的编辑工具栏重排 ===== */
+.stickerToolbar {
+    align-items: stretch;
+    flex-wrap: wrap;
+}
+
+.toolbarPanel {
+    height: auto;
+    min-height: 52px;
+    align-items: center;
+}
+
+.toolbarSettings {
+    width: 294px;
+    overflow: visible;
+}
+
+.toolbarSettings.withLinkAction {
+    width: 342px;
+}
+
+.toolbarStylePanel {
+    width: 234px;
+    height: 52px;
+    flex: 0 0 234px;
+    padding: 6px 7px;
+    overflow: visible;
+}
+
+.toolbarColorGroup {
+    display: grid;
+    grid-template-columns: repeat(5, 20px);
+    grid-auto-rows: 20px;
+    align-items: center;
+    justify-content: start;
+    gap: 4px;
+    width: 116px;
+    height: 44px;
+    min-width: 116px;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+}
+
+.toolbarFontSizeControl {
+    align-self: center;
+}
+
+.toolbarActions {
+    min-height: 64px;
+    align-items: center;
+}
+
+.floatingToolbar {
+    overflow: visible;
+    border-radius: 18px;
+}
+
+.floatingColorGroup {
+    display: grid;
+    grid-template-columns: repeat(5, 18px);
+    grid-auto-rows: 18px;
+    gap: 4px;
+}
+
+.floatingColorGroup .colorButton {
+    width: 18px;
+    height: 18px;
+}
+
+.drawingToolbar {
+    width: min(760px, calc(100vw - 24px));
+}
+
+.drawingToolbarPanel {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px;
+    overflow: visible;
+}
+
+.drawingToolbarSection {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 5px;
+    padding: 5px 7px;
+    border-radius: 10px;
+    background: var(--color-bg-secondary);
+    box-shadow: var(--shadow-small);
+}
+
+.drawingToolbarLabel {
+    color: var(--color-text-secondary);
+    font-size: 10px;
+    line-height: 1;
+    font-weight: var(--font-weight-medium);
+}
+
+.drawingColorGrid {
+    width: 116px;
+    min-width: 116px;
+}
+
+.drawingShapeGroup,
+.drawingActionGroup,
+.drawingStrokeRow {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.drawingShapeGroup .toolbarDrawBtn,
+.drawingActionGroup .toolbarDrawBtn {
+    width: 32px;
+    height: 32px;
+}
+
+.drawingStrokeControl {
+    height: auto;
+    padding: 5px 7px;
+}
+
+.drawingStrokeControl input[type="range"] {
+    width: 104px;
+}
+
+.drawingActionGroup {
+    padding: 5px;
+    align-self: center;
+}
+
+.drawingActionGroup .toolbarCancelBtn {
+    height: 32px;
+    font-size: 13px;
+}
+
+.stickerFontEditor,
+.widgetFontEditor {
+    max-height: calc(100vh - 24px);
+    overflow: hidden;
+}
+
+@media (max-width: 620px) {
+    .stickerToolbar {
+        width: min(342px, calc(100vw - 24px));
+    }
+
+    .toolbarSettings,
+    .toolbarSettings.withLinkAction {
+        width: 100%;
+    }
+
+    .toolbarActions {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .drawingToolbar {
+        bottom: 12px;
+    }
+}
+
+/* 文本编辑器二级分区：字号与色板一眼可见，避免横向滚动。 */
+.toolbarSettings {
+    width: 312px;
+}
+
+.toolbarSettings.withLinkAction {
+    width: 360px;
+}
+
+.toolbarStylePanel {
+    width: 252px;
+    height: 64px;
+    flex-basis: 252px;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 8px;
+}
+
+.toolbarControlSection {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 4px;
+}
+
+.toolbarControlLabel {
+    color: var(--color-text-secondary);
+    font-size: 10px;
+    font-weight: var(--font-weight-medium);
+    line-height: 1;
+    user-select: none;
+}
+
+.toolbarColorSection {
+    flex: 1;
+}
+
+.toolbarControlDivider {
+    height: 44px;
+}
+
+.toolbarFontSizeControl {
+    height: 28px;
+}
+
+.toolbarFontSizeBtn,
+.toolbarFontSizeInput {
+    height: 28px;
+}
+
+@media (max-width: 620px) {
+    .stickerToolbar {
+        width: min(360px, calc(100vw - 24px));
+    }
+}
+
+/* 统一贴纸内部链接：文字贴纸与图片贴纸都使用指针光标提示可跳转。 */
+.linkedStickerContent {
+    cursor: pointer;
+}
+
+/* 编辑模式下显示内部锚点标签，便于建立贴纸之间的跳转关系。 */
+.stickerAnchorBadge {
+    position: absolute;
+    left: 36px;
+    bottom: -24px;
+    z-index: 2;
+    max-width: 148px;
+    box-sizing: border-box;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 3px 7px;
+    overflow: hidden;
+    background: var(--color-bg-primary);
+    color: var(--color-text-secondary);
+    box-shadow: var(--shadow-small);
+    font-size: 9px;
+    font-weight: var(--font-weight-bold, 700);
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* 相对屏幕固定贴纸位于 viewportStickerLayer，不参与 pageStickerLayer 翻页动画。 */
+
+/* ===== 统一级联子菜单：尺寸 / 交互效果 / 描边 / 布局 ===== */
+.submenuWrap {
+    position: relative;
+}
+
+.submenuWrap > .menuItem {
+    position: relative;
+}
+
+.menuSizeIcon {
+    display: inline-grid;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    place-items: center;
+    color: var(--context-menu-muted);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.menuChevron {
+    margin-left: 2px;
+    color: var(--context-menu-muted);
+    font-size: 18px;
+    line-height: 1;
+}
+
+.submenu {
+    position: absolute;
+    top: -4px;
+    left: calc(100% + 8px);
+    z-index: 1000000005;
+    display: none;
+    width: 188px;
+    box-sizing: border-box;
+    flex-direction: column;
+    gap: 4px;
+    border: 1px solid var(--context-menu-border);
+    border-radius: var(--radius-default);
+    padding: var(--spacing-padding-small);
+    background: var(--context-menu-bg);
+    box-shadow: var(--context-menu-shadow);
+    backdrop-filter: blur(var(--context-menu-blur));
+    -webkit-backdrop-filter: blur(var(--context-menu-blur));
+}
+
+.submenuLeft {
+    right: calc(100% + 8px);
+    left: auto;
+}
+
+.submenuWrap:hover .submenu,
+.submenuWrap:focus-within .submenu,
+.submenu:hover {
+    display: flex;
+}
+
+.submenu .menuItem:disabled {
+    cursor: not-allowed;
+    opacity: .42;
+}
+.submenu::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -9px;
+    width: 9px;
+}
+.submenuLeft::before { right: -9px; left: auto; }
+
+
+.menuRadioIcon {
+    display: inline-grid;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    place-items: center;
+    color: var(--context-menu-muted);
+    font-size: 13px;
+    line-height: 1;
+}
+
+.menuRadioIconActive {
+    color: var(--fusion-accent);
+}
+
+/* ========================================================================== */
+/* 统一贴纸编辑菜单 / 工具栏材质                                               */
+/* ========================================================================== */
+.textInputPopup,
+.floatingToolbar,
+.toolbarPanel,
+.stickerPriorityEditor,
+.stickerImageLinkEditor,
+.stickerFontEditor,
+.stickerRotationEditor {
+    border-color: var(--ui-menu-border);
+    background: var(--ui-menu-bg);
+    box-shadow: var(--ui-menu-shadow);
+    backdrop-filter: blur(var(--ui-menu-blur)) saturate(1.08);
+    -webkit-backdrop-filter: blur(var(--ui-menu-blur)) saturate(1.08);
+}
+
+.textInputInner,
+.toolbarStylePanel,
+.alignmentGroup,
+.colorOptionsGrid {
+    border-color: color-mix(in srgb, var(--ui-menu-border) 66%, transparent);
+    background: color-mix(in srgb, var(--ui-menu-hover) 58%, transparent);
+    box-shadow: none;
+}
+
+.textInput,
+.stickerPriorityEditor input,
+.stickerImageLinkEditor input,
+.stickerFontEditor input,
+.stickerRotationEditor input {
+    border-color: var(--ui-control-border);
+    background: var(--ui-control-bg);
+}
+
+.textInput:focus,
+.stickerPriorityEditor input:focus,
+.stickerImageLinkEditor input:focus,
+.stickerFontEditor input:focus,
+.stickerRotationEditor input:focus {
+    border-color: var(--ui-control-focus-border);
+    background: var(--ui-control-bg-hover);
+    box-shadow: var(--ui-control-focus-ring);
+}
+
+.textInputCancel,
+.stickerPriorityEditorActions button:not(.stickerPrioritySaveButton),
+.toolbarCancelBtn,
+.toolbarCheckboxBtn,
+.toolbarLinkCardBtn {
+    border-color: var(--ui-control-border);
+    background: var(--ui-control-bg);
+}
+
+.textInputCancel:hover,
+.stickerPriorityEditorActions button:not(.stickerPrioritySaveButton):hover,
+.toolbarCancelBtn:hover,
+.toolbarCheckboxBtn:hover,
+.toolbarLinkCardBtn:hover {
+    background: var(--ui-control-bg-hover);
+}
+
+.toolbarDivider,
+.toolbarControlDivider { background: var(--ui-menu-border); }
+.contextMenu,
+.submenu { border-radius: var(--ui-menu-radius); }
+.contextMenu .menuItem,
+.submenu .menuItem { border-radius: var(--ui-menu-item-radius); }
+
+/* ===== Unified object inspector ===== */
+.objectInspectorDangerButton {
+    color: var(--color-danger, #ff3b30) !important;
+}
+
+.objectInspectorField {
+    display: grid;
+    gap: 7px;
+}
+
+.objectInspectorField > span,
+.objectInspectorRow > span:first-child {
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.objectInspectorRow {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 9px;
+    min-height: 32px;
+}
+
+.objectInspectorRow input[type='range'] {
+    width: 100%;
+    accent-color: var(--fusion-accent);
+}
+
+.objectInspectorRow strong {
+    min-width: 42px;
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    text-align: right;
+}
+
+.objectInspectorNumberInput {
+    width: 88px;
+    min-width: 0;
+    height: 32px;
+    box-sizing: border-box;
+    padding: 0 9px;
+    border: 1px solid var(--ui-control-border);
+    border-radius: var(--ui-control-radius);
+    background: var(--ui-control-bg);
+    color: var(--color-text-primary);
+    font: inherit;
+    font-size: 12px;
+    outline: none;
+}
+
+.objectInspectorNumberInput:focus {
+    border-color: var(--ui-control-focus-border);
+    box-shadow: var(--ui-control-focus-ring);
+}
+
+.objectInspectorHint {
+    color: var(--color-text-tertiary) !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+}
+
+.objectInspectorSegmented {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 4px;
+    padding: 3px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+}
+
+.objectInspectorSegmented button,
+.objectInspectorToggleGrid button,
+.objectInspectorMiniButton,
+.objectInspectorTextButton {
+    min-height: 30px;
+    padding: 0 8px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 750;
+}
+
+.objectInspectorSegmented button:hover,
+.objectInspectorToggleGrid button:hover,
+.objectInspectorMiniButton:hover,
+.objectInspectorTextButton:hover {
+    background: var(--ui-control-bg-hover);
+    color: var(--color-text-primary);
+}
+
+.objectInspectorActive {
+    border-color: color-mix(in srgb, var(--fusion-accent) 28%, transparent) !important;
+    background: color-mix(in srgb, var(--fusion-accent) 13%, var(--ui-control-bg)) !important;
+    color: var(--fusion-accent) !important;
+}
+
+.objectInspectorColorRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.objectInspectorColorRow > button:not(.objectInspectorTextButton) {
+    width: 23px;
+    height: 23px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-text-primary) 9%, transparent);
+}
+
+.objectInspectorColorRow > .objectInspectorColorActive {
+    border-color: var(--fusion-accent) !important;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--fusion-accent) 16%, transparent);
+}
+
+.objectInspectorTextButton {
+    border-color: var(--ui-control-border);
+    background: var(--ui-control-bg);
+}
+
+.objectInspectorMiniButton {
+    min-width: 62px;
+    border-color: var(--ui-control-border);
+    background: var(--ui-control-bg);
+}
+
+.objectInspectorToggleGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+}
+
+.objectInspectorToggleGrid button {
+    min-height: 36px;
+    border-color: var(--ui-control-border);
+    background: var(--ui-control-bg);
+}
+
+/* Expandable context-menu rows reserve a fixed trailing column so every chevron
+   sits on the same vertical guide, regardless of labels or value badges. */
+.submenuWrap > .menuItem {
+    width: 100%;
+}
+
+.submenuWrap > .menuItem > .menuItemContent {
+    flex: 1 1 auto;
+}
+
+.submenuWrap > .menuItem > .menuChevron {
+    display: inline-grid;
+    width: 14px;
+    height: 16px;
+    flex: 0 0 14px;
+    margin-left: auto;
+    place-items: center;
+    text-align: center;
+}
+
+/* Ctrl/Command multi-selection is shared by every sticker type, not only text. */
+.sticker[data-selected="true"],
+.sticker.batchSelected {
+    outline: 3px solid var(--fusion-focus-ring);
+    outline-offset: 6px;
+    border-radius: 10px;
 }

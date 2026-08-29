@@ -1,0 +1,195 @@
+.inspector {
+  position: fixed;
+  left: 50%;
+  bottom: calc(max(16px, env(safe-area-inset-bottom)) + 86px);
+  z-index: 1000000002;
+  width: min(940px, calc(100vw - 36px));
+  max-height: min(270px, calc(100dvh - 130px));
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(190px, 240px) minmax(0, 1fr);
+  grid-template-areas:
+    "header actions"
+    "tabs content";
+  gap: 10px 14px;
+  padding: 11px 12px;
+  transform: translateX(-50%);
+  border: 1px solid var(--ui-menu-border, var(--color-border));
+  border-radius: 18px;
+  background: var(--ui-menu-bg, var(--color-bg-secondary));
+  box-shadow: var(--ui-menu-shadow, var(--shadow-combined));
+  backdrop-filter: blur(var(--ui-menu-blur, 22px)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--ui-menu-blur, 22px)) saturate(1.08);
+  color: var(--color-text-primary);
+  pointer-events: auto;
+}
+
+.header {
+  grid-area: header;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.heading {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.kind {
+  width: fit-content;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fusion-accent) 13%, transparent);
+  color: var(--fusion-accent);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.heading strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.heading small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-tertiary);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.closeButton {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--ui-control-bg, var(--color-bg-tertiary));
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.closeButton:hover {
+  background: var(--ui-control-bg-hover, var(--color-bg-tertiary));
+  color: var(--color-text-primary);
+}
+
+.primaryActions {
+  grid-area: actions;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-self: start;
+}
+
+.primaryActions > button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-control-border, var(--color-border));
+  border-radius: 9px;
+  background: var(--ui-control-bg, var(--color-bg-tertiary));
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.primaryActions > button:hover {
+  background: var(--ui-control-bg-hover, var(--color-bg-tertiary));
+  border-color: color-mix(in srgb, var(--fusion-accent) 35%, var(--ui-control-border, var(--color-border)));
+}
+
+.primaryActions > button[data-accent="true"] {
+  border-color: color-mix(in srgb, var(--fusion-accent) 34%, transparent);
+  background: color-mix(in srgb, var(--fusion-accent) 13%, var(--ui-control-bg, var(--color-bg-tertiary)));
+  color: var(--fusion-accent);
+}
+
+.sectionTabs {
+  grid-area: tabs;
+  align-self: end;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+}
+
+.sectionTabs button {
+  height: 29px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.sectionTabs button:hover {
+  color: var(--color-text-primary);
+}
+
+.sectionTabs .activeTab {
+  background: var(--ui-control-bg, var(--color-bg-secondary));
+  color: var(--color-text-primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.09);
+}
+
+.content {
+  grid-area: content;
+  min-width: 0;
+  max-height: 168px;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 9px 12px;
+  padding: 1px 3px 1px 0;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 760px) {
+  .inspector {
+    right: 10px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: 10px;
+    width: auto;
+    max-height: min(54dvh, 440px);
+    transform: none;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "actions"
+      "tabs"
+      "content";
+    gap: 9px;
+    overflow: auto;
+  }
+
+  .content {
+    max-height: none;
+    overflow: visible;
+    grid-template-columns: 1fr;
+  }
+
+  .sectionTabs {
+    align-self: auto;
+  }
+}
