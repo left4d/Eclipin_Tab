@@ -83,16 +83,16 @@ export const LayoutSettingsSection = () => {
       <div className={styles.layoutSection}>
         <div className={styles.layoutRow}>
           <span className={styles.layoutLabel}>{t.settings.language}</span>
-          <div className={styles.layoutToggleGroup}>
+          <div className={`segmented ${styles.layoutToggleGroup}`}>
             <div className={styles.layoutHighlight} style={{ transform: `translateX(${language === 'zh' ? 0 : 100}%)` }} />
-            <button className={styles.layoutToggleOption} onClick={() => setLanguage('zh')} title="中文">中文</button>
-            <button className={styles.layoutToggleOption} onClick={() => setLanguage('en')} title="EN">EN</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={language === 'zh'} onClick={() => setLanguage('zh')} title="中文">中文</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={language === 'en'} onClick={() => setLanguage('en')} title="EN">EN</button>
           </div>
         </div>
 
         <div className={styles.layoutRow}>
           <span className={styles.layoutLabel}>{t.settings.position}</span>
-          <div className={styles.layoutToggleGroup}>
+          <div className={`segmented ${styles.layoutToggleGroup}`}>
             <div
               className={styles.layoutHighlight}
               style={{
@@ -100,25 +100,27 @@ export const LayoutSettingsSection = () => {
                 transform: `translateX(${dockPosition === 'top' ? 0 : dockPosition === 'center' ? 100 : 200}%)`,
               }}
             />
-            <button className={styles.layoutToggleOption} onClick={() => setDockPosition('top')} title={zh ? '顶部' : 'Top'}>{zh ? '顶部' : 'Top'}</button>
-            <button className={styles.layoutToggleOption} onClick={() => setDockPosition('center')} title={t.settings.center}>{t.settings.center}</button>
-            <button className={styles.layoutToggleOption} onClick={() => setDockPosition('bottom')} title={t.settings.bottom}>{t.settings.bottom}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={dockPosition === 'top'} onClick={() => setDockPosition('top')} title={zh ? '顶部' : 'Top'}>{zh ? '顶部' : 'Top'}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={dockPosition === 'center'} onClick={() => setDockPosition('center')} title={t.settings.center}>{t.settings.center}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={dockPosition === 'bottom'} onClick={() => setDockPosition('bottom')} title={t.settings.bottom}>{t.settings.bottom}</button>
           </div>
         </div>
 
         <div className={styles.layoutRow}>
           <span className={styles.layoutLabel}>{zh ? '快捷网址栏' : 'Quick links bar'}</span>
-          <div className={styles.layoutToggleGroup}>
+          <div className={`segmented ${styles.layoutToggleGroup}`}>
             <div className={styles.layoutHighlight} style={{ transform: `translateX(${quickLinksBarEnabled ? 0 : 100}%)` }} />
             <button
-              className={styles.layoutToggleOption}
+              className={`segmented__item ${styles.layoutToggleOption}`}
+              aria-pressed={quickLinksBarEnabled}
               onClick={() => setQuickLinksBarEnabled(true)}
               title={zh ? '显示搜索框下方的快捷网址栏' : 'Show the website shortcuts below the search box'}
             >
               {zh ? '打开' : 'On'}
             </button>
             <button
-              className={styles.layoutToggleOption}
+              className={`segmented__item ${styles.layoutToggleOption}`}
+              aria-pressed={!quickLinksBarEnabled}
               onClick={() => setQuickLinksBarEnabled(false)}
               title={zh ? '隐藏快捷网址栏，保留搜索框' : 'Hide the quick links bar and keep the search box'}
             >
@@ -129,37 +131,38 @@ export const LayoutSettingsSection = () => {
 
         <div className={styles.layoutRow}>
           <span className={styles.layoutLabel}>{t.settings.iconSize}</span>
-          <div className={styles.layoutToggleGroup}>
+          <div className={`segmented ${styles.layoutToggleGroup}`}>
             <div className={styles.layoutHighlight} style={{ transform: `translateX(${iconSize === 'large' ? 0 : 100}%)` }} />
-            <button className={styles.layoutToggleOption} onClick={() => setIconSize('large')} title={t.settings.large}>{t.settings.large}</button>
-            <button className={styles.layoutToggleOption} onClick={() => setIconSize('small')} title={t.settings.small}>{t.settings.small}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={iconSize === 'large'} onClick={() => setIconSize('large')} title={t.settings.large}>{t.settings.large}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={iconSize === 'small'} onClick={() => setIconSize('small')} title={t.settings.small}>{t.settings.small}</button>
           </div>
         </div>
 
         <div className={styles.layoutRow}>
           <span className={styles.layoutLabel}>{t.settings.tabOpeningBehavior}</span>
-          <div className={styles.layoutToggleGroup}>
+          <div className={`segmented ${styles.layoutToggleGroup}`}>
             <div className={styles.layoutHighlight} style={{ transform: `translateX(${openInNewTab ? 0 : 100}%)` }} />
-            <button className={styles.layoutToggleOption} onClick={() => setOpenInNewTab(true)} title={t.settings.openInNewTab}>{t.settings.openInNewTab}</button>
-            <button className={styles.layoutToggleOption} onClick={() => setOpenInNewTab(false)} title={t.settings.openInCurrentTab}>{t.settings.openInCurrentTab}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={openInNewTab} onClick={() => setOpenInNewTab(true)} title={t.settings.openInNewTab}>{t.settings.openInNewTab}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={!openInNewTab} onClick={() => setOpenInNewTab(false)} title={t.settings.openInCurrentTab}>{t.settings.openInCurrentTab}</button>
           </div>
         </div>
 
         <div className={styles.layoutRow}>
           <span className={styles.layoutLabel}>{zh ? '页面切换' : 'Page transition'}</span>
-          <div className={styles.layoutToggleGroup}>
+          <div className={`segmented ${styles.layoutToggleGroup}`}>
             <div className={styles.layoutHighlight} style={{ transform: `translateX(${pageSlideDirection === 'vertical' ? 0 : 100}%)` }} />
-            <button className={styles.layoutToggleOption} onClick={() => setPageSlideDirection('vertical')} title={zh ? '页面上下切换' : 'Switch pages vertically'}>{zh ? '上下' : 'Vertical'}</button>
-            <button className={styles.layoutToggleOption} onClick={() => setPageSlideDirection('horizontal')} title={zh ? '页面左右切换；滚动固定整页' : 'Switch pages horizontally with full-page scrolling'}>{zh ? '左右' : 'Horizontal'}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={pageSlideDirection === 'vertical'} onClick={() => setPageSlideDirection('vertical')} title={zh ? '页面上下切换' : 'Switch pages vertically'}>{zh ? '上下' : 'Vertical'}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={pageSlideDirection === 'horizontal'} onClick={() => setPageSlideDirection('horizontal')} title={zh ? '页面左右切换；滚动固定整页' : 'Switch pages horizontally with full-page scrolling'}>{zh ? '左右' : 'Horizontal'}</button>
           </div>
         </div>
 
         <div className={styles.layoutRow}>
           <span className={styles.layoutLabel}>{zh ? '页面滚动' : 'Page scrolling'}</span>
-          <div className={styles.layoutToggleGroup}>
+          <div className={`segmented ${styles.layoutToggleGroup}`}>
             <div className={styles.layoutHighlight} style={{ transform: `translateX(${pageScrollMode === 'continuous' ? 0 : 100}%)` }} />
             <button
-              className={styles.layoutToggleOption}
+              className={`segmented__item ${styles.layoutToggleOption}`}
+              aria-pressed={pageScrollMode === 'continuous'}
               onClick={() => setPageScrollMode('continuous')}
               disabled={pageSlideDirection === 'horizontal'}
               title={pageSlideDirection === 'horizontal'
@@ -168,22 +171,22 @@ export const LayoutSettingsSection = () => {
             >
               {zh ? '连续' : 'Continuous'}
             </button>
-            <button className={styles.layoutToggleOption} onClick={() => setPageScrollMode('paged')} title={zh ? '每次滚轮固定移动一整页' : 'Move exactly one page per wheel gesture'}>{zh ? '整页' : 'Paged'}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={pageScrollMode === 'paged'} onClick={() => setPageScrollMode('paged')} title={zh ? '每次滚轮固定移动一整页' : 'Move exactly one page per wheel gesture'}>{zh ? '整页' : 'Paged'}</button>
           </div>
         </div>
 
         <div className={styles.layoutRow}>
           <span className={styles.layoutLabel}>{zh ? '导航栏' : 'Navigation bar'}</span>
-          <div className={styles.layoutToggleGroup}>
+          <div className={`segmented ${styles.layoutToggleGroup}`}>
             <div className={styles.layoutHighlight} style={{ transform: `translateX(${navigationBar.enabled ? 0 : 100}%)` }} />
-            <button className={styles.layoutToggleOption} onClick={() => updateNavigationBar({ enabled: true })} title={zh ? '显示导航栏' : 'Show navigation bar'}>{zh ? '打开' : 'On'}</button>
-            <button className={styles.layoutToggleOption} onClick={() => updateNavigationBar({ enabled: false })} title={zh ? '隐藏导航栏' : 'Hide navigation bar'}>{zh ? '关闭' : 'Off'}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={navigationBar.enabled} onClick={() => updateNavigationBar({ enabled: true })} title={zh ? '显示导航栏' : 'Show navigation bar'}>{zh ? '打开' : 'On'}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={!navigationBar.enabled} onClick={() => updateNavigationBar({ enabled: false })} title={zh ? '隐藏导航栏' : 'Hide navigation bar'}>{zh ? '关闭' : 'Off'}</button>
           </div>
         </div>
 
         <div className={styles.layoutRow}>
           <span className={styles.layoutLabel}>{zh ? '导航栏位置' : 'Navigation position'}</span>
-          <div className={styles.layoutToggleGroup}>
+          <div className={`segmented ${styles.layoutToggleGroup}`}>
             <div
               className={styles.layoutHighlight}
               style={{
@@ -191,9 +194,9 @@ export const LayoutSettingsSection = () => {
                 transform: `translateX(${navigationBar.position === 'left' ? 0 : navigationBar.position === 'right' ? 100 : 200}%)`,
               }}
             />
-            <button className={styles.layoutToggleOption} onClick={() => setNavigationBarPosition('left')} title={zh ? '导航栏放在左侧' : 'Place navigation bar on the left'}>{zh ? '左边' : 'Left'}</button>
-            <button className={styles.layoutToggleOption} onClick={() => setNavigationBarPosition('right')} title={zh ? '导航栏放在右侧' : 'Place navigation bar on the right'}>{zh ? '右边' : 'Right'}</button>
-            <button className={styles.layoutToggleOption} onClick={() => setNavigationBarPosition('bottom')} title={zh ? '导航栏放在底部' : 'Place navigation bar at the bottom'}>{zh ? '下方' : 'Bottom'}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={navigationBar.position === 'left'} onClick={() => setNavigationBarPosition('left')} title={zh ? '导航栏放在左侧' : 'Place navigation bar on the left'}>{zh ? '左边' : 'Left'}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={navigationBar.position === 'right'} onClick={() => setNavigationBarPosition('right')} title={zh ? '导航栏放在右侧' : 'Place navigation bar on the right'}>{zh ? '右边' : 'Right'}</button>
+            <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={navigationBar.position === 'bottom'} onClick={() => setNavigationBarPosition('bottom')} title={zh ? '导航栏放在底部' : 'Place navigation bar at the bottom'}>{zh ? '下方' : 'Bottom'}</button>
           </div>
         </div>
 

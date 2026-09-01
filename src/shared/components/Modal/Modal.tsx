@@ -178,7 +178,7 @@ export const Modal: React.FC<ModalProps> = ({
         {title && (
           <div className={styles.header}>
             <h2 className={styles.title}>{title}</h2>
-            <button className={styles.closeButton} onClick={handleClose}>
+            <button type="button" className={`icon-btn ${styles.closeButton}`} onClick={handleClose} aria-label="关闭">
               ×
             </button>
           </div>

@@ -45,24 +45,11 @@
 
 /* 关闭按钮 */
 .closeButton {
-  background: none;
-  border: none;
-  color: var(--color-text-primary);
-  font-size: 25px;
-  cursor: pointer;
   width: 32px;
   height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-small);
-  transition: background var(--transition-medium);
+  font-size: var(--text-2xl);
 }
 
-/* 关闭按钮悬停效果 */
-.closeButton:hover {
-  background: var(--color-bg-primary);
-}
 
 /* 模态框内容区域 */
 .content {
@@ -107,10 +94,6 @@
   box-shadow: var(--fusion-shadow-md), inset 0 1px 0 color-mix(in srgb, var(--fusion-palette-surface) 46%, transparent);
 }
 
-.closeButton:hover {
-  background: var(--fusion-accent-soft);
-  color: var(--fusion-accent);
-}
 
 /* ===== 统一 Modal / Popover 视觉层 ===== */
 .backdrop {
@@ -137,12 +120,13 @@
 }
 
 .closeButton {
-  border: 1px solid transparent;
-  background: var(--ui-control-bg);
-}
-
-.closeButton:hover {
-  border-color: var(--ui-panel-divider);
-  background: var(--ui-control-bg-hover);
-  color: var(--fusion-accent);
+  --icon-btn-border: transparent;
+  --icon-btn-hover-border: var(--ui-panel-divider);
+  --icon-btn-radius: var(--radius-sm);
+  --icon-btn-bg: var(--ui-control-bg);
+  --icon-btn-hover-bg: var(--ui-control-bg-hover);
+  --icon-btn-color: var(--color-text-primary);
+  --icon-btn-hover-color: var(--fusion-accent);
+  --icon-btn-active-bg: var(--ui-control-bg-hover);
+  --icon-btn-active-transform: none;
 }

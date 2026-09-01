@@ -31,7 +31,7 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren, Erro
 
     return (
       <main className={styles.page}>
-        <section className={styles.card} role="alert">
+        <section className={`card ${styles.card}`} role="alert">
           <div className={styles.badge}>!</div>
           <h1>页面暂时无法显示</h1>
           <p>你的本地数据没有被删除。可以先重新加载；若仍失败，再重置本次会话状态。</p>

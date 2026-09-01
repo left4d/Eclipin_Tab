@@ -79,25 +79,19 @@
 
 .closeButton,
 .editorHeading > button {
-  display: grid;
+  --icon-btn-border: transparent;
+  --icon-btn-radius: var(--radius-md);
+  --icon-btn-bg: transparent;
+  --icon-btn-hover-border: var(--color-border-subtle);
+  --icon-btn-hover-bg: var(--color-bg-tertiary);
+  --icon-btn-color: var(--color-text-tertiary);
+  --icon-btn-hover-color: var(--color-text-primary);
+  --icon-btn-active-bg: var(--color-bg-tertiary);
+  --icon-btn-active-transform: none;
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
-  place-items: center;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--color-text-tertiary);
-  font: inherit;
   font-size: 18px;
-  cursor: pointer;
-}
-
-.closeButton:hover,
-.editorHeading > button:hover {
-  border-color: var(--color-border-subtle);
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
 }
 
 .panelBody {
@@ -337,34 +331,31 @@
   text-align: center;
 }
 
-.queryField input,
-.filterEditor input,
-.filterEditor select,
-.preview textarea {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 10px;
-  background: var(--color-bg-primary);
-  color: var(--color-text-primary);
-  font: inherit;
-  outline: none;
-}
-
 .queryField input {
+  width: 100%;
   min-width: 0;
+  box-sizing: border-box;
   border: 0;
   padding: 11px 2px;
   background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
   font-size: 12px;
+  outline: none;
 }
 
-.queryField input:focus,
-.filterEditor input:focus,
-.filterEditor select:focus,
-.preview textarea:focus {
-  border-color: var(--fusion-border-accent);
-  box-shadow: 0 0 0 2px var(--fusion-accent-soft);
+.filterEditor input,
+.filterEditor select,
+.preview textarea {
+  --field-border: var(--color-border-subtle);
+  --field-radius: var(--radius-md);
+  --field-bg: var(--color-bg-primary);
+  --field-color: var(--color-text-primary);
+  --field-hover-border: var(--color-border-subtle);
+  --field-hover-bg: var(--color-bg-primary);
+  --field-focus-border: var(--fusion-border-accent);
+  --field-focus-ring: 0 0 0 2px var(--fusion-accent-soft);
+  width: 100%;
 }
 
 .workspace {

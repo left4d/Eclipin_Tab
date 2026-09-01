@@ -73,25 +73,23 @@
 }
 
 .translatorLanguageBar select {
-  box-sizing: border-box;
+  --field-border: var(--widget-border-subtle);
+  --field-radius: var(--radius-md);
+  --field-bg: var(--widget-surface-muted);
+  --field-color: var(--widget-text-secondary);
+  --field-hover-border: color-mix(in srgb, var(--widget-accent) 52%, var(--widget-border));
+  --field-hover-bg: var(--widget-surface-hover);
+  --field-hover-color: var(--widget-text-primary);
+  --field-focus-border: color-mix(in srgb, var(--widget-accent) 52%, var(--widget-border));
+  --field-focus-bg: var(--widget-surface-hover);
+  --field-focus-color: var(--widget-text-primary);
+  --field-focus-ring: 0 0 0 3px var(--fusion-focus-ring);
   width: 100%;
   height: 32px;
-  border: 1px solid var(--widget-border-subtle);
-  border-radius: 10px;
   padding: 0 28px 0 10px;
-  background: var(--widget-surface-muted);
-  color: var(--widget-text-secondary);
-  font: inherit;
   font-size: 11px;
   font-weight: 800;
   cursor: pointer;
-}
-
-.translatorLanguageBar select:hover,
-.translatorLanguageBar select:focus-visible {
-  border-color: color-mix(in srgb, var(--widget-accent) 52%, var(--widget-border));
-  background: var(--widget-surface-hover);
-  color: var(--widget-text-primary);
 }
 
 .translatorLanguageBar select option {
@@ -100,24 +98,22 @@
 }
 
 .translatorSwap {
-  display: grid;
+  --icon-btn-border: transparent;
+  --icon-btn-radius: var(--radius-md);
+  --icon-btn-bg: var(--widget-accent-soft);
+  --icon-btn-hover-bg: color-mix(in srgb, var(--widget-accent) 20%, var(--widget-surface-muted));
+  --icon-btn-color: var(--widget-accent);
+  --icon-btn-hover-color: var(--widget-accent);
+  --icon-btn-active-bg: color-mix(in srgb, var(--widget-accent) 20%, var(--widget-surface-muted));
+  --icon-btn-active-transform: rotate(180deg);
   width: 32px;
   height: 32px;
-  place-items: center;
-  border: 0;
-  border-radius: 10px;
-  background: var(--widget-accent-soft);
-  color: var(--widget-accent);
-  font: inherit;
   font-size: 16px;
   font-weight: 900;
-  cursor: pointer;
-  transition: transform 160ms ease, background 160ms ease;
 }
 
 .translatorSwap:hover {
   transform: rotate(180deg);
-  background: color-mix(in srgb, var(--widget-accent) 20%, var(--widget-surface-muted));
 }
 
 .translatorPanels {
@@ -133,15 +129,18 @@
   position: relative;
   min-width: 0;
   min-height: 0;
-  border: 1px solid var(--widget-border-subtle);
-  border-radius: 14px;
-  background: var(--widget-surface-muted);
   overflow: hidden;
 }
 
-.translatorInputPanel:focus-within {
-  border-color: var(--widget-accent);
-  box-shadow: 0 0 0 3px var(--fusion-focus-ring);
+.translatorInputPanel {
+  --field-border: var(--widget-border-subtle);
+  --field-radius: var(--radius-md);
+  --field-bg: var(--widget-surface-muted);
+  --field-color: var(--widget-text-primary);
+  --field-hover-border: var(--widget-border-subtle);
+  --field-focus-border: var(--widget-accent);
+  --field-focus-bg: var(--widget-surface-muted);
+  --field-focus-ring: 0 0 0 3px var(--fusion-focus-ring);
 }
 
 .translatorInputPanel textarea {
@@ -149,11 +148,8 @@
   width: 100%;
   height: 100%;
   min-height: 72px;
-  border: 0;
-  outline: 0;
   resize: none;
   padding: 11px 32px 11px 12px;
-  background: transparent;
   color: var(--widget-text-primary);
   caret-color: var(--widget-accent);
   font: inherit;
@@ -162,34 +158,28 @@
   line-height: 1.55;
 }
 
-.translatorInputPanel textarea::placeholder {
-  color: var(--widget-text-tertiary);
-}
+.translatorInputPanel { --field-placeholder: var(--widget-text-tertiary); }
+
+.translatorInputPanel textarea:focus-visible { outline: none; }
 
 .translatorClear {
+  --icon-btn-border: transparent;
+  --icon-btn-bg: var(--widget-surface-hover);
+  --icon-btn-color: var(--widget-text-secondary);
+  --icon-btn-hover-bg: var(--widget-accent-soft);
+  --icon-btn-hover-color: var(--widget-accent);
   position: absolute;
   top: 7px;
   right: 7px;
-  display: grid;
   width: 22px;
   height: 22px;
-  place-items: center;
-  border: 0;
-  border-radius: 999px;
-  background: var(--widget-surface-hover);
-  color: var(--widget-text-secondary);
-  font: inherit;
   font-size: 15px;
-  cursor: pointer;
-}
-
-.translatorClear:hover {
-  background: var(--widget-accent-soft);
-  color: var(--widget-accent);
 }
 
 .translatorOutputPanel {
   box-sizing: border-box;
+  border: 1px solid var(--widget-border-subtle);
+  border-radius: var(--radius-md);
   padding: 11px 12px;
   background: color-mix(in srgb, var(--widget-accent-soft) 42%, var(--widget-surface-muted));
   color: var(--widget-text-primary);
@@ -235,42 +225,37 @@
   gap: 6px;
 }
 
-.translatorIconButton,
-.translatorDictionaryButton {
+.translatorIconButton {
+  --icon-btn-border: transparent;
+  --icon-btn-bg: var(--widget-surface-muted);
+  --icon-btn-color: var(--widget-text-secondary);
+  --icon-btn-hover-bg: var(--widget-accent-hover);
+  --icon-btn-hover-color: var(--widget-on-accent);
+  --icon-btn-active-transform: translateY(-1px);
+  width: 27px;
   height: 27px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--widget-surface-muted);
-  color: var(--widget-text-secondary);
-  font: inherit;
   font-size: 10px;
   font-weight: 850;
-  cursor: pointer;
-  transition: transform 160ms ease, background 160ms ease, color 160ms ease, opacity 160ms ease;
-}
-
-.translatorIconButton {
-  width: 27px;
-  padding: 0;
 }
 
 .translatorDictionaryButton {
+  --btn-border: transparent;
+  --btn-radius: var(--radius-round);
+  --btn-bg: var(--widget-accent);
+  --btn-color: var(--widget-on-accent);
+  --btn-hover-bg: var(--widget-accent-hover);
+  --btn-hover-color: var(--widget-on-accent);
+  --btn-active-transform: translateY(-1px);
+  min-height: 27px;
+  height: 27px;
   padding: 0 10px;
-  background: var(--widget-accent);
-  color: var(--widget-on-accent);
+  font-size: 10px;
+  font-weight: 850;
 }
 
 .translatorIconButton:hover:not(:disabled),
 .translatorDictionaryButton:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: var(--widget-accent-hover);
-  color: var(--widget-on-accent);
-}
-
-.translatorIconButton:disabled,
-.translatorDictionaryButton:disabled {
-  cursor: default;
-  opacity: 0.36;
 }
 
 .srOnly {

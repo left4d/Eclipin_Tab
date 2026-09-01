@@ -192,6 +192,7 @@ export const renderTimeWidgetBody = (props: SortableWidgetProps, controller: Sor
               <label>
                 <span>日期</span>
                 <input
+                  className="field"
                   type="date"
                   value={widget.countdownDate ?? ''}
                   onChange={(event) => onUpdate(widget.id, { countdownDate: event.target.value || undefined })}

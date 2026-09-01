@@ -67,21 +67,18 @@
 }
 
 .closeButton {
+  --icon-btn-border: var(--ui-control-border, var(--color-border));
+  --icon-btn-radius: var(--radius-md);
+  --icon-btn-bg: var(--ui-control-bg, var(--color-bg-tertiary));
+  --icon-btn-hover-bg: var(--ui-control-bg-hover, var(--color-bg-tertiary));
+  --icon-btn-color: var(--color-text-secondary);
+  --icon-btn-hover-color: var(--color-text-primary);
+  --icon-btn-active-bg: var(--ui-control-bg-hover, var(--color-bg-tertiary));
+  --icon-btn-active-transform: none;
   width: 34px;
   height: 34px;
   flex: 0 0 auto;
-  border: 1px solid var(--ui-control-border, var(--color-border));
-  border-radius: 11px;
-  background: var(--ui-control-bg, var(--color-bg-tertiary));
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  font: inherit;
   font-size: 21px;
-}
-
-.closeButton:hover {
-  background: var(--ui-control-bg-hover, var(--color-bg-tertiary));
-  color: var(--color-text-primary);
 }
 
 .toolbar {
@@ -182,6 +179,13 @@
 
 .widgetCard,
 .spaceCard {
+  --card-border: 1px solid var(--color-border-subtle);
+  --card-radius: var(--radius-lg);
+  --card-bg: color-mix(in srgb, var(--color-bg-primary) 84%, transparent);
+  --card-shadow: none;
+  --card-overflow: visible;
+  --card-hover-border: color-mix(in srgb, var(--fusion-accent) 32%, var(--color-border-subtle));
+  --card-hover-bg: color-mix(in srgb, var(--fusion-accent) 6%, var(--color-bg-primary));
   min-width: 0;
   min-height: 82px;
   display: grid;
@@ -189,20 +193,8 @@
   align-items: center;
   gap: 12px;
   padding: 13px;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 15px;
-  background: color-mix(in srgb, var(--color-bg-primary) 84%, transparent);
   color: var(--color-text-primary);
-  cursor: pointer;
   text-align: left;
-  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
-}
-
-.widgetCard:hover,
-.spaceCard:hover:not(:disabled) {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--fusion-accent) 32%, var(--color-border-subtle));
-  background: color-mix(in srgb, var(--fusion-accent) 6%, var(--color-bg-primary));
 }
 
 .widgetIcon,
@@ -260,8 +252,7 @@
 }
 
 .spaceCardAdded {
-  opacity: .58;
-  cursor: default;
+  --card-disabled-opacity: .58;
 }
 
 .spaceCardAdded .addMark {

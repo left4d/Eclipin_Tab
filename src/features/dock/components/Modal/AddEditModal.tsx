@@ -295,7 +295,7 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
           <label className={styles.label}>{t.modal.address}</label>
           <input
             type="text"
-            className={`${styles.input} ${urlReadOnly ? styles.inputReadOnly : ''}`}
+            className={`field ${styles.input} ${urlReadOnly ? styles.inputReadOnly : ''}`}
             value={url}
             onChange={(e) => handleUrlChange(e.target.value)}
             readOnly={urlReadOnly}
@@ -312,7 +312,7 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
         <label className={styles.label}>{t.modal.name}</label>
         <input
           type="text"
-          className={`${styles.input} ${nameReadOnly ? styles.inputReadOnly : ''}`}
+          className={`field ${styles.input} ${nameReadOnly ? styles.inputReadOnly : ''}`}
           value={name}
           onChange={(e) => setName(e.target.value)}
           readOnly={nameReadOnly}

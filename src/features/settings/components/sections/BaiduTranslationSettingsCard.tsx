@@ -31,7 +31,7 @@ export const BaiduTranslationSettingsCard = () => {
   };
 
   return (
-    <div className={sharedStyles.settingsCard}>
+    <div className={`card ${sharedStyles.settingsCard}`}>
       <div className={styles.apiCardHeader}>
         <div>
           <div className={sharedStyles.cardTitle}>百度翻译</div>
@@ -41,18 +41,18 @@ export const BaiduTranslationSettingsCard = () => {
       <div className={styles.apiCredentialGrid}>
         <label className={styles.apiCredentialField}>
           <span>APP ID</span>
-          <input value={appId} onChange={(event) => setAppId(event.target.value)} autoComplete="off" placeholder="百度翻译 APP ID" />
+          <input className="field" value={appId} onChange={(event) => setAppId(event.target.value)} autoComplete="off" placeholder="百度翻译 APP ID" />
         </label>
         <label className={styles.apiCredentialField}>
           <span>密钥</span>
-          <input type="password" value={secretKey} onChange={(event) => setSecretKey(event.target.value)} autoComplete="new-password" placeholder="百度翻译密钥" />
+          <input className="field" type="password" value={secretKey} onChange={(event) => setSecretKey(event.target.value)} autoComplete="new-password" placeholder="百度翻译密钥" />
         </label>
       </div>
       <div className={styles.apiActions}>
         <span className={styles.apiStatus}>{status}</span>
         <div className={styles.apiButtons}>
-          <button type="button" onClick={() => navigateToUrl('https://fanyi-api.baidu.com/', { openInNewTab: true })}>开放平台 ↗</button>
-          <button type="button" disabled={!appId.trim() || !secretKey.trim() || saving} onClick={() => void saveAndAuthorize()}>
+          <button type="button" className="btn btn--sm" onClick={() => navigateToUrl('https://fanyi-api.baidu.com/', { openInNewTab: true })}>开放平台 ↗</button>
+          <button type="button" className="btn btn--sm btn--primary" disabled={!appId.trim() || !secretKey.trim() || saving} onClick={() => void saveAndAuthorize()}>
             {saving ? '授权中…' : '保存并授权'}
           </button>
         </div>

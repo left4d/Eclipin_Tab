@@ -291,7 +291,7 @@ export const OpenTabsWidgetBody = ({ widget, onUpdate, startDrag }: OpenTabsWidg
         </div>
         <div className={styles.headerActions} onPointerDown={stopHeaderControlPointer}>
           <select
-            className={styles.spaceSelect}
+            className={`field ${styles.spaceSelect}`}
             value={selectedSpaceId}
             disabled={spaces.length === 0}
             aria-label={tr('添加网站到空间', 'Add sites to space')}
@@ -302,16 +302,16 @@ export const OpenTabsWidgetBody = ({ widget, onUpdate, startDrag }: OpenTabsWidg
               <option key={space.id} value={space.id}>{tr('添加到', 'Add to')} · {space.name}</option>
             ))}
           </select>
-          <button type="button" className={styles.iconButton} title={tr('刷新标签页', 'Refresh tabs')} aria-label={tr('刷新标签页', 'Refresh tabs')} onClick={() => void refresh()}>↻</button>
+          <button type="button" className={`icon-btn ${styles.iconButton}`} title={tr('刷新标签页', 'Refresh tabs')} aria-label={tr('刷新标签页', 'Refresh tabs')} onClick={() => void refresh()}>↻</button>
         </div>
       </div>
 
-      <div className={styles.viewTabs} role="tablist" aria-label={tr('标签页视图', 'Tab view')} onPointerDown={stopHeaderControlPointer}>
+      <div className={`tabs tabs--contained ${styles.viewTabs}`} role="tablist" aria-label={tr('标签页视图', 'Tab view')} onPointerDown={stopHeaderControlPointer}>
         <button
           type="button"
           role="tab"
           aria-selected={view === 'open'}
-          className={view === 'open' ? styles.viewTabActive : styles.viewTab}
+          className={`tabs__item ${styles.viewTab}`}
           onClick={() => setView('open')}
         >
           {tr('打开的标签页', 'Open Tabs')} <span>{permissionGranted ? tabs.length : '—'}</span>
@@ -320,7 +320,7 @@ export const OpenTabsWidgetBody = ({ widget, onUpdate, startDrag }: OpenTabsWidg
           type="button"
           role="tab"
           aria-selected={view === 'saved'}
-          className={view === 'saved' ? styles.viewTabActive : styles.viewTab}
+          className={`tabs__item ${styles.viewTab}`}
           onClick={() => setView('saved')}
         >
           {tr('保存的会话', 'Saved Sessions')} <span>{savedSessions.length}</span>
@@ -367,7 +367,8 @@ export const OpenTabsWidgetBody = ({ widget, onUpdate, startDrag }: OpenTabsWidg
                   <div className={styles.groupActions}>
                     <button
                       type="button"
-                      className={`${styles.saveButton} ${allSaved ? styles.saveButtonActive : ''}`}
+                      className={`icon-btn ${styles.saveButton}`}
+                      aria-pressed={allSaved}
                       title={allSaved ? tr('这一组已出现在保存的会话中；可继续保存到其他会话', 'This group is already in a saved session; you can still save it to another session') : tr('把这一组保存到会话', 'Save this group to a session')}
                       aria-label={language === 'zh' ? `把 ${group.displayDomain} 这一组保存到会话` : `Save the ${group.displayDomain} group to a session`}
                       onClick={() => openSessionPicker(group.tabs, group.displayDomain)}
@@ -403,7 +404,8 @@ export const OpenTabsWidgetBody = ({ widget, onUpdate, startDrag }: OpenTabsWidg
                           <div className={styles.rowActions}>
                             <button
                               type="button"
-                              className={`${styles.saveButton} ${alreadySaved ? styles.saveButtonActive : ''}`}
+                              className={`icon-btn ${styles.saveButton}`}
+                              aria-pressed={alreadySaved}
                               title={alreadySaved ? tr('已出现在保存的会话中；可继续添加到其他会话', 'Already in a saved session; you can still add it to another session') : tr('保存到会话', 'Save to session')}
                               aria-label={language === 'zh' ? `把 ${tab.title} 保存到会话` : `Save ${tab.title} to a session`}
                               onClick={() => openSessionPicker([tab], tab.title || tab.displayDomain)}
@@ -412,7 +414,7 @@ export const OpenTabsWidgetBody = ({ widget, onUpdate, startDrag }: OpenTabsWidg
                             </button>
                             <button
                               type="button"
-                              className={styles.addButton}
+                              className={`icon-btn ${styles.addButton}`}
                               disabled={!selectedSpace || alreadyAdded}
                               title={alreadyAdded ? tr('已在目标空间中', 'Already in the target space') : (language === 'zh' ? `添加到 ${selectedSpace?.name || '空间'}` : `Add to ${selectedSpace?.name || 'space'}`)}
                               aria-label={alreadyAdded ? (language === 'zh' ? `${tab.title} 已在目标空间中` : `${tab.title} is already in the target space`) : (language === 'zh' ? `把 ${tab.title} 添加到目标空间` : `Add ${tab.title} to the target space`)}
@@ -471,7 +473,7 @@ export const OpenTabsWidgetBody = ({ widget, onUpdate, startDrag }: OpenTabsWidg
                     <div className={styles.sessionActions}>
                       <button
                         type="button"
-                        className={styles.sessionIconButton}
+                        className={`icon-btn ${styles.sessionIconButton}`}
                         title={tr('恢复整个会话', 'Restore entire session')}
                         aria-label={language === 'zh' ? `恢复会话 ${session.name}` : `Restore session ${session.name}`}
                         onClick={() => void restoreSavedTabSession(session).then(() => setNotice(language === 'zh' ? `正在打开「${session.name}」` : `Opening “${session.name}”`)).catch(() => setNotice(tr('恢复会话失败', 'Failed to restore session')))}
@@ -480,7 +482,7 @@ export const OpenTabsWidgetBody = ({ widget, onUpdate, startDrag }: OpenTabsWidg
                       </button>
                       <button
                         type="button"
-                        className={styles.sessionIconButton}
+                        className={`icon-btn ${styles.sessionIconButton}`}
                         title={tr('重命名会话', 'Rename session')}
                         aria-label={language === 'zh' ? `重命名会话 ${session.name}` : `Rename session ${session.name}`}
                         onClick={() => renameSession(session)}
@@ -489,7 +491,7 @@ export const OpenTabsWidgetBody = ({ widget, onUpdate, startDrag }: OpenTabsWidg
                       </button>
                       <button
                         type="button"
-                        className={`${styles.sessionIconButton} ${styles.dangerButton}`}
+                        className={`icon-btn ${styles.sessionIconButton} ${styles.dangerButton}`}
                         title={tr('删除会话', 'Delete session')}
                         aria-label={language === 'zh' ? `删除会话 ${session.name}` : `Delete session ${session.name}`}
                         onClick={() => deleteSession(session)}
@@ -514,7 +516,7 @@ export const OpenTabsWidgetBody = ({ widget, onUpdate, startDrag }: OpenTabsWidg
                             <div className={styles.rowActions}>
                               <button
                                 type="button"
-                                className={styles.removeSavedButton}
+                                className={`icon-btn ${styles.removeSavedButton}`}
                                 title={tr('从这个会话移除', 'Remove from this session')}
                                 aria-label={language === 'zh' ? `从 ${session.name} 移除 ${tab.title}` : `Remove ${tab.title} from ${session.name}`}
                                 onClick={() => {
@@ -526,7 +528,7 @@ export const OpenTabsWidgetBody = ({ widget, onUpdate, startDrag }: OpenTabsWidg
                               </button>
                               <button
                                 type="button"
-                                className={styles.addButton}
+                                className={`icon-btn ${styles.addButton}`}
                                 disabled={!selectedSpace || alreadyAdded}
                                 title={alreadyAdded ? tr('已在目标空间中', 'Already in the target space') : (language === 'zh' ? `添加到 ${selectedSpace?.name || '空间'}` : `Add to ${selectedSpace?.name || 'space'}`)}
                                 onClick={() => addTabsToSelectedSpace([tab])}
@@ -550,13 +552,13 @@ export const OpenTabsWidgetBody = ({ widget, onUpdate, startDrag }: OpenTabsWidg
 
       {sessionPicker && (
         <div className={styles.pickerBackdrop} onPointerDown={stopHeaderControlPointer}>
-          <div className={styles.pickerPanel} role="dialog" aria-modal="true" aria-label={tr('保存到会话', 'Save to session')}>
+          <div className={`card ${styles.pickerPanel}`} role="dialog" aria-modal="true" aria-label={tr('保存到会话', 'Save to session')}>
             <div className={styles.pickerHeader}>
               <div>
                 <strong>{tr('保存到会话', 'Save to session')}</strong>
                 <span>{language === 'zh' ? `${sessionPicker.tabs.length} 个标签页` : `${sessionPicker.tabs.length} tabs`}</span>
               </div>
-              <button type="button" className={styles.pickerClose} onClick={() => setSessionPicker(null)} aria-label={tr('关闭', 'Close')}>
+              <button type="button" className={`icon-btn ${styles.pickerClose}`} onClick={() => setSessionPicker(null)} aria-label={tr('关闭', 'Close')}>
                 <CloseIcon />
               </button>
             </div>
@@ -583,6 +585,7 @@ export const OpenTabsWidgetBody = ({ widget, onUpdate, startDrag }: OpenTabsWidg
               <label htmlFor={`session-name-${widget.id}`} className={styles.pickerLabel}>{tr('新建会话', 'New Session')}</label>
               <div className={styles.newSessionRow}>
                 <input
+                  className="field"
                   id={`session-name-${widget.id}`}
                   value={newSessionName}
                   maxLength={80}

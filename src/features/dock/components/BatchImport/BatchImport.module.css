@@ -225,12 +225,13 @@
 
 /* ===== 单个卡片 ===== */
 .card {
+    --card-border: 1px solid var(--color-border);
+    --card-radius: var(--radius-lg);
+    --card-bg: var(--color-bg-primary);
+    --card-shadow: var(--shadow-combined);
+    --card-overflow: visible;
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
-    background: var(--color-bg-primary);
-    border: 1px solid var(--color-border);
-    border-radius: 16px;
-    box-shadow: var(--shadow-combined);
     padding: 12px 16px;
     display: flex;
     flex-direction: column;
@@ -311,24 +312,18 @@
 }
 
 .input {
-    background: var(--color-bg-secondary);
-    border: none;
-    border-radius: 8px;
-    padding: 8px 12px;
-    color: var(--color-text-primary);
-    font-size: 14px;
-    outline: none;
-    transition: background var(--transition-medium);
+    --field-border: transparent;
+    --field-radius: var(--radius-sm);
+    --field-bg: var(--color-bg-secondary);
+    --field-color: var(--color-text-primary);
+    --field-placeholder: var(--color-text-secondary);
+    --field-hover-border: transparent;
+    --field-focus-border: transparent;
+    --field-focus-bg: var(--color-bg-tertiary);
+    --field-focus-ring: none;
     width: 100%;
-    box-sizing: border-box;
-}
-
-.input:focus {
-    background: var(--color-bg-tertiary);
-}
-
-.input::placeholder {
-    color: var(--color-text-secondary);
+    padding: 8px 12px;
+    font-size: 14px;
 }
 
 .iconSection {

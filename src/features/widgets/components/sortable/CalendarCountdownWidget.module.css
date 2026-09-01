@@ -184,20 +184,15 @@
 }
 
 .countdownEditor input {
+  --field-border: var(--widget-border-subtle, rgba(20, 24, 31, 0.1));
+  --field-radius: var(--radius-md);
+  --field-bg: var(--widget-control-surface, rgba(20, 24, 31, 0.055));
+  --field-color: var(--widget-text-primary, inherit);
+  --field-hover-border: var(--widget-border-subtle, rgba(20, 24, 31, 0.1));
+  --field-focus-border: color-mix(in srgb, var(--utility-accent) 48%, var(--widget-border-subtle, transparent));
+  --field-focus-ring: 0 0 0 3px var(--fusion-focus-ring);
   min-width: 0;
   width: 100%;
-  box-sizing: border-box;
-  border: 1px solid var(--widget-border-subtle, rgba(20, 24, 31, 0.1));
-  border-radius: 10px;
   padding: 8px 9px;
-  background: var(--widget-control-surface, rgba(20, 24, 31, 0.055));
-  color: var(--widget-text-primary, inherit);
-  outline: none;
-  font: inherit;
   font-size: 0.72rem;
-}
-
-.countdownEditor input:focus {
-  border-color: color-mix(in srgb, var(--utility-accent) 48%, var(--widget-border-subtle, transparent));
-  box-shadow: 0 0 0 3px var(--fusion-focus-ring);
 }

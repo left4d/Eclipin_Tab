@@ -81,7 +81,7 @@ const TextStickerContent: React.FC<Pick<StickerContentProps,
 
             {sticker.linkCard ? (
                 <article
-                    className={`${styles.linkCardSticker} ${!sticker.linkCard.imageUrl ? styles.noImage : ''}`}
+                    className={`card card--sticker ${styles.linkCardSticker} ${!sticker.linkCard.imageUrl ? styles.noImage : ''}`}
                     style={{ fontFamily }}
                 >
                     {sticker.linkCard.imageUrl && (
@@ -93,17 +93,19 @@ const TextStickerContent: React.FC<Pick<StickerContentProps,
                         />
                     )}
                     <div className={styles.linkCardContent}>
-                        <div className={styles.linkCardTitle} style={{ fontFamily }}>{sticker.linkCard.title}</div>
-                        <div className={styles.linkCardSubtitle} style={{ fontFamily }}>{sticker.linkCard.subtitle}</div>
+                        <div className={`card__title ${styles.linkCardTitle}`} style={{ fontFamily }}>{sticker.linkCard.title}</div>
+                        <div className={`card__subtitle ${styles.linkCardSubtitle}`} style={{ fontFamily }}>{sticker.linkCard.subtitle}</div>
                     </div>
                 </article>
             ) : (
                 <div
                     className={[
+                        'sticker__text',
                         styles.textSticker,
                         isDragging && styles.dragging,
                         isCreativeMode && styles.creativeHover,
                         sticker.isChecked && styles.textStickerCrossedOut,
+                        sticker.hideStroke && 'sticker__text--plain',
                         sticker.hideStroke && styles.noStickerStroke,
                     ].filter(Boolean).join(' ')}
                     style={{
@@ -219,6 +221,7 @@ export const StickerContent: React.FC<StickerContentProps> = ({
             >
                 <div
                     className={[
+                        'sticker__image',
                         styles.imageSticker,
                         styles.svgSticker,
                         styles.vectorIconSticker,
@@ -263,11 +266,13 @@ export const StickerContent: React.FC<StickerContentProps> = ({
                 src={resolvedImageUrl || ''}
                 alt="sticker"
                 className={[
+                    'sticker__image',
                     styles.imageSticker,
                     isSvgImage && styles.svgSticker,
                     isSvgImage && sticker.imagePresentation === 'vectorIcon' && styles.vectorIconSticker,
                     !isSvgImage && isDragging && styles.dragging,
                     !isSvgImage && isCreativeMode && styles.creativeHover,
+                    sticker.hideStroke && 'sticker__image--plain',
                     sticker.hideStroke && styles.noStickerStroke,
                 ].filter(Boolean).join(' ')}
                 style={{ width: imageWidth }}

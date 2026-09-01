@@ -113,18 +113,14 @@
   --editor-icon-size: 25px;
 
   /* ===== 动画时长变量 ===== */
-  /* 标准化的动画持续时间 */
-  --duration-instant: 100ms;
-  --duration-fast: 150ms;
-  --duration-medium: 200ms;
-  --duration-normal: 300ms;
-  --duration-slow: 500ms;
+  /* 标准时长由 tokens.css 提供；此处仅保留标准没有的 --duration-medium 作别名 */
+  --duration-medium: var(--duration-normal);
 
   /* ===== 动画缓动函数 ===== */
   /* 标准化的缓动曲线函数 */
   --ease-linear: linear;
   --ease-in: ease-in;
-  --ease-out: ease-out;
+  /* --ease-out 由 tokens.css 提供（引用 Open Props --ease-out-3） */
   --ease-in-out: ease-in-out;
   --ease-out-quint: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-quint: cubic-bezier(0.755, 0.05, 0.855, 0.06);
@@ -158,16 +154,16 @@
 /* ===== 亮色主题 ===== */
 /* 覆盖默认主题的颜色变量 */
 [data-theme="light"] {
-  /* 亮色主题颜色变量 */
-  --color-bg-primary: var(--gray-200);
-  --color-bg-secondary: var(--gray-100);
-  --color-bg-tertiary: var(--gray-300);
+  /* 亮色主题：语义色统一指向标准 token（见 tokens.css） */
+  --color-bg-primary: var(--color-bg);
+  --color-bg-secondary: var(--color-surface-muted);
+  --color-bg-tertiary: var(--color-surface-raised);
   --color-bg-white: var(--gray-100);
-  --color-border: var(--gray-300);
+  --color-border: rgb(32 38 47 / 0.10); /* = tokens.css 亮色 --color-border */
   --color-border-light: var(--gray-100);
-  --color-text-primary: var(--gray-950);
-  --color-text-secondary: var(--gray-600);
-  --color-text-tertiary: var(--gray-600);
+  --color-text-primary: var(--color-text);
+  --color-text-secondary: var(--color-text-muted);
+  --color-text-tertiary: var(--color-text-subtle);
   --color-sticker-stroke: var(--gray-100);
 
 
@@ -182,16 +178,16 @@
 /* ===== 暗色主题 ===== */
 /* 覆盖默认主题的颜色变量 */
 [data-theme="dark"] {
-  /* 暗色主题颜色变量 */
-  --color-bg-primary: var(--gray-900);
-  --color-bg-secondary: var(--gray-800);
-  --color-bg-tertiary: var(--gray-700);
+  /* 暗色主题：语义色统一指向标准 token（见 tokens.css） */
+  --color-bg-primary: var(--color-bg);
+  --color-bg-secondary: var(--color-surface-muted);
+  --color-bg-tertiary: var(--color-surface-raised);
   --color-bg-white: var(--white);
-  --color-border: var(--gray-750);
+  --color-border: rgb(255 255 255 / 0.10); /* = tokens.css 暗色 --color-border */
   --color-border-light: transparent;
-  --color-text-primary: var(--gray-100);
-  --color-text-secondary: var(--gray-300);
-  --color-text-tertiary: var(--gray-300);
+  --color-text-primary: var(--color-text);
+  --color-text-secondary: var(--color-text-muted);
+  --color-text-tertiary: var(--color-text-subtle);
   --color-sticker-stroke: var(--gray-750);
   --recycle-bin-bg: radial-gradient(circle, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0) 70%);
 
@@ -436,8 +432,8 @@ body {
  * 因此搜索框、贴纸与小组件卡片继续保持原始结构、材质和对比关系。
  */
 :root {
-  --fusion-palette-bg: #f4f6f2;
-  --fusion-palette-surface: #ffffff;
+  --fusion-palette-bg: var(--color-bg);
+  --fusion-palette-surface: var(--color-surface);
   --fusion-accent: #78916c;
   --fusion-on-accent: #ffffff;
   --fusion-accent-soft: color-mix(in srgb, var(--fusion-accent) 16%, transparent);
@@ -450,6 +446,24 @@ body {
   --fusion-shadow-sm: 0 1px 2px rgba(26, 34, 45, 0.05), 0 8px 24px rgba(26, 34, 45, 0.08);
   --fusion-shadow-md: 0 16px 44px rgba(26, 34, 45, 0.14);
   --fusion-shadow-lg: 0 28px 80px rgba(26, 34, 45, 0.18);
+}
+
+/* 语义强调色 → 动态强调色（跟随用户选择的主题色板 sage/blue/sand/…） */
+:root {
+  --color-accent: var(--fusion-accent);
+  --color-on-accent: var(--fusion-on-accent);
+  --color-accent-soft: var(--fusion-accent-soft);
+  --color-accent-softer: var(--fusion-accent-softer);
+  --color-focus-ring: var(--fusion-focus-ring);
+}
+
+:root[data-theme="dark"],
+:root[data-theme="default"][data-background-brightness="dark"] {
+  --color-accent: var(--fusion-accent);
+  --color-on-accent: var(--fusion-on-accent);
+  --color-accent-soft: var(--fusion-accent-soft);
+  --color-accent-softer: var(--fusion-accent-softer);
+  --color-focus-ring: var(--fusion-focus-ring);
 }
 
 :root[data-theme-palette='blue'] {
@@ -496,8 +510,8 @@ body {
 
 :root[data-theme='dark'],
 :root[data-theme='default'][data-background-brightness='dark'] {
-  --fusion-palette-bg: #171b18;
-  --fusion-palette-surface: #222824;
+  --fusion-palette-bg: var(--color-bg);
+  --fusion-palette-surface: var(--color-surface);
   --fusion-accent: #91ad82;
   --fusion-on-accent: #111711;
   --fusion-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.18), 0 10px 28px rgba(0, 0, 0, 0.28);
@@ -630,6 +644,17 @@ body {
 :root[data-theme='dark'],
 :root[data-theme='default'][data-background-brightness='dark'] {
   --ui-overlay-bg: rgba(0, 0, 0, 0.34);
+}
+
+/* 玻璃（默认）主题：大面板与次级控件使用更高不透明度的表面，
+ * 避免渐变/壁纸背景过度透出导致文字难读；外层 chrome / 菜单仍保持玻璃质感。
+ * 仅作用于默认容器材质（classic），frame/ambient/veil 仍由其自身覆盖。 */
+:root[data-theme='default'] {
+  --ui-panel-bg: color-mix(in srgb, var(--color-bg-tertiary) 76%, transparent);
+  --ui-panel-inner-bg: color-mix(in srgb, var(--color-bg-secondary) 88%, transparent);
+  --ui-panel-card-bg: color-mix(in srgb, var(--color-bg-secondary) 82%, transparent);
+  --ui-control-bg: color-mix(in srgb, var(--color-bg-secondary) 76%, transparent);
+  --ui-control-bg-hover: color-mix(in srgb, var(--color-bg-tertiary) 78%, transparent);
 }
 
 /* Frame：更像“清晰边框中的实体内容”，弱化外层玻璃。 */

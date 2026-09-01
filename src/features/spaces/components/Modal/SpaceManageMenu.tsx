@@ -186,7 +186,7 @@ export function SpaceManageMenu({
                             <input
                                 ref={inputRef}
                                 type="text"
-                                className={styles.renameInput}
+                                className={`field ${styles.renameInput}`}
                                 value={renameValue}
                                 onChange={(e) => setRenameValue(e.target.value)}
                                 onKeyDown={handleRenameKeyDown}
@@ -194,7 +194,7 @@ export function SpaceManageMenu({
                                 placeholder={t.space.inputName}
                             />
                             <button
-                                className={styles.confirmButton}
+                                className={`btn btn--sm ${styles.confirmButton}`}
                                 onClick={handleRenameSubmit}
                                 disabled={!renameValue.trim() || renameValue.trim() === currentSpace.name}
                             >
@@ -207,21 +207,21 @@ export function SpaceManageMenu({
                         <div className={styles.label}>{t.space.title}</div>
                         <div className={styles.divider} />
                         <div className={styles.optionsContainer}>
-                            <button className={styles.menuItem} onClick={handleAddClick}>
+                            <button className={`menu-item ${styles.menuItem}`} onClick={handleAddClick}>
                                 <span className={styles.icon} style={{ WebkitMaskImage: `url(${plusIcon})`, maskImage: `url(${plusIcon})` }} />
                                 <span>{t.space.addSpace}</span>
                             </button>
-                            <button className={styles.menuItem} onClick={() => { onToggleEditMode(); onClose(); }}>
+                            <button className={`menu-item ${styles.menuItem}`} onClick={() => { onToggleEditMode(); onClose(); }}>
                                 <span className={styles.icon} style={{ WebkitMaskImage: `url(${editIcon})`, maskImage: `url(${editIcon})` }} />
                                 <span>{isEditMode ? t.contextMenu.exitEditMode : t.contextMenu.editMode}</span>
                             </button>
-                            <button className={styles.menuItem} onClick={handleRenameClick}>
+                            <button className={`menu-item ${styles.menuItem}`} onClick={handleRenameClick}>
                                 <span className={styles.icon} style={{ WebkitMaskImage: `url(${writeIcon})`, maskImage: `url(${writeIcon})` }} />
                                 <span>{t.space.rename}</span>
                             </button>
                             {/* 置顶 */}
                             <button
-                                className={`${styles.menuItem} ${isFirstSpace ? styles.disabled : ''}`}
+                                className={`menu-item ${styles.menuItem} ${isFirstSpace ? styles.disabled : ''}`}
                                 onClick={() => { onPin(); onClose(); }}
                                 disabled={isFirstSpace}
                                 title={isFirstSpace ? t.space.alreadyAtTop : t.space.pinToTop}
@@ -230,7 +230,7 @@ export function SpaceManageMenu({
                                 <span>{t.space.pinToTop}</span>
                             </button>
                             <button
-                                className={`${styles.menuItem} ${styles.danger} ${isLastSpace ? styles.disabled : ''}`}
+                                className={`menu-item menu-item--danger ${styles.menuItem} ${styles.danger} ${isLastSpace ? styles.disabled : ''}`}
                                 onClick={handleDeleteClick}
                                 disabled={isLastSpace}
                                 title={isLastSpace ? 'Reserve at least one space' : t.space.deleteSpace}
@@ -241,15 +241,15 @@ export function SpaceManageMenu({
                             {/* 分隔线 */}
                             <div className={styles.divider} />
                             {/* 导入/导出 */}
-                            <button className={styles.menuItem} onClick={handleImportClick}>
+                            <button className={`menu-item ${styles.menuItem}`} onClick={handleImportClick}>
                                 <span className={styles.icon} style={{ WebkitMaskImage: `url(${importIcon})`, maskImage: `url(${importIcon})` }} />
                                 <span>{t.space.importSpace}</span>
                             </button>
-                            <button className={styles.menuItem} onClick={handleExportClick}>
+                            <button className={`menu-item ${styles.menuItem}`} onClick={handleExportClick}>
                                 <span className={styles.icon} style={{ WebkitMaskImage: `url(${exportIcon})`, maskImage: `url(${exportIcon})` }} />
                                 <span>{t.space.exportSpace}</span>
                             </button>
-                            <button className={styles.menuItem} onClick={handleExportAllClick}>
+                            <button className={`menu-item ${styles.menuItem}`} onClick={handleExportAllClick}>
                                 <span className={styles.icon} style={{ WebkitMaskImage: `url(${exportLargeIcon})`, maskImage: `url(${exportLargeIcon})` }} />
                                 <span>{t.space.exportAllSpaces}</span>
                             </button>

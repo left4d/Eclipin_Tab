@@ -1,0 +1,704 @@
+/* ==========================================================================
+ * Brand Recipes —— 品牌配方层（③，草案 v0.1）
+ * --------------------------------------------------------------------------
+ * 从两个项目抽取的可复用组件配方，只消费 tokens.css 的语义变量（②），
+ * 不硬编码魔法数字。用途：
+ *   - 新项目直接 import 本文件即可获得品牌视觉；
+ *   - 也可作为"标准答案"，改造 Eclipin_Tab / snapwrite 时对照收敛。
+ *
+ * 命名：BEM 风格（.block、.block__element、.block--modifier）。
+ *
+ * 归一说明（对照原项目里的"离群值"，统一到 tokens.css 的尺度）：
+ *   - 控件圆角 11px  → --radius-md(12px)
+ *   - 卡片圆角 14px  → --radius-md(12px) / --radius-lg(16px)
+ *   - 字重 650/720/740/760 → 600/700（variable 字体可继续用任意值，标准层取整）
+ *   - 状态色按"人眼分不出的近似色 → 取大众 iOS 值"规则归一（见 README）
+ * ========================================================================== */
+
+/* ==========================================================================
+ * 品牌配方专用 token（属于 ③，不属于 ② 语义层）
+ * ========================================================================== */
+:root {
+  /* 贴纸描边：亮色=白边，暗色=深灰边，模拟"模切贴纸"的实体边缘 */
+  --sticker-stroke: #ffffff;
+  --sticker-stroke-width: 6px;
+  --sticker-lift: -4px;
+  --sticker-shadow-idle: 0 4px 8px rgb(0 0 0 / 0.08);
+  --sticker-shadow-hover: 0 8px 16px rgb(0 0 0 / 0.18);
+  --sticker-shadow-pressed: 0 2px 6px rgb(0 0 0 / 0.14);
+  --sticker-shadow-y: 8px;
+  --sticker-shadow-blur: 16px;
+  --sticker-shadow-hover-color: rgb(0 0 0 / 0.18);
+  --sticker-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* 禁用态统一不透明度 */
+  --opacity-disabled: 0.42;
+
+  /* 按压态统一缩放（替代 0.96 / 0.98 / 0.99 等魔法数字） */
+  --press-scale: 0.98;
+
+  /* 贴纸色板（iOS 系，按"近似取大众色"归一） */
+  --sticker-ink: #1c1c1e;      /* 墨黑 */
+  --sticker-red: #ff3b30;      /* 红 */
+  --sticker-green: #34c759;    /* 绿（原 #35C759） */
+  --sticker-orange: #ff9500;   /* 橙（原 #FF9502） */
+  --sticker-purple: #af52de;   /* 紫（原 #B052DE） */
+  --sticker-white: #ffffff;    /* 白 */
+  --sticker-yellow: #ffd60a;   /* 黄 */
+  --sticker-cyan: #32ade6;     /* 青蓝 */
+  --sticker-pink: #ff2d55;     /* 玫红 */
+  /* 主题色贴纸直接用 --color-accent */
+}
+
+:root[data-theme="dark"] {
+  --sticker-stroke: #38383a;
+}
+
+/* ==========================================================================
+ * 贴纸容器（经典贴纸）
+ * --------------------------------------------------------------------------
+ * 视觉签名：圆角表面 + 一圈描边（像实体模切贴纸）+ 悬停抬升 + 轻投影。
+ * ========================================================================== */
+.sticker {
+  position: relative;
+  display: inline-block;
+  cursor: grab;
+  user-select: none;
+}
+
+/* 文字贴纸：用 text-stroke 描边 */
+.sticker__text {
+  font-family: var(--font-display, var(--font-sans));
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  white-space: pre;
+  color: var(--sticker-color, var(--sticker-ink));
+  -webkit-text-stroke: calc(var(--sticker-stroke-render-width, var(--sticker-stroke-width)) * 2)
+    var(--color-sticker-stroke, var(--sticker-stroke));
+  paint-order: stroke fill;
+}
+
+/* 图片贴纸：用 outline 描边 */
+.sticker__image {
+  display: block;
+  border-radius: var(--sticker-corner-radius-render, var(--radius-md));
+  outline: var(--sticker-stroke-render-width, var(--sticker-stroke-width)) solid
+    var(--color-sticker-stroke, var(--sticker-stroke));
+  outline-offset: 0;
+  filter: drop-shadow(var(--sticker-shadow-idle));
+}
+
+/* 无描边变体 */
+.sticker__text--plain { -webkit-text-stroke: 0 transparent; }
+.sticker__image--plain { outline: none; }
+
+/* 悬停抬升交互（原 .stickerInteractionLift） */
+.sticker--lift {
+  transition: transform var(--duration-normal) var(--sticker-ease), filter var(--duration-normal) ease;
+}
+.sticker--lift:hover {
+  transform: translateY(var(--sticker-hover-lift, var(--sticker-lift)));
+  filter: drop-shadow(
+    0
+    var(--sticker-shadow-y)
+    var(--sticker-shadow-blur)
+    var(--sticker-shadow-hover-color)
+  );
+}
+
+.sticker--lift:active {
+  transform: translateY(0) scale(var(--press-scale));
+  filter: drop-shadow(var(--sticker-shadow-pressed));
+  transition-duration: var(--duration-instant);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sticker--lift { transition: none; }
+  .sticker--lift:hover,
+  .sticker--lift:active { transform: none; }
+}
+
+/* ==========================================================================
+ * 徽章 / 标签（原 statusBadge）
+ * ========================================================================== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--space-6);
+  padding: 0 var(--space-2);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
+  border-radius: var(--radius-round);
+  background: var(--color-accent-soft);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ==========================================================================
+ * Chip（原 anchorChip / presetButton）
+ * ========================================================================== */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  overflow: hidden;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-round);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.chip:hover,
+.chip[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+}
+
+/* ==========================================================================
+ * 按钮（原 actionButton / primary / danger）
+ * ========================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--btn-gap, var(--space-2));
+  padding: var(--btn-padding, var(--space-2) var(--space-3));
+  border: 1px solid var(--btn-border, var(--color-border));
+  border-radius: var(--btn-radius, var(--radius-md));
+  background: var(--btn-bg, var(--color-surface-muted));
+  color: var(--btn-color, var(--color-text));
+  font: inherit;
+  font-size: var(--btn-font-size, var(--text-sm));
+  font-weight: var(--btn-font-weight, var(--font-weight-semibold));
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard),
+              color var(--duration-fast) var(--ease-standard),
+              filter var(--duration-fast) var(--ease-standard),
+              transform var(--duration-fast) var(--ease-standard),
+              opacity var(--duration-fast) var(--ease-standard);
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--btn-hover-border, var(--btn-border, var(--color-border)));
+  background: var(--btn-hover-bg, var(--color-surface-raised));
+  color: var(--btn-hover-color, var(--btn-color, var(--color-text)));
+}
+.btn:active:not(:disabled) {
+  border-color: var(--btn-active-border, var(--btn-hover-border, var(--btn-border, var(--color-border))));
+  background: var(--btn-active-bg, var(--btn-hover-bg, var(--btn-bg, var(--color-surface-muted))));
+  color: var(--btn-active-color, var(--btn-hover-color, var(--btn-color, var(--color-text))));
+  transform: var(--btn-active-transform, none);
+}
+.btn:disabled { cursor: default; opacity: var(--btn-disabled-opacity, var(--opacity-disabled)); }
+
+
+.btn--primary {
+  --btn-border: color-mix(in srgb, var(--color-accent) 80%, transparent);
+  --btn-bg: var(--color-accent);
+  --btn-color: var(--color-on-accent);
+  --btn-hover-bg: var(--color-accent);
+  --btn-hover-color: var(--color-on-accent);
+  box-shadow: var(--shadow-sm);
+}
+.btn--primary:hover:not(:disabled) { filter: brightness(1.04); }
+
+.btn--danger { --btn-color: var(--color-danger); }
+
+/* 紧凑按钮（工具栏 / 检查器里的小按钮） */
+.btn--sm {
+  --btn-padding: 0 var(--space-3);
+  --btn-radius: var(--radius-sm);
+  --btn-font-size: var(--text-sm);
+  min-height: var(--space-8);
+}
+
+/* 柔和强调按钮（原 data-accent）：淡 accent 底 + accent 字，做"主操作"提示但不用实底 */
+.btn--accent {
+  --btn-border: color-mix(in srgb, var(--color-accent) 34%, transparent);
+  --btn-bg: var(--color-accent-soft);
+  --btn-color: var(--color-accent);
+  --btn-hover-bg: color-mix(in srgb, var(--color-accent) 24%, transparent);
+  --btn-hover-border: color-mix(in srgb, var(--color-accent) 50%, transparent);
+  --btn-hover-color: var(--color-accent);
+}
+
+
+
+/* ==========================================================================
+ * 图标按钮（关闭 × / 工具栏图标切换）
+ * --------------------------------------------------------------------------
+ * 尺寸由使用场景决定；配方只统一交互、表面和状态。
+ * Eclipin 可通过 --icon-btn-* 局部变量保持现有材质。
+ * ========================================================================== */
+.icon-btn {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--icon-btn-border, var(--color-border));
+  border-radius: var(--icon-btn-radius, var(--radius-md));
+  background: var(--icon-btn-bg, var(--color-surface-muted));
+  color: var(--icon-btn-color, var(--color-text));
+  font: inherit;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard),
+              color var(--duration-fast) var(--ease-standard),
+              transform var(--duration-fast) var(--ease-standard),
+              opacity var(--duration-fast) var(--ease-standard);
+}
+.icon-btn:hover:not(:disabled) {
+  border-color: var(--icon-btn-hover-border, var(--icon-btn-border, var(--color-border)));
+  background: var(--icon-btn-hover-bg, var(--color-surface-raised));
+  color: var(--icon-btn-hover-color, var(--color-text));
+}
+.icon-btn:active:not(:disabled) {
+  border-color: var(--icon-btn-active-border, var(--icon-btn-hover-border, var(--icon-btn-border, var(--color-border))));
+  background: var(--icon-btn-active-bg, var(--color-surface-raised));
+  transform: var(--icon-btn-active-transform, scale(var(--press-scale)));
+}
+.icon-btn[aria-pressed="true"] {
+  border-color: var(--icon-btn-pressed-border, color-mix(in srgb, var(--color-accent) 60%, transparent));
+  background: var(--icon-btn-pressed-bg, var(--color-accent));
+  color: var(--icon-btn-pressed-color, var(--color-on-accent));
+}
+.icon-btn:disabled {
+  cursor: default;
+  opacity: var(--icon-btn-disabled-opacity, var(--opacity-disabled));
+}
+.icon-btn--ghost {
+  --icon-btn-border: transparent;
+  --icon-btn-bg: transparent;
+  --icon-btn-pressed-border: transparent;
+}
+.icon-btn--round {
+  --icon-btn-radius: var(--radius-round);
+}
+.icon-btn--danger {
+  --icon-btn-border: color-mix(in srgb, var(--color-danger) 56%, transparent);
+  --icon-btn-bg: var(--color-danger);
+  --icon-btn-color: var(--color-on-accent);
+  --icon-btn-hover-bg: color-mix(in srgb, var(--color-danger) 88%, black);
+  --icon-btn-hover-color: var(--color-on-accent);
+}
+
+/* ==========================================================================
+ * 菜单项（右键菜单 / 子菜单）
+ * --------------------------------------------------------------------------
+ * 默认使用 semantic surface；浮层若有自己的材质系统，可用 --menu-item-* 覆写。
+ * ========================================================================== */
+.menu-item {
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--menu-item-gap, var(--space-2));
+  margin: 0;
+  padding: var(--menu-item-padding, var(--space-2));
+  border: var(--menu-item-border, 0);
+  border-radius: var(--menu-item-radius, var(--radius-sm));
+  background: var(--menu-item-bg, transparent);
+  color: var(--menu-item-color, var(--color-text));
+  font: inherit;
+  font-size: var(--menu-item-font-size, var(--text-base));
+  font-weight: var(--menu-item-font-weight, var(--font-weight-medium));
+  line-height: var(--menu-item-line-height, 1);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard),
+              color var(--duration-fast) var(--ease-standard),
+              transform var(--duration-fast) var(--ease-standard),
+              opacity var(--duration-fast) var(--ease-standard);
+}
+.menu-item:hover:not(:disabled) {
+  border-color: var(--menu-item-hover-border, transparent);
+  background: var(--menu-item-hover-bg, var(--color-surface-muted));
+  color: var(--menu-item-hover-color, var(--menu-item-color, var(--color-text)));
+}
+.menu-item:active:not(:disabled) {
+  border-color: var(--menu-item-active-border, transparent);
+  background: var(--menu-item-active-bg, var(--color-surface-raised));
+  color: var(--menu-item-active-color, var(--menu-item-color, var(--color-text)));
+  transform: var(--menu-item-active-transform, scale(var(--press-scale)));
+}
+.menu-item:disabled {
+  cursor: default;
+  opacity: var(--menu-item-disabled-opacity, var(--opacity-disabled));
+}
+.menu-item--danger {
+  color: var(--color-danger);
+  --menu-item-hover-bg: color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
+
+/* ==========================================================================
+ * 表单字段（input / textarea / select）
+ * --------------------------------------------------------------------------
+ * 只统一视觉状态，不接管宽高、padding、resize 等业务布局。
+ * 项目已有材质可通过 --field-* 覆写，因此 React / Vanilla HTML 都能共用。
+ * ========================================================================== */
+.field {
+  box-sizing: border-box;
+  border: 1px solid var(--field-border, var(--color-border));
+  border-radius: var(--field-radius, var(--radius-md));
+  background: var(--field-bg, var(--color-input-bg));
+  color: var(--field-color, var(--color-text));
+  font: inherit;
+  outline: none;
+  transition: background-color var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard),
+              box-shadow var(--duration-fast) var(--ease-standard),
+              color var(--duration-fast) var(--ease-standard),
+              opacity var(--duration-fast) var(--ease-standard);
+}
+.field::placeholder {
+  color: var(--field-placeholder, var(--color-text-subtle));
+}
+.field:hover:not(:disabled):not([readonly]) {
+  border-color: var(--field-hover-border, var(--color-border-strong));
+  background: var(--field-hover-bg, var(--field-bg, var(--color-input-bg)));
+  color: var(--field-hover-color, var(--field-color, var(--color-text)));
+}
+.field:focus {
+  border-color: var(--field-focus-border, var(--color-accent));
+  background: var(--field-focus-bg, var(--field-bg, var(--color-input-bg)));
+  color: var(--field-focus-color, var(--field-color, var(--color-text)));
+  box-shadow: var(--field-focus-ring, 0 0 0 3px var(--color-accent-soft));
+}
+.field:disabled {
+  cursor: default;
+  opacity: var(--field-disabled-opacity, var(--opacity-disabled));
+}
+
+/* 字段内联附加段（尺寸输入的 × 分隔符 / 单位后缀 / 前缀符号）：
+ * 与 .field 共用同一表面（描边、背景、字号），因此能和相邻 input 严丝合缝。
+ * 默认直角，圆角由宿主连接组（DaisyUI .join / .field-join）统一控制。 */
+.field-affix {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--field-affix-padding, var(--space-2));
+  border: 1px solid var(--field-border, var(--color-border));
+  border-radius: 0;
+  background: var(--field-bg, var(--color-input-bg));
+  color: var(--field-affix-color, var(--color-text-muted));
+  font: inherit;
+  font-size: var(--field-affix-font-size, var(--text-sm));
+  line-height: 1;
+  white-space: nowrap;
+  cursor: default;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 连接式字段组（如 "1600 × 350" 尺寸输入、前后缀 + 输入框）：
+ * 多个字段段共享同一表面与描边，相邻段交叠 1px，只有首/尾保留外圆角。
+ * 与 .field-affix 配套：中间段默认直角，首/尾段由本组补回外圆角。 */
+.field-join {
+  display: inline-flex;
+  align-items: stretch;
+}
+.field-join > * {
+  box-sizing: border-box;
+  border-radius: 0;
+}
+.field-join > * + * {
+  margin-inline-start: -1px;
+}
+.field-join > :first-child {
+  border-start-start-radius: var(--field-radius, var(--radius-md));
+  border-end-start-radius: var(--field-radius, var(--radius-md));
+}
+.field-join > :last-child {
+  border-start-end-radius: var(--field-radius, var(--radius-md));
+  border-end-end-radius: var(--field-radius, var(--radius-md));
+}
+.field-join > :focus {
+  position: relative;
+  z-index: 1;
+}
+
+/* 复合字段外壳（前缀/后缀/内嵌动作 + input/textarea） */
+.field-shell {
+  box-sizing: border-box;
+  border: 1px solid var(--field-border, var(--color-border));
+  border-radius: var(--field-radius, var(--radius-md));
+  background: var(--field-bg, var(--color-input-bg));
+  color: var(--field-color, var(--color-text));
+  transition: background-color var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard),
+              box-shadow var(--duration-fast) var(--ease-standard),
+              color var(--duration-fast) var(--ease-standard),
+              opacity var(--duration-fast) var(--ease-standard);
+}
+.field-shell:hover:not(:focus-within) {
+  border-color: var(--field-hover-border, var(--color-border-strong));
+  background: var(--field-hover-bg, var(--field-bg, var(--color-input-bg)));
+  color: var(--field-hover-color, var(--field-color, var(--color-text)));
+}
+.field-shell:focus-within {
+  border-color: var(--field-focus-border, var(--color-accent));
+  background: var(--field-focus-bg, var(--field-bg, var(--color-input-bg)));
+  color: var(--field-focus-color, var(--field-color, var(--color-text)));
+  box-shadow: var(--field-focus-ring, 0 0 0 3px var(--color-accent-soft));
+}
+.field-shell__input {
+  box-sizing: border-box;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+.field-shell__input::placeholder {
+  color: var(--field-placeholder, var(--color-text-subtle));
+}
+
+/* ==========================================================================
+ * Segmented control（分段切换 / 紧凑 tabs）
+ * --------------------------------------------------------------------------
+ * 只统一容器材质与 item 状态；列数、高度、字号等几何布局留在项目局部。
+ * 支持 tab 的 aria-selected 与 mode switch 的 aria-pressed。
+ * ========================================================================== */
+.segmented {
+  box-sizing: border-box;
+  gap: var(--segmented-gap, var(--space-1));
+  padding: var(--segmented-padding, var(--space-1));
+  border: var(--segmented-border, 1px solid var(--color-border));
+  border-radius: var(--segmented-radius, var(--radius-md));
+  background: var(--segmented-bg, var(--color-surface-muted));
+}
+
+.segmented__item {
+  box-sizing: border-box;
+  border: var(--segmented-item-border, 1px solid transparent);
+  border-radius: var(--segmented-item-radius, var(--radius-sm));
+  background: var(--segmented-item-bg, transparent);
+  color: var(--segmented-item-color, var(--color-text-muted));
+  font: inherit;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard),
+              box-shadow var(--duration-fast) var(--ease-standard),
+              color var(--duration-fast) var(--ease-standard),
+              transform var(--duration-fast) var(--ease-standard);
+}
+.segmented__item:hover:not(:disabled) {
+  border-color: var(--segmented-item-hover-border, transparent);
+  background: var(--segmented-item-hover-bg, var(--color-accent-softer));
+  color: var(--segmented-item-hover-color, var(--color-text));
+}
+.segmented__item:active:not(:disabled) {
+  transform: var(--segmented-item-active-transform, scale(var(--press-scale)));
+}
+.segmented__item:focus-visible {
+  outline: var(--segmented-focus-width, 2px) solid var(--segmented-focus-ring, var(--color-focus-ring));
+  outline-offset: var(--segmented-focus-offset, 2px);
+}
+.segmented__item[aria-selected="true"],
+.segmented__item[aria-pressed="true"],
+.segmented__item.is-active {
+  border-color: var(--segmented-item-selected-border, transparent);
+  background: var(--segmented-item-selected-bg, var(--color-surface));
+  color: var(--segmented-item-selected-color, var(--color-text));
+  box-shadow: var(--segmented-item-selected-shadow, var(--shadow-sm));
+}
+.segmented__item:disabled {
+  cursor: default;
+  opacity: var(--segmented-item-disabled-opacity, var(--opacity-disabled));
+}
+
+/* ==========================================================================
+ * Tabs（内容面板导航）
+ * --------------------------------------------------------------------------
+ * 与 segmented 区分：tabs 表示“切换内容面板/页面”，应配合 role=tablist/tab 与
+ * aria-selected；segmented 表示“选择一个值/模式”。布局方向、列数和尺寸仍留局部。
+ * ========================================================================== */
+.tabs {
+  box-sizing: border-box;
+  display: var(--tabs-display, flex);
+  align-items: var(--tabs-align-items, stretch);
+  gap: var(--tabs-gap, var(--space-1));
+  padding: var(--tabs-padding, 0);
+  border: var(--tabs-border, 0);
+  border-radius: var(--tabs-radius, 0);
+  background: var(--tabs-bg, transparent);
+}
+
+.tabs--contained {
+  --tabs-display: grid;
+  --tabs-align-items: end;
+  --tabs-padding: var(--space-1);
+  --tabs-border: 1px solid var(--color-border);
+  --tabs-radius: var(--radius-md);
+  --tabs-bg: var(--color-surface-muted);
+}
+
+.tabs__item {
+  box-sizing: border-box;
+  border: var(--tabs-item-border, 1px solid transparent);
+  border-radius: var(--tabs-item-radius, var(--radius-sm));
+  background: var(--tabs-item-bg, transparent);
+  color: var(--tabs-item-color, var(--color-text-subtle));
+  font: inherit;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard),
+              box-shadow var(--duration-fast) var(--ease-standard),
+              color var(--duration-fast) var(--ease-standard),
+              transform var(--duration-fast) var(--ease-standard);
+}
+.tabs__item:hover:not(:disabled) {
+  border-color: var(--tabs-item-hover-border, transparent);
+  background: var(--tabs-item-hover-bg, var(--color-accent-softer));
+  color: var(--tabs-item-hover-color, var(--color-text));
+}
+.tabs__item:active:not(:disabled) {
+  transform: var(--tabs-item-active-transform, scale(var(--press-scale)));
+}
+.tabs__item:focus-visible {
+  outline: var(--tabs-focus-width, 2px) solid var(--tabs-focus-ring, var(--color-focus-ring));
+  outline-offset: var(--tabs-focus-offset, 2px);
+}
+.tabs__item[aria-selected="true"],
+.tabs__item.is-active {
+  border-color: var(--tabs-item-selected-border, var(--color-border));
+  background: var(--tabs-item-selected-bg, var(--color-surface));
+  color: var(--tabs-item-selected-color, var(--color-text));
+  box-shadow: var(--tabs-item-selected-shadow, var(--shadow-sm));
+}
+.tabs__item:disabled {
+  cursor: default;
+  opacity: var(--tabs-item-disabled-opacity, var(--opacity-disabled));
+}
+
+/* ==========================================================================
+ * Range / Slider（连续数值调节）
+ * --------------------------------------------------------------------------
+ * 先统一原生 slider 的 accent / focus / disabled / cursor；每个业务控件继续
+ * 自己决定 min/max/step、宽度、刻度与数值展示。Chrome Extension 与 pywebview
+ * 都基于 Chromium，可共享同一套原生轨道 / thumb 皮肤而不额外维护进度填充。
+ * ========================================================================== */
+.range {
+  box-sizing: border-box;
+  margin: var(--range-margin, 0);
+  accent-color: var(--range-accent, var(--color-accent));
+  cursor: pointer;
+  outline: none;
+  transition: opacity var(--duration-fast) var(--ease-standard),
+              filter var(--duration-fast) var(--ease-standard);
+}
+.range:hover:not(:disabled) {
+  filter: var(--range-hover-filter, brightness(1.04));
+}
+.range:focus-visible {
+  outline: var(--range-focus-width, 2px) solid var(--range-focus-ring, var(--color-focus-ring));
+  outline-offset: var(--range-focus-offset, 2px);
+  border-radius: var(--range-focus-radius, var(--radius-round));
+}
+.range:disabled {
+  cursor: default;
+  opacity: var(--range-disabled-opacity, var(--opacity-disabled));
+  filter: none;
+}
+
+/* ==========================================================================
+ * 卡片（原 linkCardSticker 的容器形态）
+ * ========================================================================== */
+.card {
+  /* Surface recipe must stay layout-neutral: composed controls such as switch-line
+   * and advanced-card provide their own flex/grid behavior. */
+  overflow: var(--card-overflow, visible);
+  border: var(--card-border, 1px solid var(--color-border));
+  border-radius: var(--card-radius, var(--radius-lg));
+  background: var(--card-bg, var(--color-surface));
+  box-shadow: var(--card-shadow, var(--shadow-sm));
+}
+
+/* 可点击 / 可选择卡片：内容布局仍由业务组件决定。 */
+.card--interactive {
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard),
+              box-shadow var(--duration-fast) var(--ease-standard),
+              transform var(--duration-fast) var(--ease-standard),
+              opacity var(--duration-fast) var(--ease-standard);
+}
+.card--interactive:hover:not(:disabled) {
+  border-color: var(--card-hover-border, var(--color-border-strong));
+  background: var(--card-hover-bg, var(--card-bg, var(--color-surface)));
+  transform: var(--card-hover-transform, translateY(-1px));
+}
+.card--interactive:active:not(:disabled) {
+  transform: var(--card-active-transform, scale(var(--press-scale)));
+}
+.card--interactive:focus-visible {
+  outline: var(--card-focus-width, 2px) solid var(--card-focus-ring, var(--color-focus-ring));
+  outline-offset: var(--card-focus-offset, 2px);
+}
+.card--interactive[aria-selected="true"],
+.card--interactive[aria-pressed="true"],
+.card--interactive.is-active {
+  border-color: var(--card-selected-border, var(--color-accent));
+  background: var(--card-selected-bg, var(--color-accent-softer));
+  box-shadow: var(--card-selected-shadow, 0 0 0 2px var(--color-focus-ring));
+}
+.card--interactive:disabled {
+  cursor: default;
+  opacity: var(--card-disabled-opacity, var(--opacity-disabled));
+}
+
+/* 贴纸式卡片：更轻——无阴影、细边框、更小圆角（更像实体贴纸） */
+.card--sticker {
+  --card-border: 1px solid color-mix(in srgb, var(--color-border) 76%, transparent);
+  --card-radius: var(--radius-md);
+  --card-shadow: none;
+}
+
+.card__title {
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.28;
+}
+.card__subtitle {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.35;
+}
+
+/* ==========================================================================
+ * 遮罩与玻璃面板（overlay / glass-panel）
+ * --------------------------------------------------------------------------
+ * 语义材质：全屏遮罩 + 大面板玻璃表面。面板表面带最低不透明度，保证内容可读；
+ * 业务组件只消费这些 recipe，不再各自决定 blur / 透明度 / 圆角。
+ * 外层 chrome / 菜单需要更透的玻璃时，可用局部变量覆写。
+ * ========================================================================== */
+.overlay {
+  box-sizing: border-box;
+  background: var(--overlay-bg, var(--color-overlay));
+  backdrop-filter: blur(var(--overlay-blur, 14px)) saturate(var(--overlay-saturate, 108%));
+  -webkit-backdrop-filter: blur(var(--overlay-blur, 14px)) saturate(var(--overlay-saturate, 108%));
+}
+
+.glass-panel {
+  box-sizing: border-box;
+  border: 1px solid var(--glass-panel-border, var(--color-border));
+  border-radius: var(--glass-panel-radius, var(--radius-lg));
+  background: var(--glass-panel-bg, color-mix(in srgb, var(--color-surface) 88%, transparent));
+  color: var(--glass-panel-color, var(--color-text));
+  box-shadow: var(--glass-panel-shadow, var(--shadow-lg));
+  backdrop-filter: blur(var(--glass-panel-blur, 24px)) saturate(1.08);
+  -webkit-backdrop-filter: blur(var(--glass-panel-blur, 24px)) saturate(1.08);
+}

@@ -68,23 +68,16 @@
 }
 
 .closeButton {
-  display: grid;
+  --icon-btn-border: var(--ui-control-border);
+  --icon-btn-radius: var(--ui-control-radius);
+  --icon-btn-bg: var(--ui-control-bg);
+  --icon-btn-hover-bg: var(--ui-control-bg-hover);
+  --icon-btn-color: var(--color-text-primary);
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
-  place-items: center;
-  border: 1px solid var(--ui-control-border);
-  border-radius: var(--ui-control-radius);
-  background: var(--ui-control-bg);
-  color: var(--color-text-primary);
-  cursor: pointer;
-  font: inherit;
   font-size: 18px;
   line-height: 1;
-}
-
-.closeButton:hover {
-  background: var(--ui-control-bg-hover);
 }
 
 .body {
@@ -112,8 +105,17 @@
 }
 
 .targetGroups {
+  --tabs-gap: 4px;
+  --tabs-item-border: 1px solid transparent;
+  --tabs-item-radius: var(--radius-md);
+  --tabs-item-color: var(--color-text-secondary);
+  --tabs-item-hover-bg: var(--ui-control-bg-hover);
+  --tabs-item-hover-color: var(--color-text-primary);
+  --tabs-item-selected-border: color-mix(in srgb, var(--fusion-accent) 34%, var(--ui-control-border));
+  --tabs-item-selected-bg: var(--fusion-accent-soft);
+  --tabs-item-selected-color: var(--color-text-primary);
+  --tabs-item-selected-shadow: none;
   display: grid;
-  gap: 4px;
 }
 
 .targetGroupButton,
@@ -125,23 +127,24 @@
   align-items: center;
   gap: 9px;
   padding: 8px;
+  text-align: left;
+}
+
+.anchorQuickButton {
   border: 1px solid transparent;
   border-radius: 11px;
   background: transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
   font: inherit;
-  text-align: left;
   transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
-.targetGroupButton:hover,
 .anchorQuickButton:hover {
   background: var(--ui-control-bg-hover);
   color: var(--color-text-primary);
 }
 
-.targetGroupButtonActive,
 .anchorQuickButtonActive {
   border-color: color-mix(in srgb, var(--fusion-accent) 34%, var(--ui-control-border));
   background: var(--fusion-accent-soft);
@@ -195,7 +198,7 @@
   text-align: center;
 }
 
-.targetGroupButtonActive .targetGroupChevron,
+.targetGroupButton[aria-selected="true"] .targetGroupChevron,
 .anchorQuickButtonActive .targetGroupChevron {
   color: var(--color-text-primary);
 }
@@ -268,19 +271,6 @@
   line-height: 1.4;
 }
 
-.statusBadge {
-  display: inline-flex;
-  min-height: 23px;
-  flex: 0 0 auto;
-  align-items: center;
-  padding: 0 8px;
-  border: 1px solid color-mix(in srgb, var(--fusion-accent) 28%, transparent);
-  border-radius: 999px;
-  background: var(--fusion-accent-soft);
-  color: var(--color-text-secondary);
-  font-size: 10px;
-  font-weight: 650;
-}
 
 .editorPanel,
 .anchorSection {
@@ -308,42 +298,31 @@
 }
 
 .input,
-.numberInput,
-.anchorInput {
+.numberInput {
+  --field-border: var(--ui-control-border);
+  --field-radius: var(--ui-control-radius);
+  --field-bg: var(--ui-control-bg);
+  --field-color: var(--color-text-primary);
+  --field-hover-border: var(--ui-control-border);
+  --field-focus-border: var(--ui-control-focus-border);
+  --field-focus-bg: var(--ui-control-bg);
+  --field-focus-ring: var(--ui-control-focus-ring);
   width: 100%;
-  box-sizing: border-box;
-  border: 1px solid var(--ui-control-border);
-  border-radius: var(--ui-control-radius);
-  background: var(--ui-control-bg);
-  color: var(--color-text-primary);
   padding: 10px 11px;
-  outline: none;
-  font: inherit;
   font-size: 13px;
 }
 
-.input:focus,
-.numberInput:focus,
-.anchorInput:focus {
-  border-color: var(--ui-control-focus-border);
-  box-shadow: var(--ui-control-focus-ring);
-}
-
 .inputAction {
+  --btn-border: var(--ui-control-border);
+  --btn-radius: var(--ui-control-radius);
+  --btn-bg: var(--ui-control-bg);
+  --btn-color: var(--color-text-secondary);
+  --btn-hover-bg: var(--ui-control-bg-hover);
+  --btn-hover-color: var(--color-text-primary);
   min-width: 52px;
-  border: 1px solid var(--ui-control-border);
-  border-radius: var(--ui-control-radius);
-  background: var(--ui-control-bg);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  font: inherit;
+  min-height: 0;
+  padding: 0 12px;
   font-size: 11px;
-  font-weight: 650;
-}
-
-.inputAction:hover {
-  background: var(--ui-control-bg-hover);
-  color: var(--color-text-primary);
 }
 
 .numberInput {
@@ -374,29 +353,6 @@
   gap: 6px;
 }
 
-.anchorChip,
-.presetButton {
-  max-width: 100%;
-  overflow: hidden;
-  padding: 6px 9px;
-  border: 1px solid var(--ui-control-border);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.anchorChip:hover,
-.anchorChipActive,
-.presetButton:hover {
-  border-color: color-mix(in srgb, var(--fusion-accent) 40%, var(--ui-control-border));
-  background: var(--fusion-accent-soft);
-  color: var(--color-text-primary);
-}
 
 .emptyHint {
   margin-top: 10px;
@@ -409,9 +365,23 @@
 }
 
 .pageModes {
+  --segmented-gap: 6px;
+  --segmented-padding: 0;
+  --segmented-border: 0;
+  --segmented-radius: 0;
+  --segmented-bg: transparent;
+  --segmented-item-border: 1px solid var(--ui-control-border);
+  --segmented-item-radius: var(--radius-md);
+  --segmented-item-bg: var(--ui-control-bg);
+  --segmented-item-color: var(--color-text-secondary);
+  --segmented-item-hover-bg: var(--ui-control-bg-hover);
+  --segmented-item-hover-color: var(--color-text-secondary);
+  --segmented-item-selected-border: color-mix(in srgb, var(--fusion-accent) 42%, var(--ui-control-border));
+  --segmented-item-selected-bg: var(--fusion-accent-soft);
+  --segmented-item-selected-color: var(--color-text-primary);
+  --segmented-item-selected-shadow: none;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 6px;
 }
 
 .pageModesThree {
@@ -423,17 +393,7 @@
   min-width: 0;
   gap: 3px;
   padding: 9px 8px;
-  border: 1px solid var(--ui-control-border);
-  border-radius: 10px;
-  background: var(--ui-control-bg);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  font: inherit;
   text-align: left;
-}
-
-.pageModeButton:hover {
-  background: var(--ui-control-bg-hover);
 }
 
 .pageModeButton b {
@@ -450,12 +410,6 @@
   line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.pageModeButtonActive {
-  border-color: color-mix(in srgb, var(--fusion-accent) 42%, var(--ui-control-border));
-  background: var(--fusion-accent-soft);
-  color: var(--color-text-primary);
 }
 
 .focusBox {
@@ -628,16 +582,16 @@
 }
 
 .anchorInputWrap {
+  --field-border: var(--ui-control-border);
+  --field-radius: var(--ui-control-radius);
+  --field-bg: var(--ui-control-bg);
+  --field-color: var(--color-text-primary);
+  --field-hover-border: var(--ui-control-border);
+  --field-focus-border: var(--ui-control-focus-border);
+  --field-focus-bg: var(--ui-control-bg);
+  --field-focus-ring: var(--ui-control-focus-ring);
   display: flex;
   align-items: center;
-  border: 1px solid var(--ui-control-border);
-  border-radius: var(--ui-control-radius);
-  background: var(--ui-control-bg);
-}
-
-.anchorInputWrap:focus-within {
-  border-color: var(--ui-control-focus-border);
-  box-shadow: var(--ui-control-focus-ring);
 }
 
 .anchorInputWrap > span {
@@ -648,13 +602,10 @@
 }
 
 .anchorInput {
-  border: 0;
-  background: transparent;
-  padding-left: 4px;
-}
-
-.anchorInput:focus {
-  box-shadow: none;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 11px 10px 4px;
+  font-size: 13px;
 }
 
 .error {
@@ -700,42 +651,9 @@
   opacity: .55;
 }
 
-.actionButton {
+/* 动作按钮改用 brand-recipes 的 .btn / .btn--primary / .btn--danger（全局配方类） */
+.actions :global(.btn) {
   flex: 0 0 auto;
-  border: 1px solid var(--ui-control-border);
-  border-radius: var(--ui-control-radius);
-  padding: 8px 12px;
-  background: var(--ui-control-bg);
-  color: var(--color-text-primary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 650;
-}
-
-.actionButton:hover:not(:disabled) {
-  background: var(--ui-control-bg-hover);
-}
-
-.actionButton:disabled {
-  cursor: default;
-  opacity: .36;
-}
-
-.primary {
-  border-color: color-mix(in srgb, var(--fusion-accent) 80%, transparent);
-  background: var(--fusion-accent);
-  color: white;
-  box-shadow: var(--fusion-shadow-sm);
-}
-
-.primary:hover:not(:disabled) {
-  background: var(--fusion-accent);
-  filter: brightness(1.04);
-}
-
-.danger {
-  color: #ef4444;
 }
 
 @media (max-width: 720px) {
@@ -801,7 +719,7 @@
     padding: 10px 14px;
   }
 
-  .danger {
+  .actions :global(.btn--danger) {
     margin-right: auto;
   }
 }
@@ -887,7 +805,7 @@
     flex-wrap: wrap;
   }
 
-  .danger {
+  .actions :global(.btn--danger) {
     order: 2;
   }
 }

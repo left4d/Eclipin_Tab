@@ -25,16 +25,49 @@
 .header { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; }
 .header h2 { margin: 0; font-size: 20px; }
 .header p { margin: 6px 0 0; color: var(--context-menu-muted); font-size: 13px; line-height: 1.55; }
-.header button { width: 34px; height: 34px; border: 0; border-radius: 10px; background: var(--context-menu-hover); color: var(--context-menu-text); cursor: pointer; font-size: 20px; }
+.header button {
+  --icon-btn-border: var(--ui-control-border);
+  --icon-btn-radius: var(--ui-control-radius);
+  --icon-btn-bg: var(--ui-control-bg);
+  --icon-btn-color: var(--context-menu-text);
+  --icon-btn-hover-bg: var(--ui-control-bg-hover);
+  width: 34px;
+  height: 34px;
+  font-size: 20px;
+}
 .label { display: grid; gap: 7px; margin-top: 20px; color: var(--context-menu-muted); font-size: 12px; }
-.label input { width: 100%; box-sizing: border-box; border: 1px solid var(--context-menu-border); border-radius: 12px; padding: 11px 12px; outline: none; background: var(--context-menu-hover); color: var(--context-menu-text); font: inherit; }
-.label input:focus { border-color: var(--color-accent, #8b5cf6); }
+.label input {
+  --field-border: var(--ui-control-border);
+  --field-radius: var(--ui-control-radius);
+  --field-bg: var(--ui-control-bg);
+  --field-color: var(--context-menu-text);
+  --field-hover-border: var(--ui-control-border);
+  --field-focus-border: var(--ui-control-focus-border);
+  --field-focus-ring: var(--ui-control-focus-ring);
+  width: 100%;
+  padding: 11px 12px;
+}
 .help { margin: 8px 0 0; color: var(--context-menu-muted); font-size: 12px; line-height: 1.5; }
-.error { margin-top: 10px; color: #ef4444; font-size: 12px; }
+.error { margin-top: 10px; color: var(--color-danger); font-size: 12px; }
 .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
-.actions button { border: 0; border-radius: 11px; padding: 10px 15px; cursor: pointer; background: var(--context-menu-hover); color: var(--context-menu-text); font: inherit; font-weight: 650; }
-.actions .clear { margin-right: auto; color: #ef4444; }
-.actions .primary { background: var(--color-accent, #8b5cf6); color: #fff; }
+.actions .btn {
+  --btn-border: var(--ui-control-border);
+  --btn-radius: var(--ui-control-radius);
+  --btn-bg: var(--ui-control-bg);
+  --btn-color: var(--context-menu-text);
+  --btn-hover-bg: var(--ui-control-bg-hover);
+  padding: 10px 15px;
+  font-weight: 650;
+}
+.actions .clear { --btn-color: var(--color-danger); margin-right: auto; }
+.actions .primary {
+  --btn-border: color-mix(in srgb, var(--fusion-accent) 80%, transparent);
+  --btn-bg: var(--fusion-accent);
+  --btn-color: var(--fusion-on-accent);
+  --btn-hover-bg: var(--fusion-accent);
+  --btn-hover-color: var(--fusion-on-accent);
+  box-shadow: none;
+}
 
 /* ===== 统一大页面材质 ===== */
 .backdrop {
@@ -50,14 +83,3 @@
   backdrop-filter: blur(var(--ui-panel-blur)) saturate(1.08);
   -webkit-backdrop-filter: blur(var(--ui-panel-blur)) saturate(1.08);
 }
-.label input { background: var(--ui-control-bg); border-color: var(--ui-control-border); border-radius: var(--ui-control-radius); }
-.label input:focus { border-color: var(--ui-control-focus-border); box-shadow: var(--ui-control-focus-ring); }
-.header button,
-.actions button:not(.primary) {
-  border: 1px solid var(--ui-control-border);
-  border-radius: var(--ui-control-radius);
-  background: var(--ui-control-bg);
-}
-.header button:hover,
-.actions button:not(.primary):hover { background: var(--ui-control-bg-hover); }
-.actions .primary { background: var(--fusion-accent); color: var(--fusion-on-accent); }

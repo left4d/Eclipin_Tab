@@ -77,7 +77,7 @@ export const WidgetsSettingsSection = ({ controller }: { controller: WidgetSetti
       </div>
       <div className={styles.widgetOptionGrid}>
         {WIDGET_OPTIONS.map((option) => (
-          <button key={option.type} className={styles.widgetOptionCard} onClick={() => addWidget(option.type)}>
+          <button key={option.type} className={`card card--interactive ${styles.widgetOptionCard}`} onClick={() => addWidget(option.type)}>
             <span className={styles.widgetOptionIcon}>{option.icon}</span>
             <span className={styles.widgetOptionCopy}><strong className={styles.widgetOptionTitle}>{option.title}</strong><small className={styles.widgetOptionDesc}>{option.description}</small></span>
             <span className={styles.widgetOptionAdd}>＋</span>
@@ -85,7 +85,7 @@ export const WidgetsSettingsSection = ({ controller }: { controller: WidgetSetti
         ))}
       </div>
 
-      <div className={styles.settingsCard}>
+      <div className={`card ${styles.settingsCard}`}>
         <div className={styles.widgetCardHeader}>
           <div><div className={styles.cardTitle}>空间网站组件</div><p>把某个 Focus Space 的网站整理成统一入口。</p></div>
           <span>▦</span>
@@ -110,7 +110,7 @@ export const WidgetsSettingsSection = ({ controller }: { controller: WidgetSetti
         </div>
       </div>
 
-      <div className={styles.widgetManageCard}>
+      <div className={`card ${styles.widgetManageCard}`}>
         <div><strong>当前页面管理</strong><span>{targetPageLabel}共有 {widgetTargetCount} 个组件</span></div>
         <div className={styles.widgetManageActions}>
           <button type="button" onClick={resetWidgetPage}>{widgetTargetPage === 1 ? '恢复默认' : '恢复空白'}</button>

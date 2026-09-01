@@ -234,35 +234,35 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 <div className={styles.menuOptions}>
                     {type === 'background' ? (
                         <>
-                            <button className={styles.menuItem} onClick={() => { onAddSticker(); onClose(); }}>
+                            <button className={`menu-item ${styles.menuItem}`} onClick={() => { onAddSticker(); onClose(); }}>
                                 <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${plusIcon})`, maskImage: `url(${plusIcon})` }} />
                                 <span>{t.contextMenu.addSticker}</span>
                             </button>
-                            <button className={styles.menuItem} onClick={() => { onOpenAddWidget?.(); onClose(); }}>
+                            <button className={`menu-item ${styles.menuItem}`} onClick={() => { onOpenAddWidget?.(); onClose(); }}>
                                 <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${plusIcon})`, maskImage: `url(${plusIcon})` }} />
                                 <span>添加组件</span>
                             </button>
-                            <button className={styles.menuItem} onClick={() => { onStartDrawing(); onClose(); }}>
+                            <button className={`menu-item ${styles.menuItem}`} onClick={() => { onStartDrawing(); onClose(); }}>
                                 <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${writeIcon})`, maskImage: `url(${writeIcon})` }} />
                                 <span>{t.contextMenu.drawing}</span>
                             </button>
-                            <button className={styles.menuItem} onClick={() => { onUploadImage(); onClose(); }}>
+                            <button className={`menu-item ${styles.menuItem}`} onClick={() => { onUploadImage(); onClose(); }}>
                                 <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${uploadIcon})`, maskImage: `url(${uploadIcon})` }} />
                                 <span>{t.contextMenu.uploadImage}</span>
                             </button>
-                            <button className={styles.menuItem} onClick={() => { onOpenSvgLibrary?.(); onClose(); }}>
+                            <button className={`menu-item ${styles.menuItem}`} onClick={() => { onOpenSvgLibrary?.(); onClose(); }}>
                                 <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${vectorIcon})`, maskImage: `url(${vectorIcon})` }} />
                                 <span>{t.contextMenu.svgLibrary}</span>
                             </button>
-                            <button className={styles.menuItem} onClick={() => { onToggleEditMode(); onClose(); }}>
+                            <button className={`menu-item ${styles.menuItem}`} onClick={() => { onToggleEditMode(); onClose(); }}>
                                 <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${editIcon})`, maskImage: `url(${editIcon})` }} />
                                 <span>{isEditMode ? t.contextMenu.exitEditMode : t.contextMenu.editMode}</span>
                             </button>
-                            <button className={styles.menuItem} onClick={() => { onOpenSettings?.(); onClose(); }}>
+                            <button className={`menu-item ${styles.menuItem}`} onClick={() => { onOpenSettings?.(); onClose(); }}>
                                 <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${settingsIcon})`, maskImage: `url(${settingsIcon})` }} />
                                 <span>{t.contextMenu.settings}</span>
                             </button>
-                            <button className={`${styles.menuItem} ${styles.danger}`} onClick={() => { onClose(); onClearAllStickers?.(); }}>
+                            <button className={`menu-item menu-item--danger ${styles.menuItem} ${styles.danger}`} onClick={() => { onClose(); onClearAllStickers?.(); }}>
                                 <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${trashIcon})`, maskImage: `url(${trashIcon})` }} />
                                 <span>{t.contextMenu.clearAllStickers}</span>
                             </button>
@@ -271,19 +271,19 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                         <>
                             {isImageSticker ? (
                                 <>
-                                    <button className={styles.menuItem} onClick={() => { onCopyImage?.(); onClose(); }}>
+                                    <button className={`menu-item ${styles.menuItem}`} onClick={() => { onCopyImage?.(); onClose(); }}>
                                         <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${copyIcon})`, maskImage: `url(${copyIcon})` }} />
                                         <span>{t.contextMenu.copyImage}</span>
                                     </button>
-                                    <button className={styles.menuItem} onClick={() => { onExportImageSticker?.(); onClose(); }}>
+                                    <button className={`menu-item ${styles.menuItem}`} onClick={() => { onExportImageSticker?.(); onClose(); }}>
                                         <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${uploadIcon})`, maskImage: `url(${uploadIcon})` }} />
                                         <span>{t.contextMenu.exportImage}</span>
                                     </button>
-                                    <button className={styles.menuItem} onClick={() => { onOpenSvgLibrary?.(); onClose(); }}>
+                                    <button className={`menu-item ${styles.menuItem}`} onClick={() => { onOpenSvgLibrary?.(); onClose(); }}>
                                         <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${vectorIcon})`, maskImage: `url(${vectorIcon})` }} />
                                         <span>{t.contextMenu.svgLibrary}</span>
                                     </button>
-                                    <button className={styles.menuItem} onClick={() => { onSetStickerLink?.(); onClose(); }}>
+                                    <button className={`menu-item ${styles.menuItem}`} onClick={() => { onSetStickerLink?.(); onClose(); }}>
                                         <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${linkIcon})`, maskImage: `url(${linkIcon})` }} />
                                         <span className={styles.menuItemContent}>
                                             <span>链接与标签</span>
@@ -293,23 +293,23 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                                 </>
                             ) : isTextSticker ? (
                                 <>
-                                    <button className={styles.menuItem} onClick={() => { onCopyText?.(); onClose(); }}>
+                                    <button className={`menu-item ${styles.menuItem}`} onClick={() => { onCopyText?.(); onClose(); }}>
                                         <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${copyIcon})`, maskImage: `url(${copyIcon})` }} />
                                         <span>{t.contextMenu.copyText}</span>
                                     </button>
-                                    <button className={styles.menuItem} onClick={() => { onEditSticker?.(); onClose(); }}>
+                                    <button className={`menu-item ${styles.menuItem}`} onClick={() => { onEditSticker?.(); onClose(); }}>
                                         <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${writeIcon})`, maskImage: `url(${writeIcon})` }} />
                                         <span>{t.contextMenu.editSticker}</span>
                                     </button>
-                                    <button className={styles.menuItem} onClick={() => { onExportImage?.(); onClose(); }}>
+                                    <button className={`menu-item ${styles.menuItem}`} onClick={() => { onExportImage?.(); onClose(); }}>
                                         <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${uploadIcon})`, maskImage: `url(${uploadIcon})` }} />
                                         <span>{t.contextMenu.exportAsImage}</span>
                                     </button>
-                                    <button className={styles.menuItem} onClick={() => { onChangeFont?.(); onClose(); }}>
+                                    <button className={`menu-item ${styles.menuItem}`} onClick={() => { onChangeFont?.(); onClose(); }}>
                                         <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${fontIcon})`, maskImage: `url(${fontIcon})` }} />
                                         <span>{t.contextMenu.changeFont}</span>
                                     </button>
-                                    <button className={styles.menuItem} onClick={() => { onSetStickerLink?.(); onClose(); }}>
+                                    <button className={`menu-item ${styles.menuItem}`} onClick={() => { onSetStickerLink?.(); onClose(); }}>
                                         <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${linkIcon})`, maskImage: `url(${linkIcon})` }} />
                                         <span className={styles.menuItemContent}>
                                             <span>链接与标签</span>
@@ -319,7 +319,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                                 </>
                             ) : null}
                             <div className={styles.submenuWrap}>
-                                <button type="button" className={styles.menuItem}>
+                                <button type="button" className={`menu-item ${styles.menuItem}`}>
                                     <span className={styles.menuSizeIcon}>↔</span>
                                     <span className={styles.menuItemContent}>
                                         <span>尺寸</span>
@@ -328,20 +328,20 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                                     <span className={styles.menuChevron}>›</span>
                                 </button>
                                 <div className={`${styles.submenu} ${submenuOpensLeft ? styles.submenuLeft : ''}`}>
-                                    <button type="button" className={styles.menuItem} onClick={() => { onEditSize?.(); onClose(); }}>
+                                    <button type="button" className={`menu-item ${styles.menuItem}`} onClick={() => { onEditSize?.(); onClose(); }}>
                                         <span className={styles.menuSizeIcon}>✎</span><span>编辑</span>
                                     </button>
-                                    <button type="button" className={styles.menuItem} disabled={!canPasteSize} onClick={() => { if (canPasteSize) { onPasteSize?.(); onClose(); } }}>
+                                    <button type="button" className={`menu-item ${styles.menuItem}`} disabled={!canPasteSize} onClick={() => { if (canPasteSize) { onPasteSize?.(); onClose(); } }}>
                                         <span className={styles.menuSizeIcon}>⎘</span><span>粘贴尺寸</span>
                                     </button>
-                                    <button type="button" className={styles.menuItem} onClick={() => { onCopySize?.(); onClose(); }}>
+                                    <button type="button" className={`menu-item ${styles.menuItem}`} onClick={() => { onCopySize?.(); onClose(); }}>
                                         <span className={styles.menuSizeIcon}>⧉</span><span>复制尺寸</span>
                                     </button>
                                 </div>
                             </div>
 
                             <div className={styles.submenuWrap}>
-                                <button type="button" className={styles.menuItem}>
+                                <button type="button" className={`menu-item ${styles.menuItem}`}>
                                     <span className={styles.menuSizeIcon}>✦</span>
                                     <span className={styles.menuItemContent}>
                                         <span>交互效果</span>
@@ -359,7 +359,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                                         <button
                                             key={effect}
                                             type="button"
-                                            className={styles.menuItem}
+                                            className={`menu-item ${styles.menuItem}`}
                                             onClick={() => { onSetInteractionEffect?.(effect); onClose(); }}
                                         >
                                             <span className={`${styles.menuRadioIcon} ${interactionEffect === effect ? styles.menuRadioIconActive : ''}`}>
@@ -372,7 +372,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                                         <>
                                             <button
                                                 type="button"
-                                                className={styles.menuItem}
+                                                className={`menu-item ${styles.menuItem}`}
                                                 onClick={() => { onEnableIconSwap?.(); onClose(); }}
                                             >
                                                 <span className={`${styles.menuRadioIcon} ${interactionEffect === 'iconSwap' ? styles.menuRadioIconActive : ''}`}>
@@ -381,7 +381,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                                                 <span>图标转换</span>
                                             </button>
                                             {hasIconSwapContent && (
-                                                <button type="button" className={styles.menuItem} onClick={() => { onChooseIconSwap?.(); onClose(); }}>
+                                                <button type="button" className={`menu-item ${styles.menuItem}`} onClick={() => { onChooseIconSwap?.(); onClose(); }}>
                                                     <span className={styles.menuSizeIcon}>↻</span>
                                                     <span>更换图标</span>
                                                 </button>
@@ -393,7 +393,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
                             {(isImageSticker || isTextSticker) && (
                                 <div className={styles.submenuWrap}>
-                                    <button type="button" className={styles.menuItem}>
+                                    <button type="button" className={`menu-item ${styles.menuItem}`}>
                                         <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${slashIcon})`, maskImage: `url(${slashIcon})` }} />
                                         <span className={styles.menuItemContent}>
                                             <span>描边</span>
@@ -402,11 +402,11 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                                         <span className={styles.menuChevron}>›</span>
                                     </button>
                                     <div className={`${styles.submenu} ${submenuOpensLeft ? styles.submenuLeft : ''}`}>
-                                        <button type="button" className={styles.menuItem} onClick={() => { onToggleStroke?.(); onClose(); }}>
+                                        <button type="button" className={`menu-item ${styles.menuItem}`} onClick={() => { onToggleStroke?.(); onClose(); }}>
                                             <span className={styles.menuSizeIcon}>{hideStroke ? '◉' : '⊘'}</span>
                                             <span>{hideStroke ? '恢复描边' : '去除描边'}</span>
                                         </button>
-                                        <button type="button" className={styles.menuItem} onClick={() => { onEditStroke?.(); onClose(); }}>
+                                        <button type="button" className={`menu-item ${styles.menuItem}`} onClick={() => { onEditStroke?.(); onClose(); }}>
                                             <span className={styles.menuSizeIcon}>↔</span>
                                             <span className={styles.menuItemContent}>
                                                 <span>描边边距</span>
@@ -419,7 +419,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
                             {isImageSticker && (
                                 <div className={styles.submenuWrap}>
-                                    <button type="button" className={styles.menuItem}>
+                                    <button type="button" className={`menu-item ${styles.menuItem}`}>
                                         <span className={styles.menuSizeIcon}>◜</span>
                                         <span className={styles.menuItemContent}>
                                             <span>圆角</span>
@@ -428,7 +428,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                                         <span className={styles.menuChevron}>›</span>
                                     </button>
                                     <div className={`${styles.submenu} ${submenuOpensLeft ? styles.submenuLeft : ''}`}>
-                                        <button type="button" className={styles.menuItem} onClick={() => { onEditCornerRadius?.(); onClose(); }}>
+                                        <button type="button" className={`menu-item ${styles.menuItem}`} onClick={() => { onEditCornerRadius?.(); onClose(); }}>
                                             <span className={styles.menuSizeIcon}>↔</span>
                                             <span className={styles.menuItemContent}>
                                                 <span>圆角大小</span>
@@ -437,7 +437,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                                         </button>
                                         <button
                                             type="button"
-                                            className={styles.menuItem}
+                                            className={`menu-item ${styles.menuItem}`}
                                             disabled={isDefaultCornerRadius}
                                             onClick={() => { if (!isDefaultCornerRadius) { onResetCornerRadius?.(); onClose(); } }}
                                         >
@@ -449,37 +449,37 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                             )}
 
                             <div className={styles.submenuWrap}>
-                                <button type="button" className={styles.menuItem}>
+                                <button type="button" className={`menu-item ${styles.menuItem}`}>
                                     <span className={styles.menuSizeIcon}>▤</span>
                                     <span>布局</span>
                                     <span className={styles.menuChevron}>›</span>
                                 </button>
                                 <div className={`${styles.submenu} ${submenuOpensLeft ? styles.submenuLeft : ''}`}>
-                                    <button className={styles.menuItem} onClick={() => { onRotateSticker?.(); onClose(); }}>
+                                    <button className={`menu-item ${styles.menuItem}`} onClick={() => { onRotateSticker?.(); onClose(); }}>
                                         <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${rotateIcon})`, maskImage: `url(${rotateIcon})` }} />
                                         <span className={styles.menuItemContent}>
                                             <span>{t.contextMenu.rotateSticker}</span>
                                             <small>{Math.round(rotation)}°</small>
                                         </span>
                                     </button>
-                                    <button className={styles.menuItem} onClick={() => { onSetPriority?.(); onClose(); }}>
+                                    <button className={`menu-item ${styles.menuItem}`} onClick={() => { onSetPriority?.(); onClose(); }}>
                                         <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${priorityIcon})`, maskImage: `url(${priorityIcon})` }} />
                                         <span className={styles.menuItemContent}>
                                             <span>设置优先级</span>
                                             <small>P{Math.max(-999, Math.min(999, Math.trunc(priority)))}</small>
                                         </span>
                                     </button>
-                                    <button className={styles.menuItem} onClick={() => { onToggleScreenFixed?.(); onClose(); }}>
+                                    <button className={`menu-item ${styles.menuItem}`} onClick={() => { onToggleScreenFixed?.(); onClose(); }}>
                                         <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${monitorIcon})`, maskImage: `url(${monitorIcon})` }} />
                                         <span>{isScreenFixed ? '恢复随页面滚动' : '相对屏幕固定'}</span>
                                     </button>
-                                    <button className={styles.menuItem} onClick={() => { onTogglePin?.(); onClose(); }}>
+                                    <button className={`menu-item ${styles.menuItem}`} onClick={() => { onTogglePin?.(); onClose(); }}>
                                         <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${pinIcon})`, maskImage: `url(${pinIcon})` }} />
                                         <span>{isPinned ? t.contextMenu.unpinSticker : t.contextMenu.pinSticker}</span>
                                     </button>
                                 </div>
                             </div>
-                            <button className={`${styles.menuItem} ${styles.danger}`} onClick={() => { onDeleteSticker?.(); onClose(); }}>
+                            <button className={`menu-item menu-item--danger ${styles.menuItem} ${styles.danger}`} onClick={() => { onDeleteSticker?.(); onClose(); }}>
                                 <span className={styles.menuIcon} style={{ WebkitMaskImage: `url(${trashIcon})`, maskImage: `url(${trashIcon})` }} />
                                 <span>{t.contextMenu.deleteSticker}</span>
                             </button>

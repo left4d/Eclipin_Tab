@@ -477,7 +477,7 @@ export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, in
                     </button>
                 )}
                 {linkCard ? (
-                    <article className={`${styles.linkCardSticker} ${!linkCard.imageUrl ? styles.noImage : ''}`} style={{ fontFamily: previewFontFamily }}>
+                    <article className={`card card--sticker ${styles.linkCardSticker} ${!linkCard.imageUrl ? styles.noImage : ''}`} style={{ fontFamily: previewFontFamily }}>
                         {linkCard.imageUrl && (
                             <img
                                 src={linkCard.imageUrl}
@@ -487,8 +487,8 @@ export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, in
                             />
                         )}
                         <div className={styles.linkCardContent}>
-                            <div className={styles.linkCardTitle} style={{ fontFamily: previewFontFamily }}>{linkCard.title}</div>
-                            <div className={styles.linkCardSubtitle} style={{ fontFamily: previewFontFamily }}>{linkCard.subtitle}</div>
+                            <div className={`card__title ${styles.linkCardTitle}`} style={{ fontFamily: previewFontFamily }}>{linkCard.title}</div>
+                            <div className={`card__subtitle ${styles.linkCardSubtitle}`} style={{ fontFamily: previewFontFamily }}>{linkCard.subtitle}</div>
                         </div>
                     </article>
                 ) : (
@@ -502,7 +502,7 @@ export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, in
                         )}
                         <div
                             ref={inputRef}
-                            className={[styles.textSticker, styles.stickerPreviewInput, previewHideStroke ? styles.noStickerStroke : ''].filter(Boolean).join(' ')}
+                            className={['sticker__text', styles.textSticker, styles.stickerPreviewInput, previewHideStroke ? 'sticker__text--plain' : '', previewHideStroke ? styles.noStickerStroke : ''].filter(Boolean).join(' ')}
                             contentEditable
                             suppressContentEditableWarning
                             style={{
@@ -608,7 +608,8 @@ export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, in
 
                     {/* 复选框切换按钮 */}
                     <button
-                        className={`${styles.toolbarCheckboxBtn} ${hasCheckbox ? styles.active : ''}`}
+                        className={`icon-btn ${styles.toolbarCheckboxBtn} ${hasCheckbox ? styles.active : ''}`}
+                        aria-pressed={hasCheckbox}
                         onClick={() => setHasCheckbox(!hasCheckbox)}
                         title={hasCheckbox ? 'Remove Checkbox' : 'Add Checkbox'}
                     >
@@ -617,7 +618,8 @@ export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, in
 
                     {detectedUrl && (
                         <button
-                            className={`${styles.toolbarLinkCardBtn} ${linkCard ? styles.active : ''}`}
+                            className={`icon-btn ${styles.toolbarLinkCardBtn} ${linkCard ? styles.active : ''}`}
+                            aria-pressed={Boolean(linkCard)}
                             onClick={handleCreateLinkCard}
                             disabled={isFetchingLinkCard}
                             title={linkCard ? 'Back to text' : 'Create link card'}
@@ -629,11 +631,11 @@ export const TextInput = forwardRef<TextInputHandle, TextInputProps>(({ x, y, in
 
                 {/* 操作按钮 */}
                 <div className={`${styles.toolbarPanel} ${styles.toolbarActions}`}>
-                    <button className={styles.toolbarCancelBtn} onClick={handleCancel}>
+                    <button className="btn" onClick={handleCancel}>
                         {t.textInput.cancel}
                     </button>
                     <button
-                        className={styles.toolbarConfirmBtn}
+                        className="btn btn--primary"
                         onClick={handleSubmit}
                         disabled={!hasContent}
                     >

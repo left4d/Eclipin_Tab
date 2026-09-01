@@ -10,8 +10,8 @@ export const APPEARANCE_PALETTES = [
         id: 'sage',
         nameZh: '雾松绿',
         nameEn: 'Sage',
-        light: { bg: '#f4f6f2', surface: '#ffffff', accent: '#78916c' },
-        dark: { bg: '#171b18', surface: '#222824', accent: '#91ad82' },
+        light: { bg: '#E8E8ED', surface: '#ffffff', accent: '#78916c' },
+        dark: { bg: '#1C1C1E', surface: '#2C2C2E', accent: '#91ad82' },
     },
     {
         id: 'blue',

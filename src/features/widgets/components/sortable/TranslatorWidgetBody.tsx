@@ -62,6 +62,7 @@ export const TranslatorWidgetBody = ({ props, controller }: TranslatorWidgetBody
         <label>
           <span className={styles.srOnly}>源语言</span>
           <select
+            className="field"
             value={translationSourceLanguage}
             onChange={(event) => onUpdate(widget.id, { translateSourceLanguage: event.target.value as TranslatorLanguageCode })}
             aria-label="源语言"
@@ -69,10 +70,11 @@ export const TranslatorWidgetBody = ({ props, controller }: TranslatorWidgetBody
             {TRANSLATOR_LANGUAGES.map((language) => <option key={language.code} value={language.code}>{language.label}</option>)}
           </select>
         </label>
-        <button type="button" className={styles.translatorSwap} onClick={swapTranslationLanguages} aria-label="交换翻译语言" title="交换翻译语言">⇄</button>
+        <button type="button" className={`icon-btn ${styles.translatorSwap}`} onClick={swapTranslationLanguages} aria-label="交换翻译语言" title="交换翻译语言">⇄</button>
         <label>
           <span className={styles.srOnly}>目标语言</span>
           <select
+            className="field"
             value={translationTargetLanguage}
             onChange={(event) => onUpdate(widget.id, { translateTargetLanguage: event.target.value as Exclude<TranslatorLanguageCode, 'auto'> })}
             aria-label="目标语言"
@@ -83,8 +85,9 @@ export const TranslatorWidgetBody = ({ props, controller }: TranslatorWidgetBody
       </div>
 
       <div className={styles.translatorPanels} onPointerDown={(event) => event.stopPropagation()}>
-        <div className={styles.translatorInputPanel}>
+        <div className={`field-shell ${styles.translatorInputPanel}`}>
           <textarea
+            className="field-shell__input"
             ref={translatorInputRef}
             value={translationDraft}
             maxLength={600}
@@ -96,7 +99,7 @@ export const TranslatorWidgetBody = ({ props, controller }: TranslatorWidgetBody
           {translationDraft ? (
             <button
               type="button"
-              className={styles.translatorClear}
+              className={`icon-btn icon-btn--round ${styles.translatorClear}`}
               onClick={() => {
                 setTranslationDraft('');
                 setTranslationResult('');
@@ -117,7 +120,7 @@ export const TranslatorWidgetBody = ({ props, controller }: TranslatorWidgetBody
         <div className={styles.translatorActions}>
           <button
             type="button"
-            className={styles.translatorIconButton}
+            className={`icon-btn icon-btn--round ${styles.translatorIconButton}`}
             disabled={!translationQuery || isTranslating}
             onClick={() => setTranslationRefreshKey((value) => value + 1)}
             aria-label="重新翻译"
@@ -125,7 +128,7 @@ export const TranslatorWidgetBody = ({ props, controller }: TranslatorWidgetBody
           >↻</button>
           <button
             type="button"
-            className={styles.translatorIconButton}
+            className={`icon-btn icon-btn--round ${styles.translatorIconButton}`}
             disabled={!translationQuery}
             onClick={() => openExternalUrl(translatorWebUrl, openInNewTab)}
             aria-label={`在 ${provider.label} 翻译中打开`}
@@ -133,7 +136,7 @@ export const TranslatorWidgetBody = ({ props, controller }: TranslatorWidgetBody
           >{provider.short}</button>
           <button
             type="button"
-            className={styles.translatorDictionaryButton}
+            className={`btn btn--sm ${styles.translatorDictionaryButton}`}
             disabled={!translationQuery}
             onClick={() => openExternalUrl(dictionaryUrl, openInNewTab)}
             aria-label="在有道词典中查询"

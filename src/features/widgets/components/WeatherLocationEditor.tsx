@@ -58,18 +58,20 @@ export const WeatherLocationEditor = ({ widget, anchorRect, onClose, onUpdate }:
             <h3>天气位置</h3>
             <p>选择使用浏览器所在地，或为这个天气组件固定一个城市。</p>
           </div>
-          <button type="button" className={styles.closeButton} onClick={onClose} aria-label="关闭天气位置设置">×</button>
+          <button type="button" className={`icon-btn ${styles.closeButton}`} onClick={onClose} aria-label="关闭天气位置设置">×</button>
         </header>
 
-        <div className={styles.modeSwitch} role="group" aria-label="天气位置模式">
+        <div className={`segmented ${styles.modeSwitch}`} role="group" aria-label="天气位置模式">
           <button
             type="button"
-            className={mode === 'current' ? styles.activeMode : ''}
+            className="segmented__item"
+            aria-pressed={mode === 'current'}
             onClick={() => setMode('current')}
           >所在地</button>
           <button
             type="button"
-            className={mode === 'custom' ? styles.activeMode : ''}
+            className="segmented__item"
+            aria-pressed={mode === 'custom'}
             onClick={() => setMode('custom')}
           >自定义城市</button>
         </div>
@@ -91,6 +93,7 @@ export const WeatherLocationEditor = ({ widget, anchorRect, onClose, onUpdate }:
             <label className={styles.searchField}>
               <span>搜索城市</span>
               <input
+                className="field"
                 value={citySearch.query}
                 onChange={(event) => citySearch.setQuery(event.target.value)}
                 placeholder="例如：上海 / Tokyo / Paris"

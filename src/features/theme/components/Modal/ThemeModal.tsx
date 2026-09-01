@@ -12,7 +12,7 @@ interface ThemeModalProps {
 }
 
 const THEME_OPTIONS: { value: Theme; label: string; description: string }[] = [
-    { value: 'default', label: '默认', description: '经典渐变' },
+    { value: 'default', label: '玻璃', description: '玻璃质感' },
     { value: 'light', label: '浅色', description: '明亮清新' },
     { value: 'dark', label: '深色', description: '深邃优雅' },
 ];

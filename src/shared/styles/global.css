@@ -1,6 +1,10 @@
 /* ===== 全局基础样式 ===== */
-/* 导入 CSS 变量定义 */
+/* ① 统一 Design Tokens（标准语义层，唯一真相） */
+@import './tokens.css';
+/* ② Eclipin 既有变量（玻璃态/材质系统；旧语义名作为别名指向标准 token） */
 @import './variables.css';
+/* ③ 品牌配方（贴纸/徽章/chip/按钮/卡片） */
+@import './brand-recipes.css';
 
 /* 重置所有元素的盒模型为 border-box */
 * {

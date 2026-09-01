@@ -458,7 +458,7 @@ export const VectorCanvas = ({
           <button type="button" onClick={onUndo} disabled={!canUndo} title="撤销 Ctrl/⌘+Z">↶</button>
           <button type="button" onClick={onRedo} disabled={!canRedo} title="重做 Ctrl/⌘+Shift+Z">↷</button>
           <button type="button" className={snapEnabled ? styles.activeButton : ''} onClick={() => setSnapEnabled(value => !value)}>吸附</button>
-          <select className={styles.compactSelect} value={gridSize} onChange={event => setGridSize(Number(event.target.value))} disabled={!snapEnabled} aria-label="网格吸附尺寸">
+          <select className={`field ${styles.compactSelect}`} value={gridSize} onChange={event => setGridSize(Number(event.target.value))} disabled={!snapEnabled} aria-label="网格吸附尺寸">
             <option value="5">5</option><option value="10">10</option><option value="20">20</option>
           </select>
           <button type="button" onClick={() => zoomBy(-1)} disabled={zoom === ZOOM_STEPS[0]}>−</button>
@@ -556,8 +556,8 @@ export const VectorCanvas = ({
             </div>
             {selected && (
               <div className={styles.inspectorControls}>
-                <label><span>角度 {Math.round(selected.rotation)}°</span><input type="range" min="-180" max="180" step="1" value={selected.rotation} onChange={event => updateSelected(item => ({ ...item, rotation: Number(event.target.value) }))} /></label>
-                <label><span>透明度 {Math.round(selected.opacity * 100)}%</span><input type="range" min="0.1" max="1" step="0.05" value={selected.opacity} onChange={event => updateSelected(item => ({ ...item, opacity: Number(event.target.value) }))} /></label>
+                <label><span>角度 {Math.round(selected.rotation)}°</span><input type="range" className="range" min="-180" max="180" step="1" value={selected.rotation} onChange={event => updateSelected(item => ({ ...item, rotation: Number(event.target.value) }))} /></label>
+                <label><span>透明度 {Math.round(selected.opacity * 100)}%</span><input type="range" className="range" min="0.1" max="1" step="0.05" value={selected.opacity} onChange={event => updateSelected(item => ({ ...item, opacity: Number(event.target.value) }))} /></label>
                 <button type="button" className={selected.lockAspectRatio ? styles.activeButton : ''} onClick={() => updateSelected(item => ({ ...item, lockAspectRatio: !item.lockAspectRatio }))}>锁比例</button>
                 <button type="button" onClick={() => updateSelected(item => ({ ...item, flipX: !item.flipX }))}>水平翻转</button>
                 <button type="button" onClick={() => updateSelected(item => ({ ...item, flipY: !item.flipY }))}>垂直翻转</button>

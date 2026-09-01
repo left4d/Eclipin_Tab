@@ -113,6 +113,7 @@ export const SizeEditorPopover = ({
           <label>
             <span>W</span>
             <input
+              className="field"
               autoFocus
               type="number"
               min="1"
@@ -128,6 +129,7 @@ export const SizeEditorPopover = ({
           <label>
             <span>H</span>
             <input
+              className="field"
               type="number"
               min="1"
               max="10000"

@@ -2,9 +2,11 @@
 /* 遵循 SettingsModal 的设计语言 */
 
 .cardSection {
-    background: var(--color-bg-secondary);
-    box-shadow: var(--shadow-small);
-    border-radius: 8px;
+    --card-border: 0;
+    --card-radius: var(--radius-sm);
+    --card-bg: var(--color-bg-secondary);
+    --card-shadow: var(--shadow-small);
+    --card-overflow: visible;
     padding: 8px;
     display: flex;
     flex-direction: column;
@@ -91,30 +93,24 @@
 }
 
 .inputField {
+    --field-border: var(--ui-control-border, var(--color-bg-primary));
+    --field-radius: var(--ui-control-radius, var(--radius-xs));
+    --field-bg: var(--ui-control-bg, var(--color-bg-primary));
+    --field-color: var(--color-text-primary);
+    --field-placeholder: var(--color-text-tertiary);
+    --field-hover-border: var(--ui-control-border, var(--color-bg-primary));
+    --field-hover-bg: var(--ui-control-bg, var(--color-bg-primary));
+    --field-focus-border: var(--ui-control-focus-border, var(--fusion-accent));
+    --field-focus-bg: var(--ui-control-bg-hover, var(--color-bg-secondary));
+    --field-focus-ring: var(--ui-control-focus-ring, 0 0 0 3px var(--fusion-focus-ring));
     flex: 1;
-    background: var(--color-bg-primary);
-    border: 1px solid var(--color-bg-primary);
-    border-radius: 4px;
     height: 28px;
     padding: 0 8px;
     font-family: var(--font-family);
     font-size: var(--font-size-small);
     font-weight: var(--font-weight-regular);
-    color: var(--color-text-primary);
-    outline: none;
-    transition: all var(--transition-medium);
-    box-sizing: border-box;
     width: 100%;
     min-width: 0;
-}
-
-.inputField:focus {
-    border-color: var(--fusion-accent);
-    background: var(--color-bg-secondary);
-}
-
-.inputField::placeholder {
-    color: var(--color-text-tertiary);
 }
 
 /* 按钮组 */
@@ -319,9 +315,6 @@
   .iconWrapper {
     border-radius: 12px;
   }
-  .inputField {
-    border-radius: 6px;
-  }
   .btnBase {
     border-radius: 6px;
   }
@@ -330,10 +323,6 @@
   }
 }
 /* Web × Pegboard 表单强调色 */
-.inputField:focus {
-    border-color: var(--fusion-accent);
-    box-shadow: 0 0 0 3px var(--fusion-focus-ring);
-}
 
 .btnPrimary,
 .toggleActive {
@@ -352,19 +341,4 @@
     border: 1px solid color-mix(in srgb, var(--ui-menu-border) 68%, transparent);
     background: color-mix(in srgb, var(--ui-menu-hover) 54%, transparent);
     box-shadow: none;
-}
-.inputField {
-    border-color: var(--ui-control-border);
-    border-radius: var(--ui-control-radius);
-    background: var(--ui-control-bg);
-}
-.inputField:focus {
-    border-color: var(--ui-control-focus-border);
-    background: var(--ui-control-bg-hover);
-    box-shadow: var(--ui-control-focus-ring);
-}
-.inputField:focus {
-    border-color: var(--ui-control-focus-border);
-    background: var(--ui-control-bg-hover);
-    box-shadow: var(--ui-control-focus-ring);
 }

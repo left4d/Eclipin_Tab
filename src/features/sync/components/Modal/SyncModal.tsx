@@ -121,7 +121,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose, anchorPos
             anchorPosition={anchorPosition}
             width={264}
             sideContent={
-                <div className={styles.cardSection} style={{ flex: 1, margin: 0, justifyContent: 'center' }}>
+                <div className={`card ${styles.cardSection}`} style={{ flex: 1, margin: 0, justifyContent: 'center' }}>
                     <div className={styles.sectionHeader}>
                         <span className={styles.sectionTitle}>{t.sync.localBackup}</span>
                     </div>
@@ -159,12 +159,12 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose, anchorPos
             </div>
 
             {/* 服务器配置 */}
-            <div className={styles.cardSection}>
+            <div className={`card ${styles.cardSection}`}>
                 <div className={styles.inputRow}>
                     <span className={styles.inputLabel}>{t.sync.serverUrl}</span>
                     <input
                         type="text"
-                        className={styles.inputField}
+                        className={`field ${styles.inputField}`}
                         value={serverUrl}
                         onChange={(e) => setServerUrl(e.target.value)}
                         onBlur={(e) => saveToStorage('Eclipin_webdav_url', e.target.value)}
@@ -175,7 +175,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose, anchorPos
                     <span className={styles.inputLabel}>{t.sync.username}</span>
                     <input
                         type="text"
-                        className={styles.inputField}
+                        className={`field ${styles.inputField}`}
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         onBlur={(e) => saveToStorage('Eclipin_webdav_user', e.target.value)}
@@ -186,7 +186,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose, anchorPos
                     <span className={styles.inputLabel}>{t.sync.password}</span>
                     <input
                         type="password"
-                        className={styles.inputField}
+                        className={`field ${styles.inputField}`}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         onBlur={(e) => saveToStorage('Eclipin_webdav_pass', e.target.value)}
@@ -196,7 +196,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose, anchorPos
             </div>
 
             {/* 连接测试 */}
-            <div className={styles.cardSection}>
+            <div className={`card ${styles.cardSection}`}>
                 <div className={styles.testRow}>
                     <div className={styles.testLeft}>
                         <div className={`${styles.statusDot} ${
@@ -222,7 +222,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose, anchorPos
             </div>
 
             {/* 同步选项 */}
-            <div className={styles.cardSection}>
+            <div className={`card ${styles.cardSection}`}>
                 <div className={styles.optionRow}>
                     <span className={styles.optionLabel}>{t.sync.autoSyncTitle}</span>
                     <button
@@ -265,7 +265,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({ isOpen, onClose, anchorPos
             </div>
 
             {/* 操作按钮 */}
-            <div className={styles.cardSection}>
+            <div className={`card ${styles.cardSection}`}>
                 <div className={styles.buttonRow}>
                     <button className={`${styles.btnBase} ${styles.btnFull}`} onClick={handleDownload} disabled={isDownloading}>
                         {isDownloading ? 'Downloading...' : t.sync.downloadFromCloud}

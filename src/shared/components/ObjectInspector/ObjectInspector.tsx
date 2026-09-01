@@ -32,7 +32,7 @@ export const ObjectInspector = ({
         {summary && <small>{summary}</small>}
       </div>
       {onClose && (
-        <button type="button" className={styles.closeButton} onClick={onClose} aria-label="关闭对象编辑器" title="取消选择">
+        <button type="button" className={`icon-btn ${styles.closeButton}`} onClick={onClose} aria-label="关闭对象编辑器" title="取消选择">
           ×
         </button>
       )}
@@ -40,12 +40,12 @@ export const ObjectInspector = ({
 
     {primaryActions && <div className={styles.primaryActions}>{primaryActions}</div>}
 
-    <div className={styles.sectionTabs} role="tablist" aria-label="对象编辑分类">
+    <div className={`segmented ${styles.sectionTabs}`} role="tablist" aria-label="对象编辑分类">
       <button
         type="button"
         role="tab"
         aria-selected={activeSection === 'appearance'}
-        className={activeSection === 'appearance' ? styles.activeTab : ''}
+        className="segmented__item"
         onClick={() => onSectionChange('appearance')}
       >
         外观
@@ -54,7 +54,7 @@ export const ObjectInspector = ({
         type="button"
         role="tab"
         aria-selected={activeSection === 'layout'}
-        className={activeSection === 'layout' ? styles.activeTab : ''}
+        className="segmented__item"
         onClick={() => onSectionChange('layout')}
       >
         布局

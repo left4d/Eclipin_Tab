@@ -86,10 +86,10 @@ export const StickerObjectInspector = ({
       onClose={onClose}
       primaryActions={
         <>
-          {sticker.type === 'text' && <button type="button" data-accent="true" onClick={() => onEditText(sticker)}>编辑文字</button>}
-          {sticker.type !== 'drawing' && <button type="button" onClick={() => onEditLink(sticker)}>链接与标签</button>}
-          <button type="button" onClick={() => onEditSize(sticker)}>尺寸</button>
-          <button type="button" className={styles.objectInspectorDangerButton} onClick={() => onDelete(sticker)}>删除</button>
+          {sticker.type === 'text' && <button type="button" className="btn btn--sm btn--accent" onClick={() => onEditText(sticker)}>编辑文字</button>}
+          {sticker.type !== 'drawing' && <button type="button" className="btn btn--sm" onClick={() => onEditLink(sticker)}>链接与标签</button>}
+          <button type="button" className="btn btn--sm" onClick={() => onEditSize(sticker)}>尺寸</button>
+          <button type="button" className="btn btn--sm btn--danger" onClick={() => onDelete(sticker)}>删除</button>
         </>
       }
     >
@@ -100,7 +100,7 @@ export const StickerObjectInspector = ({
               <div className={styles.objectInspectorRow}>
                 <span>字号</span>
                 <input
-                  type="range"
+                  type="range" className="range"
                   min={12}
                   max={120}
                   step={1}
@@ -142,7 +142,7 @@ export const StickerObjectInspector = ({
           <div className={styles.objectInspectorRow}>
             <span>旋转</span>
             <input
-              type="range"
+              type="range" className="range"
               min={-180}
               max={180}
               step={1}
@@ -156,7 +156,7 @@ export const StickerObjectInspector = ({
             <div className={styles.objectInspectorRow}>
               <span>描边</span>
               <input
-                type="range"
+                type="range" className="range"
                 min={1}
                 max={20}
                 step={1}
@@ -178,7 +178,7 @@ export const StickerObjectInspector = ({
             <div className={styles.objectInspectorRow}>
               <span>圆角</span>
               <input
-                type="range"
+                type="range" className="range"
                 min={0}
                 max={72}
                 step={1}
@@ -212,7 +212,7 @@ export const StickerObjectInspector = ({
           <div className={styles.objectInspectorRow}>
             <span>缩放</span>
             <input
-              type="range"
+              type="range" className="range"
               min={25}
               max={300}
               step={5}
@@ -224,7 +224,7 @@ export const StickerObjectInspector = ({
           <div className={styles.objectInspectorRow}>
             <span>优先级</span>
             <input
-              className={styles.objectInspectorNumberInput}
+              className={`field ${styles.objectInspectorNumberInput}`}
               type="number"
               min={-999}
               max={999}

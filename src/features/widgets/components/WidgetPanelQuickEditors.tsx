@@ -103,6 +103,7 @@ export default function WidgetPanelQuickEditors({
             <label className={styles.embedInputRow}>
               <span>网页地址</span>
               <input
+                className="field"
                 autoFocus
                 type="text"
                 inputMode="url"
@@ -151,9 +152,9 @@ export default function WidgetPanelQuickEditors({
             {embedUrlError && <div className={styles.embedEditorError}>{embedUrlError}</div>}
             <div className={styles.embedEditorNotice}>本地网页会保存到 IndexedDB，并在隔离的 sandbox iframe 中运行。ZIP/文件夹会自动选择最合适的 HTML 入口，并保留 CSS、JS、图片、字体、WebAssembly、Worker、SVG sprite 等相对路径资源；离开可视区域后 iframe 会短暂保活，持续离屏后再自动卸载释放内存。</div>
             <div className={styles.priorityEditorActions}>
-              <button type="button" onClick={onCloseEmbed} disabled={isSavingEmbed}>取消</button>
-              {(embedWidget?.embedUrl || embedWidget?.embedLocalId) && <button type="button" className={styles.embedClearButton} onClick={() => onClearEmbed(embedEditor.id)}>移除嵌入</button>}
-              <button type="submit" className={styles.prioritySaveButton} disabled={isSavingEmbed}>{isSavingEmbed ? '正在授权…' : '保存'}</button>
+              <button type="button" className="btn btn--sm" onClick={onCloseEmbed} disabled={isSavingEmbed}>取消</button>
+              {(embedWidget?.embedUrl || embedWidget?.embedLocalId) && <button type="button" className={`btn btn--sm btn--danger ${styles.embedClearButton}`} onClick={() => onClearEmbed(embedEditor.id)}>移除嵌入</button>}
+              <button type="submit" className={`btn btn--sm btn--primary ${styles.prioritySaveButton}`} disabled={isSavingEmbed}>{isSavingEmbed ? '正在授权…' : '保存'}</button>
             </div>
           </form>
         </div>
@@ -177,6 +178,7 @@ export default function WidgetPanelQuickEditors({
             <label className={styles.priorityInputRow}>
               <span>优先级</span>
               <input
+                className="field"
                 autoFocus
                 type="number"
                 min="-999"
@@ -188,8 +190,8 @@ export default function WidgetPanelQuickEditors({
               />
             </label>
             <div className={styles.priorityEditorActions}>
-              <button type="button" onClick={onClosePriority}>取消</button>
-              <button type="submit" className={styles.prioritySaveButton}>保存</button>
+              <button type="button" className="btn btn--sm" onClick={onClosePriority}>取消</button>
+              <button type="submit" className={`btn btn--sm btn--primary ${styles.prioritySaveButton}`}>保存</button>
             </div>
           </form>
         </div>
@@ -209,7 +211,7 @@ export default function WidgetPanelQuickEditors({
             <label className={styles.linkTextRow}>
               <span>字号</span>
               <input
-                type="range"
+                type="range" className="range"
                 min="12"
                 max="48"
                 value={linkTextWidget.linkTextSize ?? 20}

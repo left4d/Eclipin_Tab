@@ -49,15 +49,15 @@ export const PermissionToggle = () => {
     });
   };
 
-  if (enabled === null) return <div className={styles.layoutToggleGroup}>...</div>;
+  if (enabled === null) return <div className={`segmented ${styles.layoutToggleGroup}`}>...</div>;
 
   return (
-    <div className={`${styles.layoutToggleGroup} ${loading ? styles.loading : ''}`}>
+    <div className={`segmented ${styles.layoutToggleGroup} ${loading ? styles.loading : ''}`}>
       <div className={styles.layoutHighlight} style={{ transform: `translateX(${enabled ? 0 : 100}%)` }} />
-      <button className={styles.layoutToggleOption} onClick={enabled ? undefined : handleToggle} title={t.settings.on}>
+      <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={enabled} onClick={enabled ? undefined : handleToggle} title={t.settings.on}>
         {t.settings.on}
       </button>
-      <button className={styles.layoutToggleOption} onClick={!enabled ? undefined : handleToggle} title={t.settings.off}>
+      <button className={`segmented__item ${styles.layoutToggleOption}`} aria-pressed={!enabled} onClick={!enabled ? undefined : handleToggle} title={t.settings.off}>
         {t.settings.off}
       </button>
     </div>

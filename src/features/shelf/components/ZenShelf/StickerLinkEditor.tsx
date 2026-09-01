@@ -202,20 +202,20 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
             <h2 className={styles.title}>链接与标签</h2>
             <p className={styles.subtitle}>把贴纸变成网页入口、页面按钮或内部导航点。</p>
           </div>
-          <button type="button" className={styles.closeButton} onClick={onClose} aria-label="关闭">×</button>
+          <button type="button" className={`icon-btn ${styles.closeButton}`} onClick={onClose} aria-label="关闭">×</button>
         </header>
 
         <div className={styles.body}>
           <aside className={styles.sidebar} aria-label="点击行为类型">
             <div className={styles.sidebarLabel}>点击后</div>
-            <div className={styles.targetGroups} role="tablist" aria-label="跳转类型">
+            <div className={`tabs ${styles.targetGroups}`} role="tablist" aria-label="跳转类型">
               {targetGroupOptions.map(option => (
                 <button
                   key={option.value}
                   type="button"
                   role="tab"
                   aria-selected={activeTargetGroup === option.value}
-                  className={`${styles.targetGroupButton} ${activeTargetGroup === option.value ? styles.targetGroupButtonActive : ''}`}
+                  className={`tabs__item ${styles.targetGroupButton}`}
                   onClick={() => chooseTargetGroup(option.value)}
                 >
                   <span className={styles.targetGroupIcon}>{option.icon}</span>
@@ -255,7 +255,7 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
                     <p className={styles.sectionDescription}>{activeTargetOption.description}</p>
                   </div>
                 </div>
-                {hasSavedLink && <span className={styles.statusBadge}>已设置</span>}
+                {hasSavedLink && <span className="badge">已设置</span>}
               </div>
 
               <div className={styles.editorPanel}>
@@ -265,13 +265,13 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
                       <span>网页地址</span>
                       <div className={styles.inputActionWrap}>
                         <input
-                          className={styles.input}
+                          className={`field ${styles.input}`}
                           value={externalUrl}
                           onChange={event => { setExternalUrl(event.target.value); setError(''); }}
                           placeholder="example.com 或 https://example.com"
                           autoFocus
                         />
-                        <button type="button" className={styles.inputAction} onClick={pasteExternalUrl}>粘贴</button>
+                        <button type="button" className={`btn btn--sm ${styles.inputAction}`} onClick={pasteExternalUrl}>粘贴</button>
                       </div>
                     </label>
                     <p className={styles.help}>可直接输入域名，保存时会自动识别为网页地址。</p>
@@ -282,10 +282,10 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
                   <>
                     <label className={styles.label}>
                       <span>目标标签</span>
-                      <div className={styles.anchorInputWrap}>
+                      <div className={`field-shell ${styles.anchorInputWrap}`}>
                         <span>#</span>
                         <input
-                          className={styles.anchorInput}
+                          className={`field-shell__input ${styles.anchorInput}`}
                           value={targetAnchor}
                           onChange={event => { setTargetAnchor(event.target.value); setError(''); }}
                           placeholder="project-start"
@@ -300,7 +300,8 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
                           {availableAnchors.map(anchor => (
                             <button
                               type="button"
-                              className={`${styles.anchorChip} ${normalizeStickerAnchorId(targetAnchor) === anchor ? styles.anchorChipActive : ''}`}
+                              className="chip"
+                              aria-pressed={normalizeStickerAnchorId(targetAnchor) === anchor}
                               key={anchor}
                               onClick={() => { setTargetAnchor(anchor); setError(''); }}
                             >#{anchor}</button>
@@ -315,14 +316,13 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
 
                 {activeTargetGroup === 'page' && (
                   <>
-                    <div className={styles.pageModes} role="tablist" aria-label="页面跳转方式">
+                    <div className={`segmented ${styles.pageModes}`} role="group" aria-label="页面跳转方式">
                       {pageModeOptions.map(option => (
                         <button
                           key={option.value}
                           type="button"
-                          role="tab"
-                          aria-selected={mode === option.value}
-                          className={`${styles.pageModeButton} ${mode === option.value ? styles.pageModeButtonActive : ''}`}
+                          aria-pressed={mode === option.value}
+                          className={`segmented__item ${styles.pageModeButton}`}
                           onClick={() => selectMode(option.value)}
                         >
                           <b>{option.label}</b>
@@ -335,7 +335,7 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
                       <div className={styles.focusBox}>
                         <label className={styles.label}>
                           <span>跳到第几页</span>
-                          <input className={styles.numberInput} type="number" min={1} step={1} value={screen} onChange={event => setScreen(Math.max(1, Number(event.target.value) || 1))} />
+                          <input className={`field ${styles.numberInput}`} type="number" min={1} step={1} value={screen} onChange={event => setScreen(Math.max(1, Number(event.target.value) || 1))} />
                         </label>
                       </div>
                     )}
@@ -345,11 +345,11 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
                         <div className={styles.grid2}>
                           <label className={styles.label}>
                             <span>主页面</span>
-                            <input className={styles.numberInput} type="number" min={1} step={1} value={screen} onChange={event => setScreen(Math.max(1, Number(event.target.value) || 1))} />
+                            <input className={`field ${styles.numberInput}`} type="number" min={1} step={1} value={screen} onChange={event => setScreen(Math.max(1, Number(event.target.value) || 1))} />
                           </label>
                           <label className={styles.label}>
                             <span>再次点击返回</span>
-                            <input className={styles.numberInput} type="number" min={1} step={1} value={elseScreen} onChange={event => setElseScreen(Math.max(1, Number(event.target.value) || 1))} />
+                            <input className={`field ${styles.numberInput}`} type="number" min={1} step={1} value={elseScreen} onChange={event => setElseScreen(Math.max(1, Number(event.target.value) || 1))} />
                           </label>
                         </div>
                         <p className={styles.help}>不在主页面时先进入主页面；已在主页面时再次点击会跳到返回页面。</p>
@@ -359,9 +359,9 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
                     {mode === 'coordinate' && (
                       <div className={styles.focusBox}>
                         <div className={styles.grid3}>
-                          <label className={styles.label}><span>页面</span><input className={styles.numberInput} type="number" min={1} step={1} value={screen} onChange={event => setScreen(Math.max(1, Number(event.target.value) || 1))} /></label>
-                          <label className={styles.label}><span>X 坐标</span><input className={styles.numberInput} type="number" value={coordinateX} onChange={event => setCoordinateX(Number(event.target.value) || 0)} /></label>
-                          <label className={styles.label}><span>Y 坐标</span><input className={styles.numberInput} type="number" value={coordinateY} onChange={event => setCoordinateY(Number(event.target.value) || 0)} /></label>
+                          <label className={styles.label}><span>页面</span><input className={`field ${styles.numberInput}`} type="number" min={1} step={1} value={screen} onChange={event => setScreen(Math.max(1, Number(event.target.value) || 1))} /></label>
+                          <label className={styles.label}><span>X 坐标</span><input className={`field ${styles.numberInput}`} type="number" value={coordinateX} onChange={event => setCoordinateX(Number(event.target.value) || 0)} /></label>
+                          <label className={styles.label}><span>Y 坐标</span><input className={`field ${styles.numberInput}`} type="number" value={coordinateY} onChange={event => setCoordinateY(Number(event.target.value) || 0)} /></label>
                         </div>
                       </div>
                     )}
@@ -377,7 +377,7 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
 
                 {activeTargetGroup === 'layout' && (
                   <>
-                    <div className={`${styles.pageModes} ${styles.pageModesThree}`} role="tablist" aria-label="空间切换方式">
+                    <div className={`segmented ${styles.pageModes} ${styles.pageModesThree}`} role="group" aria-label="空间切换方式">
                       {([
                         ['horizontal', '切到左右', '进入左右翻页空间'],
                         ['vertical', '切到上下', '返回上下翻页空间'],
@@ -386,9 +386,8 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
                         <button
                           key={value}
                           type="button"
-                          role="tab"
-                          aria-selected={layoutDirection === value}
-                          className={`${styles.pageModeButton} ${layoutDirection === value ? styles.pageModeButtonActive : ''}`}
+                          aria-pressed={layoutDirection === value}
+                          className={`segmented__item ${styles.pageModeButton}`}
                           onClick={() => { setLayoutDirection(value); setError(''); }}
                         >
                           <b>{label}</b>
@@ -408,7 +407,7 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
                     <label className={styles.label}>
                       <span>条件规则</span>
                       <input
-                        className={styles.input}
+                        className={`field ${styles.input}`}
                         value={conditionExpression}
                         onChange={event => { setConditionExpression(event.target.value); setError(''); }}
                         placeholder="if page=3 then 1 else 2"
@@ -417,7 +416,7 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
                     </label>
                     <div className={styles.presetRow}>
                       {conditionPresets.map(preset => (
-                        <button type="button" key={preset.value} className={styles.presetButton} onClick={() => { setConditionExpression(preset.value); setError(''); }}>
+                        <button type="button" key={preset.value} className="chip" onClick={() => { setConditionExpression(preset.value); setError(''); }}>
                           {preset.label}
                         </button>
                       ))}
@@ -453,10 +452,10 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
                 </div>
                 <label className={styles.label}>
                   <span>标签名称</span>
-                  <div className={styles.anchorInputWrap}>
+                  <div className={`field-shell ${styles.anchorInputWrap}`}>
                     <span>#</span>
                     <input
-                      className={styles.anchorInput}
+                      className={`field-shell__input ${styles.anchorInput}`}
                       value={anchorId}
                       onChange={event => { setAnchorId(event.target.value); setError(''); }}
                       placeholder="project-start"
@@ -473,9 +472,9 @@ export const StickerLinkEditor = ({ sticker, stickers, onClose, onSave }: Sticke
 
         <footer className={styles.actions}>
           <div className={styles.actionHint}><kbd>Esc</kbd> 关闭 <span>·</span> <kbd>Ctrl/⌘ + Enter</kbd> 保存</div>
-          <button type="button" className={`${styles.actionButton} ${styles.danger}`} onClick={clearLink} disabled={!hasSavedLink}>清除点击行为</button>
-          <button type="button" className={styles.actionButton} onClick={onClose}>取消</button>
-          <button type="button" className={`${styles.actionButton} ${styles.primary}`} onClick={handleSave}>保存</button>
+          <button type="button" className="btn btn--danger" onClick={clearLink} disabled={!hasSavedLink}>清除点击行为</button>
+          <button type="button" className="btn" onClick={onClose}>取消</button>
+          <button type="button" className="btn btn--primary" onClick={handleSave}>保存</button>
         </footer>
       </section>
     </div>,

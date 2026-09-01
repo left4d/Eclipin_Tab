@@ -41,8 +41,7 @@
 }
 
 .canvasToolbar button,
-.canvasInspector button,
-.compactSelect {
+.canvasInspector button {
   min-height: 29px;
   border: 1px solid var(--color-border-subtle);
   border-radius: 9px;
@@ -57,8 +56,7 @@
 }
 
 .canvasToolbar button:hover:not(:disabled),
-.canvasInspector button:hover:not(:disabled),
-.compactSelect:hover:not(:disabled) {
+.canvasInspector button:hover:not(:disabled) {
   border-color: var(--fusion-border-accent);
   background: var(--fusion-accent-soft);
   color: var(--fusion-accent);
@@ -70,8 +68,7 @@
 }
 
 .canvasToolbar button:disabled,
-.canvasInspector button:disabled,
-.compactSelect:disabled {
+.canvasInspector button:disabled {
   cursor: default;
   opacity: .42;
 }
@@ -94,8 +91,22 @@
 }
 
 .compactSelect {
+  --field-border: var(--ui-control-border);
+  --field-radius: var(--ui-control-radius);
+  --field-bg: var(--ui-control-bg);
+  --field-color: var(--color-text-secondary);
+  --field-hover-border: var(--fusion-border-accent);
+  --field-hover-bg: var(--ui-control-bg-hover);
+  --field-hover-color: var(--fusion-accent);
+  --field-focus-border: var(--fusion-border-accent);
+  --field-focus-bg: var(--ui-control-bg-hover);
+  --field-focus-color: var(--fusion-accent);
   min-width: 48px;
-  outline: none;
+  min-height: 29px;
+  padding: 0 9px;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
 }
 
 .canvasViewport {
@@ -248,7 +259,6 @@
 .inspectorControls input[type='range'] {
   min-width: 90px;
   width: 100%;
-  accent-color: var(--fusion-accent);
 }
 
 .dangerButton:hover:not(:disabled) {
@@ -270,15 +280,13 @@
 /* ===== 画布工具与检查器跟随统一控件材质 ===== */
 .canvasToolbar button:not(.primaryButton):not(.activeButton),
 .canvasInspector button:not(.primaryButton):not(.activeButton),
-.compactSelect,
 .inspectorControls label {
   border-color: var(--ui-control-border);
   border-radius: var(--ui-control-radius);
   background: var(--ui-control-bg);
 }
 .canvasToolbar button:not(.primaryButton):not(.activeButton):hover:not(:disabled),
-.canvasInspector button:not(.primaryButton):not(.activeButton):hover:not(:disabled),
-.compactSelect:hover:not(:disabled) { background: var(--ui-control-bg-hover); }
+.canvasInspector button:not(.primaryButton):not(.activeButton):hover:not(:disabled) { background: var(--ui-control-bg-hover); }
 .canvasInspector {
   border-color: var(--ui-panel-divider);
   border-radius: var(--ui-panel-inner-radius);

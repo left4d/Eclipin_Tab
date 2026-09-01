@@ -202,7 +202,7 @@ export const NavigationBarEditor = ({ isOpen, config, onClose, onSave }: Navigat
 
                 <label className={styles.field}>
                   <span>{zh ? '名称' : 'Name'}</span>
-                  <input value={getNavigationBarItemLabel(selectedItem, language)} onChange={(event) => updateSelected({ label: event.target.value })} />
+                  <input className="field" value={getNavigationBarItemLabel(selectedItem, language)} onChange={(event) => updateSelected({ label: event.target.value })} />
                 </label>
 
                 <div className={styles.field}>
@@ -240,6 +240,7 @@ export const NavigationBarEditor = ({ isOpen, config, onClose, onSave }: Navigat
                 <label className={styles.field}>
                   <span>{zh ? '跳转语句' : 'Navigation statement'}</span>
                   <input
+                    className="field"
                     value={actionInput}
                     onChange={(event) => { setActionInput(event.target.value); setError(''); }}
                     onBlur={() => { if (actionInput.trim()) commitActionInput(); }}

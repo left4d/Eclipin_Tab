@@ -64,10 +64,10 @@ export const WidgetObjectInspector = ({
   const anchorRect = () => getWidgetRect(widget.id);
 
   const primaryAction = (() => {
-    if (widget.type === 'link') return <button type="button" data-accent="true" onClick={() => onEditLink(widget.id, anchorRect())}>编辑链接</button>;
-    if (widget.type === 'weather') return <button type="button" data-accent="true" onClick={() => onEditWeatherLocation(widget.id, anchorRect())}>天气位置</button>;
-    if (widget.type === 'embed') return <button type="button" data-accent="true" onClick={() => onEditEmbed(widget.id, anchorRect())}>嵌入设置</button>;
-    if (widget.type === 'clock' || widget.type === 'countdown') return <button type="button" data-accent="true" onClick={() => onEditFont(widget.id, anchorRect())}>字体</button>;
+    if (widget.type === 'link') return <button type="button" className="btn btn--sm btn--accent" onClick={() => onEditLink(widget.id, anchorRect())}>编辑链接</button>;
+    if (widget.type === 'weather') return <button type="button" className="btn btn--sm btn--accent" onClick={() => onEditWeatherLocation(widget.id, anchorRect())}>天气位置</button>;
+    if (widget.type === 'embed') return <button type="button" className="btn btn--sm btn--accent" onClick={() => onEditEmbed(widget.id, anchorRect())}>嵌入设置</button>;
+    if (widget.type === 'clock' || widget.type === 'countdown') return <button type="button" className="btn btn--sm btn--accent" onClick={() => onEditFont(widget.id, anchorRect())}>字体</button>;
     return null;
   })();
 
@@ -82,10 +82,10 @@ export const WidgetObjectInspector = ({
       primaryActions={
         <>
           {primaryAction}
-          {widget.type === 'link' && <button type="button" onClick={() => onEditLinkText(widget.id, anchorRect())}>文字样式</button>}
-          <button type="button" onClick={() => onEditSize(widget.id, anchorRect())}>尺寸</button>
-          <button type="button" onClick={() => onEditAnchor(widget.id)}>标签</button>
-          <button type="button" className={styles.widgetInspectorDangerButton} onClick={() => onRemove(widget.id)}>删除</button>
+          {widget.type === 'link' && <button type="button" className="btn btn--sm" onClick={() => onEditLinkText(widget.id, anchorRect())}>文字样式</button>}
+          <button type="button" className="btn btn--sm" onClick={() => onEditSize(widget.id, anchorRect())}>尺寸</button>
+          <button type="button" className="btn btn--sm" onClick={() => onEditAnchor(widget.id)}>标签</button>
+          <button type="button" className="btn btn--sm btn--danger" onClick={() => onRemove(widget.id)}>删除</button>
         </>
       }
     >
@@ -119,7 +119,7 @@ export const WidgetObjectInspector = ({
               <div className={styles.widgetInspectorRow}>
                 <span>字号</span>
                 <input
-                  type="range"
+                  type="range" className="range"
                   min={12}
                   max={48}
                   step={1}
@@ -173,7 +173,7 @@ export const WidgetObjectInspector = ({
           <div className={styles.widgetInspectorRow}>
             <span>优先级</span>
             <input
-              className={styles.widgetInspectorNumberInput}
+              className={`field ${styles.widgetInspectorNumberInput}`}
               type="number"
               min={-999}
               max={999}

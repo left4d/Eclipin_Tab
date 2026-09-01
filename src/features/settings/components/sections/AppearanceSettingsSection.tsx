@@ -109,7 +109,7 @@ export const AppearanceSettingsSection = () => {
         <h2>外观</h2>
         <p>调整主题、背景、纹理和壁纸。</p>
       </div>
-      <div className={styles.settingsCard}>
+      <div className={`card ${styles.settingsCard}`}>
         <div className={styles.cardTitle}>主题</div>
         <div className={styles.iconContainer}>
           <div className={styles.themeGroupContainer}>
@@ -125,11 +125,11 @@ export const AppearanceSettingsSection = () => {
             </button>
           </div>
           <button className={`${styles.defaultTheme} ${isDefaultTheme ? styles.defaultThemeActive : ''}`} onClick={() => handleThemeSelect('default')} title={t.settings.defaultTheme}>
-            <img src={defaultIcon} alt="Default Theme" width={24} height={24} />
+            <img src={defaultIcon} alt="Glass" width={24} height={24} />
           </button>
         </div>
       </div>
-      <div className={styles.settingsCard}>
+      <div className={`card ${styles.settingsCard}`}>
         <div className={styles.paletteCardHeader}>
           <div>
             <div className={styles.cardTitle}>强调色</div>
@@ -145,7 +145,7 @@ export const AppearanceSettingsSection = () => {
               <button
                 key={palette.id}
                 type="button"
-                className={`${styles.paletteOption} ${isActive ? styles.paletteOptionActive : ''}`}
+                className={`card card--interactive ${styles.paletteOption} ${isActive ? styles.paletteOptionActive : ''}`}
                 onClick={() => setAppearancePalette(palette.id)}
                 aria-pressed={isActive}
                 title={language === 'en' ? palette.nameEn : palette.nameZh}
@@ -162,7 +162,7 @@ export const AppearanceSettingsSection = () => {
           })}
         </div>
       </div>
-      <div className={styles.settingsCard}>
+      <div className={`card ${styles.settingsCard}`}>
         <div className={styles.surfaceStyleHeader}>
           <div>
             <div className={styles.cardTitle}>界面材质</div>
@@ -177,7 +177,7 @@ export const AppearanceSettingsSection = () => {
               <button
                 key={option.id}
                 type="button"
-                className={`${styles.surfaceStyleOption} ${isActive ? styles.surfaceStyleOptionActive : ''}`}
+                className={`card card--interactive ${styles.surfaceStyleOption} ${isActive ? styles.surfaceStyleOptionActive : ''}`}
                 onClick={() => setContainerStyle(option.id)}
                 aria-pressed={isActive}
               >
@@ -194,7 +194,7 @@ export const AppearanceSettingsSection = () => {
           })}
         </div>
       </div>
-      <div className={styles.settingsCard}>
+      <div className={`card ${styles.settingsCard}`}>
         <div className={styles.cardTitle}>纹理</div>
         <div className={`${styles.textureSectionWrapper} ${!isDefaultTheme && !wallpaper ? styles.textureSectionWrapperOpen : ''}`}>
           <div className={styles.textureSection}>
@@ -213,7 +213,7 @@ export const AppearanceSettingsSection = () => {
           </div>
         </div>
       </div>
-      <div className={styles.settingsCard}>
+      <div className={`card ${styles.settingsCard}`}>
         <div className={styles.cardTitle}>颜色</div>
         <div className={styles.colorOptionsContainer}>
           {GRADIENT_PRESETS.map((preset) => {
@@ -234,7 +234,7 @@ export const AppearanceSettingsSection = () => {
           })}
         </div>
       </div>
-      <div className={styles.settingsCard}>
+      <div className={`card ${styles.settingsCard}`}>
         <div className={styles.cardTitle}>壁纸</div>
         <div className={styles.wallpaperSection}>
           <WallpaperGallery wallpaperId={wallpaperId} onWallpaperIdChange={setWallpaperId} onWallpaperClear={() => setWallpaper(null)} onWallpaperUpload={uploadWallpaper} />

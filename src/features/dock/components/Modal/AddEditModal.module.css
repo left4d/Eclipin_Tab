@@ -83,34 +83,28 @@
 
 /* 输入框 */
 .input {
-  background: var(--color-bg-secondary);
-  border: none;
-  border-radius: 10px;
+  --field-border: var(--ui-control-border, transparent);
+  --field-radius: var(--ui-control-radius, var(--radius-md));
+  --field-bg: var(--ui-control-bg, var(--color-bg-secondary));
+  --field-color: var(--color-text-primary);
+  --field-placeholder: var(--color-text-secondary);
+  --field-hover-border: var(--ui-control-border, transparent);
+  --field-hover-bg: var(--ui-control-bg, var(--color-bg-secondary));
+  --field-focus-border: var(--ui-control-focus-border, var(--fusion-accent));
+  --field-focus-bg: var(--ui-control-bg-hover, var(--color-bg-tertiary));
+  --field-focus-ring: var(--ui-control-focus-ring, 0 0 0 3px var(--fusion-focus-ring));
   padding: 11px 14px;
   min-height: 42px;
-  box-sizing: border-box;
-  color: var(--color-text-primary);
   font-size: 15px;
-  outline: none;
-  transition: background var(--transition-medium);
-}
-
-/* 输入框焦点状态 */
-.input:focus {
-  background: var(--color-bg-tertiary);
 }
 
 .inputReadOnly,
 .inputReadOnly:focus {
-  background: color-mix(in srgb, var(--color-bg-secondary) 84%, var(--color-text-secondary) 16%);
-  color: var(--color-text-secondary);
+  --field-bg: color-mix(in srgb, var(--color-bg-secondary) 84%, var(--color-text-secondary) 16%);
+  --field-focus-bg: color-mix(in srgb, var(--color-bg-secondary) 84%, var(--color-text-secondary) 16%);
+  --field-color: var(--color-text-secondary);
   cursor: not-allowed;
   opacity: 0.72;
-}
-
-/* 输入框占位符 */
-.input::placeholder {
-  color: var(--color-text-secondary);
 }
 
 /* 图标区域 */
@@ -313,9 +307,6 @@
   .container {
     border-radius: 24px;
   }
-  .input {
-    border-radius: 12px;
-  }
   .iconPreview {
     border-radius: 18px;
   }
@@ -336,11 +327,6 @@
     linear-gradient(145deg, var(--fusion-accent-softer), transparent 62%),
     var(--color-bg-primary) !important;
   box-shadow: var(--fusion-shadow-md);
-}
-
-.input:focus {
-  background: var(--fusion-accent-softer);
-  box-shadow: 0 0 0 3px var(--fusion-focus-ring);
 }
 
 .actionButton:hover,
@@ -400,15 +386,5 @@
   box-shadow: var(--ui-menu-shadow);
   backdrop-filter: blur(var(--ui-menu-blur)) saturate(1.08);
   -webkit-backdrop-filter: blur(var(--ui-menu-blur)) saturate(1.08);
-}
-.input {
-  border: 1px solid var(--ui-control-border);
-  border-radius: var(--ui-control-radius);
-  background: var(--ui-control-bg);
-}
-.input:focus {
-  border-color: var(--ui-control-focus-border);
-  background: var(--ui-control-bg-hover);
-  box-shadow: var(--ui-control-focus-ring);
 }
 .iconPreview { background: var(--ui-control-bg); }

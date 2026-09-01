@@ -81,7 +81,7 @@ export default function VectorIconPickerPage({ purpose = 'dock', onBack, onChoos
       </div>
 
       <div className={styles.layout}>
-        <div className={styles.libraryPanel}>
+        <div className={`card ${styles.libraryPanel}`}>
           <div className={styles.panelTitle}><span>图标库</span><small>{icons.length} 个</small></div>
           {loading ? (
             <div className={styles.empty}>正在读取图标库…</div>
@@ -93,7 +93,8 @@ export default function VectorIconPickerPage({ purpose = 'dock', onBack, onChoos
                 <button
                   type="button"
                   key={icon.id}
-                  className={`${styles.iconCard} ${selected?.id === icon.id ? styles.iconCardActive : ''}`}
+                  className={`card card--interactive ${styles.iconCard}`}
+                  aria-pressed={selected?.id === icon.id}
                   onClick={() => void handleSelect(icon.id)}
                   title={icon.name}
                 >
@@ -105,9 +106,9 @@ export default function VectorIconPickerPage({ purpose = 'dock', onBack, onChoos
           )}
         </div>
 
-        <div className={styles.previewPanel}>
+        <div className={`card ${styles.previewPanel}`}>
           <div className={styles.panelTitle}><span>预览</span><small>{selected?.name ?? '未选择'}</small></div>
-          <div className={styles.previewBox}>
+          <div className={`card ${styles.previewBox}`}>
             {previewSvg ? <div className={styles.previewSvg} dangerouslySetInnerHTML={{ __html: previewSvg }} aria-label={selected?.name ?? 'SVG 图标'} /> : <span>选择一个 SVG 图标</span>}
           </div>
 
@@ -116,7 +117,7 @@ export default function VectorIconPickerPage({ purpose = 'dock', onBack, onChoos
           <label className={styles.rotationControl}>
             <div><span>旋转角度</span><strong>{normalizeVectorRotation(rotation)}°</strong></div>
             <input
-              type="range"
+              type="range" className="range"
               min="-180"
               max="180"
               step="1"

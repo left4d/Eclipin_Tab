@@ -50,18 +50,20 @@
 
 .libraryPanel,
 .previewPanel {
+  --card-border: 1px solid var(--color-border-subtle);
+  --card-radius: var(--radius-md);
+  --card-bg: color-mix(in srgb, var(--color-bg-secondary) 86%, transparent);
+  --card-shadow: none;
+  --card-overflow: visible;
   min-width: 0;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 14px;
   padding: 12px;
-  background: color-mix(in srgb, var(--color-bg-secondary) 86%, transparent);
 }
 
 .libraryPanel {
   display: flex;
   min-height: 390px;
   flex-direction: column;
-  overflow: hidden;
+  --card-overflow: hidden;
 }
 
 .previewPanel {
@@ -92,19 +94,22 @@
 }
 
 .iconCard {
+  --card-border: 1px solid var(--color-border-subtle);
+  --card-radius: var(--radius-md);
+  --card-bg: var(--color-bg-primary);
+  --card-shadow: none;
+  --card-overflow: visible;
+  --card-hover-border: var(--color-border);
+  --card-selected-border: var(--fusion-accent);
+  --card-selected-bg: var(--fusion-accent-softer);
+  --card-selected-shadow: 0 0 0 2px var(--fusion-focus-ring);
+  --card-focus-ring: var(--fusion-focus-ring);
   min-width: 0;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 11px;
   padding: 8px;
-  background: var(--color-bg-primary);
   color: var(--color-text-secondary);
-  cursor: pointer;
   font: inherit;
-  transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
 }
 
-.iconCard:hover { transform: translateY(-1px); border-color: var(--color-border); }
-.iconCardActive { border-color: var(--fusion-accent); background: var(--fusion-accent-softer); box-shadow: 0 0 0 2px var(--fusion-focus-ring); }
 .iconCard > span { display: block; overflow: hidden; margin-top: 6px; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 
 .thumbnail {
@@ -135,13 +140,14 @@
 .empty strong { color: var(--color-text-secondary); font-size: 12px; }
 
 .previewBox {
+  --card-border: 1px solid var(--color-border-subtle);
+  --card-radius: var(--radius-md);
+  --card-bg: var(--color-bg-primary);
+  --card-shadow: none;
+  --card-overflow: hidden;
   display: grid;
   min-height: 190px;
   place-items: center;
-  overflow: hidden;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 12px;
-  background: var(--color-bg-primary);
 }
 .previewSvg { display: grid; width: 128px; height: 128px; place-items: center; }
 .previewSvg svg { display: block; width: 100%; height: 100%; }
@@ -225,7 +231,7 @@
 .rotationControl { display: flex; flex-direction: column; gap: 7px; }
 .rotationControl > div { display: flex; align-items: center; justify-content: space-between; color: var(--color-text-secondary); font-size: 10px; }
 .rotationControl strong { color: var(--fusion-accent); font-size: 10px; }
-.rotationControl input { width: 100%; accent-color: var(--fusion-accent); }
+.rotationControl input { width: 100%; }
 .rotationControl input:disabled { opacity: .45; }
 
 .quickAngles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }

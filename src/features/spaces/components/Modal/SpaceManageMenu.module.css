@@ -50,43 +50,16 @@
 
 /* 菜单项 */
 .menuItem {
-    background: none;
-    border: none;
-    padding: var(--spacing-padding-small);
+    --menu-item-gap: var(--spacing-gap-small);
+    --menu-item-padding: var(--spacing-padding-small);
+    --menu-item-radius: var(--ui-menu-item-radius);
+    --menu-item-color: var(--context-menu-text);
+    --menu-item-font-size: var(--font-size-medium);
+    --menu-item-hover-bg: var(--context-menu-hover);
+    --menu-item-active-bg: var(--context-menu-active);
     font-family: var(--font-family);
-    font-weight: var(--font-weight-medium);
-    font-size: var(--font-size-medium);
     line-height: var(--line-height-none);
-    color: var(--color-text-primary);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-gap-small);
-    text-align: left;
-    white-space: nowrap;
-    transition: opacity var(--transition-medium);
     opacity: 1;
-    margin: 0;
-    border-radius: 8px;
-}
-
-.menuItem:hover {
-    background: var(--color-bg-secondary);
-}
-
-.menuItem:active {
-    background: var(--color-bg-tertiary);
-    transform: scale(0.99);
-    transition: background var(--transition-instant), transform var(--transition-instant);
-}
-
-/* 危险操作 (删除) */
-.menuItem.danger {
-    color: #ff6b6b;
-}
-
-.menuItem.danger:hover {
-    background: rgba(255, 107, 107, 0.1);
 }
 
 /* 禁用状态 */
@@ -112,8 +85,13 @@
 }
 
 /* 危险操作图标 - 红色 */
+.danger {
+    --menu-item-color: var(--color-danger);
+    --menu-item-hover-bg: color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
 .danger .icon {
-    background-color: #ff6b6b;
+    background-color: var(--color-danger);
 }
 
 /* Emoji 图标样式 */
@@ -155,102 +133,41 @@
 
 /* 重命名输入框 */
 .renameInput {
+    --field-border: var(--ui-control-border);
+    --field-radius: var(--ui-control-radius);
+    --field-bg: var(--ui-control-bg);
+    --field-color: var(--color-text-primary);
+    --field-placeholder: var(--color-text-secondary);
+    --field-hover-border: var(--ui-control-border);
+    --field-focus-border: var(--ui-control-focus-border);
+    --field-focus-bg: var(--ui-control-bg-hover);
+    --field-focus-ring: var(--ui-control-focus-ring);
     flex: 1;
     padding: var(--spacing-padding-small);
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-small);
-    color: var(--color-text-primary);
     font-family: var(--font-family);
     font-size: var(--font-size-medium);
     font-weight: var(--font-weight-medium);
-    outline: none;
-    transition: border-color var(--transition-medium), background var(--transition-medium);
-    box-sizing: border-box;
-}
-
-.renameInput:focus {
-    background: var(--color-bg-tertiary);
-    border-color: var(--ui-control-focus-border);
-}
-
-.renameInput::placeholder {
-    color: var(--color-text-secondary);
 }
 
 /* 确认按钮 */
 .confirmButton {
+    --btn-border: var(--ui-control-border);
+    --btn-radius: var(--ui-control-radius);
+    --btn-bg: var(--ui-control-bg);
+    --btn-color: var(--color-text-primary);
+    --btn-hover-border: var(--fusion-border-accent);
+    --btn-hover-bg: var(--ui-control-bg-hover);
+    --btn-hover-color: var(--fusion-accent);
+    --btn-active-bg: var(--color-bg-primary);
+    --btn-active-transform: scale(0.98);
     padding: var(--spacing-padding-small);
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-small);
-    color: var(--color-text-primary);
     font-family: var(--font-family);
     font-size: var(--font-size-medium);
     font-weight: var(--font-weight-medium);
-    cursor: pointer;
-    transition: background var(--transition-medium), opacity var(--transition-medium);
     white-space: nowrap;
-}
-
-.confirmButton:hover {
-    background: var(--color-bg-tertiary);
-}
-
-.confirmButton:active {
-    background: var(--color-bg-primary);
-    transform: scale(0.98);
-    transition: background var(--transition-instant), transform var(--transition-instant);
-}
-
-.confirmButton:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-/* @supports: superellipse(1.5) 浏览器使用放大圆角 */
-@supports (corner-shape: superellipse(1.5)) {
-  .menuItem {
-    border-radius: 12px;
-  }
-}
-/* Web × Pegboard 菜单强调色 */
-.menuItem:hover {
-    background: var(--fusion-accent-softer);
-}
-
-.renameInput:focus {
-    border-color: var(--fusion-accent);
-    box-shadow: 0 0 0 3px var(--fusion-focus-ring);
-}
-
-.confirmButton:hover {
-    border-color: var(--fusion-border-accent);
-    background: var(--fusion-accent-soft);
-    color: var(--fusion-accent);
 }
 
 /* ===== 菜单项统一交互色 ===== */
 .divider::after { background: var(--context-menu-border); }
-.menuItem { color: var(--context-menu-text); }
-.menuItem:hover { background: var(--context-menu-hover); }
-.menuItem:active { background: var(--context-menu-active); }
 .label { color: var(--context-menu-muted); opacity: 1; }
-.renameInput {
-    border-color: var(--ui-control-border);
-    border-radius: var(--ui-control-radius);
-    background: var(--ui-control-bg);
-}
-.renameInput:focus {
-    border-color: var(--ui-control-focus-border);
-    background: var(--ui-control-bg-hover);
-    box-shadow: var(--ui-control-focus-ring);
-}
-.confirmButton {
-    border-color: var(--ui-control-border);
-    border-radius: var(--ui-control-radius);
-    background: var(--ui-control-bg);
-}
-.confirmButton:hover { background: var(--ui-control-bg-hover); }
 .menu { border-radius: var(--ui-menu-radius); }
-.menuItem { border-radius: var(--ui-menu-item-radius); }

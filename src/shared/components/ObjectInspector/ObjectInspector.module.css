@@ -68,21 +68,18 @@
 }
 
 .closeButton {
-  flex: 0 0 auto;
+  --icon-btn-border: transparent;
+  --icon-btn-radius: var(--radius-sm);
+  --icon-btn-bg: var(--ui-control-bg, var(--color-bg-tertiary));
+  --icon-btn-hover-bg: var(--ui-control-bg-hover, var(--color-bg-tertiary));
+  --icon-btn-color: var(--color-text-secondary);
+  --icon-btn-hover-color: var(--color-text-primary);
+  --icon-btn-active-bg: var(--ui-control-bg-hover, var(--color-bg-tertiary));
+  --icon-btn-active-transform: none;
   width: 28px;
   height: 28px;
-  border: 0;
-  border-radius: 9px;
-  background: var(--ui-control-bg, var(--color-bg-tertiary));
-  color: var(--color-text-secondary);
-  cursor: pointer;
   font-size: 18px;
   line-height: 1;
-}
-
-.closeButton:hover {
-  background: var(--ui-control-bg-hover, var(--color-bg-tertiary));
-  color: var(--color-text-primary);
 }
 
 .primaryActions {
@@ -95,61 +92,25 @@
   align-self: start;
 }
 
-.primaryActions > button {
-  min-height: 30px;
-  padding: 0 10px;
-  border: 1px solid var(--ui-control-border, var(--color-border));
-  border-radius: 9px;
-  background: var(--ui-control-bg, var(--color-bg-tertiary));
-  color: var(--color-text-primary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 750;
-}
-
-.primaryActions > button:hover {
-  background: var(--ui-control-bg-hover, var(--color-bg-tertiary));
-  border-color: color-mix(in srgb, var(--fusion-accent) 35%, var(--ui-control-border, var(--color-border)));
-}
-
-.primaryActions > button[data-accent="true"] {
-  border-color: color-mix(in srgb, var(--fusion-accent) 34%, transparent);
-  background: color-mix(in srgb, var(--fusion-accent) 13%, var(--ui-control-bg, var(--color-bg-tertiary)));
-  color: var(--fusion-accent);
-}
+/* 主操作按钮改用 brand-recipes 的 .btn / .btn--sm / .btn--accent / .btn--danger */
 
 .sectionTabs {
+  --segmented-border: 0;
+  --segmented-radius: var(--radius-md);
+  --segmented-item-border: 0;
+  --segmented-bg: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+  --segmented-item-selected-bg: var(--ui-control-bg, var(--color-bg-secondary));
+  --segmented-item-selected-color: var(--color-text-primary);
   grid-area: tabs;
   align-self: end;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  padding: 3px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
 }
 
 .sectionTabs button {
   height: 29px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  font: inherit;
   font-size: 11px;
   font-weight: 750;
-}
-
-.sectionTabs button:hover {
-  color: var(--color-text-primary);
-}
-
-.sectionTabs .activeTab {
-  background: var(--ui-control-bg, var(--color-bg-secondary));
-  color: var(--color-text-primary);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.09);
 }
 
 .content {

@@ -1,0 +1,205 @@
+/* ==========================================================================
+ * Design Tokens —— 统一视觉标准（草案 v0.1）
+ * --------------------------------------------------------------------------
+ * 三层结构：
+ *   ① Primitive 层 —— 由 Open Props 提供（灰阶 --gray-*、间距 --size-*、
+ *      圆角 --radius-*、阴影 --shadow-*、缓动 --ease-*、层级 --layer-*、字体 --font-*）
+ *   ② Semantic 层 —— 本文件（品牌语义：颜色 / 圆角 / 阴影 / 字体 / 间距 / 层级 / 动效）
+ *   ③ Brand 层    —— 品牌配方（sticker/badge/button/card），另见 brand-recipes.css（待补）
+ *
+ * 消费规则：
+ *   - 组件只允许引用 ②③ 的语义变量，禁止硬编码十六进制颜色、px 圆角、px 间距等魔法数字。
+ *   - Primitive 层（--gray-* / --size-* 等）仅供 Semantic 层与极少数一次性场景使用。
+ *
+ * 用法：
+ *   - 先加载 Open Props（二选一，见 README）：
+ *       无构建（snapwrite）：<link rel="stylesheet" href="open-props.min.css">
+ *       Vite（Eclipin）：    npm i open-props 后，在入口 CSS 写 @import "open-props";
+ *   - 再加载本文件。
+ *   - 本文件对 Open Props 的引用均带 fallback，单独加载本文件也不会崩。
+ * ========================================================================== */
+
+/* ==========================================================================
+ * ② Semantic 层 —— 亮色主题
+ * ========================================================================== */
+:root {
+  /* ---------- 颜色：表面（bg / surface） ---------- */
+  --color-bg: #E8E8ED;                 /* 页面底色：中性灰 gray-200（去绿调） */
+  --color-bg-rgb: 232 232 237;
+  --color-surface: #ffffff;            /* 卡片/面板主表面 */
+  --color-surface-rgb: 255 255 255;
+  --color-surface-muted: #f6f6f7;      /* 次级表面（纯灰） */
+  --color-surface-raised: #e0e2e6;     /* 悬浮/抬升表面（纯灰，有对比层次） */
+  --color-sidebar: #eef0f3;            /* 侧栏（纯灰） */
+  --color-input-bg: #fafafa;           /* 输入框底（纯灰） */
+
+  /* ---------- 颜色：文字 ---------- */
+  --color-text: #20262f;               /* 主文字 */
+  --color-text-rgb: 32 38 47;
+  --color-text-muted: #667085;         /* 次级文字（Untitled gray-500） */
+  --color-text-subtle: #98a2b3;        /* 弱文字（Untitled gray-400） */
+
+  /* ---------- 颜色：描边 ---------- */
+  --color-border: rgb(32 38 47 / 0.10);
+  --color-border-strong: rgb(32 38 47 / 0.17);
+
+  /* ---------- 颜色：强调（brand accent = sage 绿） ---------- */
+  --color-accent: #78916c;
+  --color-accent-rgb: 120 145 108;
+  --color-accent-hover: #687f5e;
+  --color-accent-soft: rgb(120 145 108 / 0.16);
+  --color-accent-softer: rgb(120 145 108 / 0.09);
+
+  /* SnapWrite palette reference: restrained sage surfaces and neutral ink.
+   * Brand consumers may override these semantic values without changing recipes. */
+  --palette-snapwrite-sage: #78916c;
+  --palette-snapwrite-sage-hover: #687f5e;
+  --palette-snapwrite-sage-soft: rgb(120 145 108 / 0.16);
+  --palette-snapwrite-sage-softer: rgb(120 145 108 / 0.09);
+  --palette-snapwrite-ink: #20262f;
+  --palette-snapwrite-canvas: #f4f6f2;
+  --palette-snapwrite-surface: #ffffff;
+  --palette-snapwrite-surface-muted: #f7f8f6;
+  --color-on-accent: #ffffff;          /* accent 之上的文字 */
+  --color-focus-ring: rgb(120 145 108 / 0.34);
+
+  /* ---------- 颜色：语义状态（iOS 系，已确认） ---------- */
+  --color-danger: #ff3b30;
+  --color-success: #34c759;
+  --color-warning: #ff9500;
+  --color-info: #0a84ff;
+
+  /* ---------- 颜色：其它 ---------- */
+  --color-overlay: rgb(16 24 40 / 0.45);   /* 遮罩（Untitled gray-900 的 45%） */
+  --color-scrollbar: #c7c9ce;
+  --color-code-bg: #eef0f2;
+
+  /* ---------- 圆角（品牌尺度：合并 snapwrite 8/12/16 与 Eclipin 4/…/24） ---------- */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-round: 999px;
+
+  /* ---------- 阴影（品牌轻阴影，替代 Open Props 较重的 --shadow-*） ---------- */
+  --shadow-sm: 0 1px 2px rgb(26 34 45 / 0.05), 0 4px 14px rgb(26 34 45 / 0.04);
+  --shadow-md: 0 8px 28px rgb(26 34 45 / 0.08);
+  --shadow-lg: 0 24px 60px rgb(26 34 45 / 0.18);
+
+  /* ---------- 字体族（本地系统字体栈；后续接 Open Props 时可由其 primitive 提供） ---------- */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto,
+             "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-display: "Bricolage Grotesque", var(--font-sans);   /* Eclipin 品牌字体 */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* ---------- 字号（品牌尺度） ---------- */
+  --text-xs: 10px;
+  --text-sm: 12px;
+  --text-base: 13px;                   /* 正文，你项目里用得最多的档 */
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+
+  /* ---------- 字重（引用 Open Props） ---------- */
+  --font-weight-regular: var(--font-weight-4, 400);
+  --font-weight-medium: var(--font-weight-5, 500);
+  --font-weight-semibold: var(--font-weight-6, 600);
+  --font-weight-bold: var(--font-weight-7, 700);
+
+  /* ---------- 间距（4px 基准；品牌补了 Open Props 缺的 12px 档） ---------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ---------- 层级（引用 Open Props --layer-*） ---------- */
+  --z-base: var(--layer-1, 1);
+  --z-dropdown: var(--layer-3, 3);
+  --z-overlay: var(--layer-4, 4);
+  --z-modal: var(--layer-5, 5);
+  --z-max: var(--layer-important, 2147483647);
+
+  /* ---------- 动效（时长自定，缓动引用 Open Props） ---------- */
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --ease-standard: var(--ease-3, cubic-bezier(.25, 0, .3, 1));
+  --ease-out: var(--ease-out-3, cubic-bezier(0, 0, .3, 1));
+  --ease-spring: var(--ease-spring-3, linear(0, .25, .5, .75, 1));
+
+  /* ---------- 玻璃 / 遮罩材质（overlay + 大面板） ----------
+   * 语义层提供“可读性优先”的玻璃材质：面板表面带最低不透明度，
+   * 保证渐变/壁纸背景透出后文字仍可读；外层 chrome 可另行覆写更透明的值。 */
+  --overlay-bg: var(--color-overlay);             /* 全屏遮罩 tint */
+  --overlay-blur: 14px;
+  --overlay-saturate: 108%;
+  --glass-panel-bg: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  --glass-panel-blur: 24px;
+  --glass-panel-border: var(--color-border);
+  --glass-panel-radius: var(--radius-lg);
+  --glass-panel-shadow: var(--shadow-lg);
+}
+
+/* ==========================================================================
+ * ② Semantic 层 —— 暗色主题（纯灰中性，去绿调）
+ * ========================================================================== */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg: #1c1c1e;
+  --color-bg-rgb: 28 28 30;
+  --color-surface: #2c2c2e;
+  --color-surface-rgb: 44 44 46;
+  --color-surface-muted: #2c2c2e;
+  --color-surface-raised: #3a3a3c;
+  --color-sidebar: #1e1e20;
+  --color-input-bg: #262629;
+
+  --color-text: #f5f5f7;
+  --color-text-rgb: 245 245 247;
+  --color-text-muted: #98989d;
+  --color-text-subtle: #6e6e73;
+
+  --color-border: rgb(255 255 255 / 0.10);
+  --color-border-strong: rgb(255 255 255 / 0.16);
+
+  --color-accent: #91ad82;
+  --color-accent-rgb: 145 173 130;
+  --color-accent-hover: #9fb98f;
+  --color-accent-soft: rgb(145 173 130 / 0.16);
+  --color-accent-softer: rgb(145 173 130 / 0.09);
+  --color-on-accent: #111711;
+  --color-focus-ring: rgb(145 173 130 / 0.34);
+
+  --color-danger: #ff3b30;
+  --color-success: #34c759;
+  --color-warning: #ff9500;
+  --color-info: #0a84ff;
+
+  --color-overlay: rgb(0 0 0 / 0.5);
+  --color-scrollbar: #3a3a3c;
+  --color-code-bg: #26282a;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.18), 0 10px 28px rgb(0 0 0 / 0.28);
+  --shadow-md: 0 18px 48px rgb(0 0 0 / 0.38);
+  --shadow-lg: 0 30px 86px rgb(0 0 0 / 0.5);
+}
+
+/* ==========================================================================
+ * 附：Primitive 层可选引用（仅说明，实际值由 Open Props 注入）
+ * --------------------------------------------------------------------------
+ * 中性灰阶（用于需要灰度微调时）：--gray-0 … --gray-15（OKLCH，感知均匀）
+ * 色相阶（未来扩展成功/警告/品牌变体时用）：--red-* --green-* --sand-* 等 0…15
+ * 间距（粗刻度备用）：--size-1 … --size-15 / --size-px-1 … --size-px-15
+ * 内阴影（凹陷控件）：--inner-shadow-0 … --inner-shadow-4
+ * 更多缓动：--ease-1…5 / --ease-in-* / --ease-out-* / --ease-spring-* / --ease-squish-*
+ * ========================================================================== */

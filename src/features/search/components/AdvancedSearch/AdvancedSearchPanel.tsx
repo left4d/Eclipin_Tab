@@ -237,7 +237,7 @@ export const AdvancedSearchPanel = ({
               <span>先选择搜索位置，再为当前平台添加专属条件</span>
             </div>
           </div>
-          <button type="button" className={styles.closeButton} onClick={onClose} aria-label="关闭高级搜索">×</button>
+          <button type="button" className={`icon-btn icon-btn--ghost ${styles.closeButton}`} onClick={onClose} aria-label="关闭高级搜索">×</button>
         </header>
 
         <div className={styles.panelBody}>
@@ -410,11 +410,12 @@ export const AdvancedSearchPanel = ({
                   <div className={styles.filterEditor}>
                     <div className={styles.editorHeading}>
                       <div><strong>{editingDefinition.label}</strong><span>{editingDefinition.description}</span></div>
-                      <button type="button" onClick={() => setEditingFilter(null)} aria-label="关闭条件编辑">×</button>
+                      <button type="button" className="icon-btn icon-btn--ghost" onClick={() => setEditingFilter(null)} aria-label="关闭条件编辑">×</button>
                     </div>
 
                     {editingDefinition.kind === 'text' && (
                       <input
+                        className="field"
                         value={typeof draftValue === 'string' ? draftValue : ''}
                         onChange={(event) => setDraftValue(event.target.value)}
                         placeholder={editingDefinition.placeholder}
@@ -424,6 +425,7 @@ export const AdvancedSearchPanel = ({
 
                     {editingDefinition.kind === 'select' && (
                       <select
+                        className="field"
                         value={typeof draftValue === 'string' ? draftValue : ''}
                         onChange={(event) => setDraftValue(event.target.value)}
                         autoFocus
@@ -437,6 +439,7 @@ export const AdvancedSearchPanel = ({
                         <label>
                           <span>从</span>
                           <input
+                            className="field"
                             type="date"
                             value={typeof draftValue === 'object' ? draftValue.from : ''}
                             onChange={(event) => setDraftValue({
@@ -449,6 +452,7 @@ export const AdvancedSearchPanel = ({
                         <label>
                           <span>到</span>
                           <input
+                            className="field"
                             type="date"
                             value={typeof draftValue === 'object' ? draftValue.to : ''}
                             onChange={(event) => setDraftValue({
@@ -481,6 +485,7 @@ export const AdvancedSearchPanel = ({
                   )}
                 </div>
                 <textarea
+                  className="field"
                   value={finalQuery}
                   onChange={(event) => setManualQueries((current) => ({ ...current, [target]: event.target.value }))}
                   onKeyDown={(event) => {

@@ -95,7 +95,7 @@ export const SettingsModal = ({ isOpen, onClose, currentPage = 0 }: SettingsModa
     if (activeSection === 'widgets') return <WidgetsSettingsSection controller={widgetController} />;
     if (activeSection === 'vectors') {
       return (
-        <Suspense fallback={<section className={styles.settingsSection}><div className={styles.settingsCard}>正在加载矢量图标工作台…</div></section>}>
+        <Suspense fallback={<section className={styles.settingsSection}><div className={`card ${styles.settingsCard}`}>正在加载矢量图标工作台…</div></section>}>
           <VectorIconStudio />
         </Suspense>
       );

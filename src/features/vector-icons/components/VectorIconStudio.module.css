@@ -46,7 +46,14 @@
 .importCard,
 .editorCard,
 .libraryCard,
-.canvasCard,
+.canvasCard {
+  --card-border: 1px solid var(--ui-panel-divider);
+  --card-radius: var(--radius-default-in);
+  --card-bg: var(--ui-panel-card-bg);
+  --card-shadow: none;
+  --card-overflow: visible;
+}
+
 .runtimeNote {
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-default-in);
@@ -173,24 +180,18 @@
 }
 
 .codeImportRow textarea {
+  --field-border: var(--ui-control-border);
+  --field-radius: var(--ui-control-radius);
+  --field-bg: var(--ui-control-bg);
+  --field-color: var(--color-text-primary);
+  --field-hover-border: var(--ui-control-border);
+  --field-focus-border: var(--fusion-accent);
+  --field-focus-ring: 0 0 0 3px var(--fusion-focus-ring);
   width: 100%;
   height: 72px;
   resize: vertical;
-  box-sizing: border-box;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 11px;
   padding: 10px 11px;
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
   font: 10px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  outline: none;
-}
-
-.codeImportRow textarea:focus,
-.editorControls input:focus,
-.editorControls select:focus {
-  border-color: var(--fusion-accent);
-  box-shadow: 0 0 0 3px var(--fusion-focus-ring);
 }
 
 .codeImportRow button {
@@ -273,17 +274,17 @@
 .editorControls input:not([type]),
 .editorControls select,
 .nameField input {
+  --field-border: var(--ui-control-border);
+  --field-radius: var(--ui-control-radius);
+  --field-bg: var(--ui-control-bg);
+  --field-color: var(--color-text-primary);
+  --field-hover-border: var(--ui-control-border);
+  --field-focus-border: var(--fusion-accent);
+  --field-focus-ring: 0 0 0 3px var(--fusion-focus-ring);
   width: 100%;
   min-height: 32px;
-  box-sizing: border-box;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 9px;
   padding: 0 9px;
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-  font: inherit;
   font-size: 10px;
-  outline: none;
 }
 
 .editorControls select {
@@ -293,7 +294,6 @@
 .editorControls input[type='range'],
 .canvasInspector input[type='range'] {
   width: 100%;
-  accent-color: var(--fusion-accent);
 }
 
 .colorControl {
@@ -520,10 +520,6 @@
 }
 
 /* ===== 图标工作台跟随统一界面材质 ===== */
-.importCard,
-.editorCard,
-.libraryCard,
-.canvasCard,
 .runtimeNote {
   border-color: var(--ui-panel-divider);
   background: var(--ui-panel-card-bg);
@@ -535,16 +531,7 @@
 .canvasToolbar button:not(.primaryButton),
 .canvasInspector button:not(.primaryButton),
 .libraryActions button,
-.editorControls input[type='text'],
-.editorControls input:not([type]),
-.editorControls select,
-.nameField input,
 .colorControl input[type='color'] {
-  border-color: var(--ui-control-border);
-  border-radius: var(--ui-control-radius);
-  background: var(--ui-control-bg);
-}
-.codeImportRow textarea {
   border-color: var(--ui-control-border);
   border-radius: var(--ui-control-radius);
   background: var(--ui-control-bg);

@@ -642,6 +642,11 @@
 }
 
 .deletedWidgetCard {
+    --card-border: 1px solid color-mix(in srgb, var(--color-text-primary) 10%, transparent);
+    --card-radius: var(--radius-medium);
+    --card-bg: color-mix(in srgb, var(--widget-surface-solid, rgba(255,255,255,.9)) 82%, transparent);
+    --card-shadow: none;
+    --card-overflow: visible;
     width: 100%;
     min-height: 82px;
     box-sizing: border-box;
@@ -650,9 +655,6 @@
     gap: 14px;
     padding: 14px 16px;
     margin-bottom: 12px;
-    border: 1px solid color-mix(in srgb, var(--color-text-primary) 10%, transparent);
-    border-radius: var(--radius-medium);
-    background: color-mix(in srgb, var(--widget-surface-solid, rgba(255,255,255,.9)) 82%, transparent);
 }
 
 .deletedWidgetIcon {
@@ -692,23 +694,7 @@
     gap: 8px;
 }
 
-.deletedWidgetActions button {
-    min-height: 36px;
-    padding: 0 13px;
-    border: 1px solid color-mix(in srgb, var(--color-text-primary) 12%, transparent);
-    border-radius: 10px;
-    background: var(--widget-control-surface, rgba(255,255,255,.5));
-    color: var(--color-text-primary);
-    cursor: pointer;
-}
-
-.deletedWidgetActions button:hover {
-    background: var(--widget-control-hover, rgba(255,255,255,.8));
-}
-
-.deletedWidgetActions .deletedWidgetDelete {
-    color: #d74646;
-}
+/* 动作按钮改用 brand-recipes 的 .btn / .btn--primary / .btn--danger */
 
 @media (max-width: 640px) {
     .deletedWidgetCard { align-items: flex-start; flex-wrap: wrap; }

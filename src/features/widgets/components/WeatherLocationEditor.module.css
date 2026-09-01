@@ -43,47 +43,37 @@
 }
 
 .closeButton {
-  display: grid;
+  --icon-btn-border: var(--context-menu-border);
+  --icon-btn-radius: var(--radius-md);
+  --icon-btn-bg: color-mix(in srgb, var(--context-menu-hover) 70%, transparent);
+  --icon-btn-hover-bg: var(--context-menu-hover);
+  --icon-btn-color: var(--context-menu-text);
+  --icon-btn-hover-color: var(--context-menu-text);
+  --icon-btn-active-bg: var(--context-menu-hover);
+  --icon-btn-active-transform: none;
   width: 30px;
   height: 30px;
   flex: 0 0 30px;
-  place-items: center;
-  border: 1px solid var(--context-menu-border);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--context-menu-hover) 70%, transparent);
-  color: var(--context-menu-text);
-  font: inherit;
   font-size: 18px;
-  cursor: pointer;
 }
-.closeButton:hover { background: var(--context-menu-hover); }
 
 .modeSwitch {
+  --segmented-border: 1px solid var(--context-menu-border);
+  --segmented-item-border: 0;
+  --segmented-bg: color-mix(in srgb, var(--context-menu-hover) 52%, transparent);
+  --segmented-item-color: var(--context-menu-muted);
+  --segmented-item-hover-bg: var(--context-menu-hover);
+  --segmented-item-hover-color: var(--context-menu-text);
+  --segmented-item-selected-bg: var(--context-menu-bg);
+  --segmented-item-selected-color: var(--fusion-accent);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-  border: 1px solid var(--context-menu-border);
-  border-radius: 12px;
-  padding: 4px;
-  background: color-mix(in srgb, var(--context-menu-hover) 52%, transparent);
 }
 
 .modeSwitch button {
   min-height: 34px;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--context-menu-muted);
-  font: inherit;
   font-size: 12px;
   font-weight: 800;
-  cursor: pointer;
-}
-.modeSwitch button:hover { background: var(--context-menu-hover); color: var(--context-menu-text); }
-.modeSwitch .activeMode {
-  background: var(--context-menu-bg);
-  color: var(--fusion-accent);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
 }
 
 .currentLocationCard,
@@ -131,20 +121,18 @@
   font-weight: 750;
 }
 .searchField input {
-  box-sizing: border-box;
+  --field-border: var(--context-menu-border);
+  --field-radius: var(--ui-menu-item-radius, var(--radius-md));
+  --field-bg: color-mix(in srgb, var(--context-menu-hover) 52%, transparent);
+  --field-color: var(--context-menu-text);
+  --field-hover-border: var(--context-menu-border);
+  --field-hover-bg: color-mix(in srgb, var(--context-menu-hover) 52%, transparent);
+  --field-focus-border: var(--fusion-accent);
+  --field-focus-bg: color-mix(in srgb, var(--context-menu-hover) 52%, transparent);
+  --field-focus-ring: 0 0 0 2px var(--fusion-focus-ring);
   width: 100%;
   min-height: 38px;
-  border: 1px solid var(--context-menu-border);
-  border-radius: 10px;
   padding: 0 11px;
-  background: color-mix(in srgb, var(--context-menu-hover) 52%, transparent);
-  color: var(--context-menu-text);
-  font: inherit;
-  outline: none;
-}
-.searchField input:focus {
-  border-color: var(--fusion-accent);
-  box-shadow: 0 0 0 2px var(--fusion-focus-ring);
 }
 
 .results {
@@ -176,6 +164,5 @@
 /* ===== 全局菜单几何与控件规范 ===== */
 .editor { border-radius: var(--ui-menu-radius); }
 .closeButton,
-.modeSwitch,
 .input,
 .results { border-radius: var(--ui-menu-item-radius); }

@@ -114,9 +114,11 @@
 }
 
 .settingsCard {
-    background: var(--color-bg-primary);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: 16px;
+    --card-bg: var(--ui-panel-card-bg);
+    --card-border: 1px solid var(--ui-panel-divider);
+    --card-radius: var(--radius-default-in);
+    --card-shadow: var(--shadow-small);
+    --card-overflow: visible;
     padding: 14px;
     display: flex;
     flex-direction: column;
@@ -438,17 +440,26 @@
 
 /* 布局切换组容器 - 类似主题切换器 */
 .layoutToggleGroup {
+    --segmented-gap: 0;
+    --segmented-padding: 0;
+    --segmented-border: 2px solid var(--color-bg-primary);
+    --segmented-radius: var(--radius-sm);
+    --segmented-bg: var(--color-bg-primary);
+    --segmented-item-border: 0;
+    --segmented-item-radius: var(--radius-sm);
+    --segmented-item-bg: transparent;
+    --segmented-item-color: var(--color-text-secondary);
+    --segmented-item-hover-bg: transparent;
+    --segmented-item-hover-color: var(--color-text-primary);
+    --segmented-item-selected-bg: transparent;
+    --segmented-item-selected-color: var(--color-text-primary);
+    --segmented-item-selected-shadow: none;
     display: flex;
     align-items: center;
     position: relative;
-    background: var(--color-bg-primary);
-    border-radius: 8px;
-    border: 2px solid var(--color-bg-primary);
     width: 130px;
     height: 28px;
     isolation: isolate;
-    box-sizing: border-box;
-    /* 去除 line-height，让内部按钮自己控制 */
 }
 
 /* 滑动高亮背景 */
@@ -459,7 +470,7 @@
     bottom: 0;
     width: 50%;
     background: var(--color-bg-tertiary);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     transition: transform var(--transition-smooth);
     z-index: 0;
 }
@@ -467,9 +478,6 @@
 /* 布局切换选项 */
 .layoutToggleOption {
     flex: 1;
-    background: transparent;
-    border: none;
-    border-radius: 6px;
     height: 100%;
     display: flex;
     align-items: center;
@@ -478,25 +486,15 @@
     font-family: var(--font-family);
     font-size: var(--font-size-small);
     font-weight: var(--font-weight-regular);
-    color: var(--color-text-secondary);
     cursor: pointer;
     z-index: 1;
-    transition: color var(--transition-fast);
     white-space: nowrap;
     line-height: 1;
-}
-
-.layoutToggleOption:hover {
-    color: var(--color-text-primary);
 }
 
 .layoutToggleOption:disabled {
     cursor: not-allowed;
     opacity: 0.42;
-}
-
-.layoutToggleOption:disabled:hover {
-    color: var(--color-text-secondary);
 }
 
 .fixButton {
@@ -537,7 +535,6 @@
     gap: 12px;
 }
 
-.widgetOptionCard,
 .spaceWidgetButton {
     border: 1px solid var(--color-border-subtle);
     border-radius: 16px;
@@ -547,6 +544,19 @@
     text-align: left;
     cursor: pointer;
     transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.widgetOptionCard {
+    --card-border: 1px solid var(--color-border-subtle);
+    --card-radius: var(--radius-md);
+    --card-bg: var(--color-bg-primary);
+    --card-shadow: var(--shadow-small);
+    --card-overflow: visible;
+    color: var(--color-text-primary);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .widgetOptionCard {
@@ -906,7 +916,6 @@
     line-height: 1.55;
 }
 
-.settingsCard,
 .layoutSection {
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-default-in);
@@ -1063,9 +1072,6 @@
     gap: 11px;
     min-height: 78px;
     padding: 12px 13px;
-    border-radius: 16px;
-    background: var(--color-bg-primary);
-    box-shadow: var(--shadow-small);
 }
 
 .widgetOptionCard:hover {
@@ -1168,11 +1174,12 @@
 }
 
 .widgetManageCard {
-    border: 1px solid var(--color-border-subtle);
-    border-radius: 16px;
+    --card-border: 1px solid var(--color-border-subtle);
+    --card-radius: var(--radius-md);
+    --card-bg: var(--color-bg-primary);
+    --card-shadow: var(--shadow-small);
+    --card-overflow: visible;
     padding: 14px;
-    background: var(--color-bg-primary);
-    box-shadow: var(--shadow-small);
 }
 
 .widgetManageActions {
@@ -1466,23 +1473,18 @@
 }
 
 .spaceNameField input {
-    box-sizing: border-box;
+    --field-border: var(--ui-control-border);
+    --field-radius: var(--ui-control-radius);
+    --field-bg: var(--ui-control-bg);
+    --field-color: var(--color-text-primary);
+    --field-hover-border: var(--ui-control-border);
+    --field-focus-border: var(--fusion-accent);
+    --field-focus-ring: var(--ui-control-focus-ring);
     width: 100%;
     height: 40px;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: 11px;
     padding: 0 12px;
-    background: var(--color-bg-secondary);
-    color: var(--color-text-primary);
-    font: inherit;
     font-size: 14px;
     font-weight: var(--font-weight-semibold, 600);
-    outline: none;
-}
-
-.spaceNameField input:focus {
-    border-color: var(--fusion-accent);
-    box-shadow: var(--ui-control-focus-ring);
 }
 
 .spaceDockSwitchBlock {
@@ -1692,10 +1694,11 @@
 }
 
 .spaceFolderCard {
-    overflow: hidden;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: 14px;
-    background: color-mix(in srgb, var(--color-bg-secondary) 78%, transparent);
+    --card-border: 1px solid var(--color-border-subtle);
+    --card-radius: var(--radius-md);
+    --card-bg: color-mix(in srgb, var(--color-bg-secondary) 78%, transparent);
+    --card-shadow: none;
+    --card-overflow: hidden;
 }
 
 .spaceFolderHeader {
@@ -1938,15 +1941,17 @@
 }
 
 .paletteOption {
+    --card-border: 1px solid var(--color-border-subtle);
+    --card-radius: var(--radius-md);
+    --card-bg: var(--color-bg-primary);
+    --card-shadow: none;
+    --card-overflow: visible;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) 16px;
     align-items: center;
     gap: 9px;
     min-height: 46px;
     padding: 8px 9px;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: 12px;
-    background: var(--color-bg-primary);
     color: var(--color-text-secondary);
     cursor: pointer;
     text-align: left;
@@ -2024,7 +2029,7 @@
 .surfaceStyleHeader { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
 .surfaceStyleHeader p { margin:5px 0 0; color:var(--color-text-tertiary); font-size:11px; line-height:1.5; }
 .surfaceStyleGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-.surfaceStyleOption { display:grid; grid-template-columns:112px minmax(0,1fr) 18px; align-items:center; gap:12px; min-height:104px; padding:10px; border:1px solid var(--color-border-subtle); border-radius:14px; background:var(--color-bg-primary); color:var(--color-text-secondary); cursor:pointer; text-align:left; transition:transform var(--transition-fast),border-color var(--transition-fast),background var(--transition-fast),box-shadow var(--transition-fast); }
+.surfaceStyleOption { --card-border:1px solid var(--color-border-subtle); --card-radius:var(--radius-md); --card-bg:var(--color-bg-primary); --card-shadow:none; --card-overflow:visible; display:grid; grid-template-columns:112px minmax(0,1fr) 18px; align-items:center; gap:12px; min-height:104px; padding:10px; color:var(--color-text-secondary); cursor:pointer; text-align:left; transition:transform var(--transition-fast),border-color var(--transition-fast),background var(--transition-fast),box-shadow var(--transition-fast); }
 .surfaceStyleOption:hover { transform:translateY(-1px); border-color:var(--fusion-border-accent); background:var(--fusion-accent-softer); }
 .surfaceStyleOptionActive { border-color:var(--fusion-accent); background:var(--fusion-accent-soft); box-shadow:0 0 0 2px var(--fusion-focus-ring),var(--fusion-shadow-sm); }
 .surfacePreview { position:relative; display:flex; width:112px; height:78px; flex-direction:column; justify-content:flex-end; gap:5px; overflow:hidden; border-radius:11px; padding:8px; box-sizing:border-box; background:radial-gradient(circle at 20% 25%,rgba(255,190,130,.88),transparent 32%),radial-gradient(circle at 82% 22%,rgba(100,175,255,.9),transparent 36%),linear-gradient(145deg,#34506f,#172131 66%,#412f3c); }
@@ -2185,7 +2190,6 @@
     background: linear-gradient(180deg, var(--fusion-accent-softer), transparent 34%), var(--ui-panel-card-bg);
 }
 
-.settingsCard,
 .paletteOption,
 .surfaceStyleOption {
     border-color: var(--ui-panel-divider);

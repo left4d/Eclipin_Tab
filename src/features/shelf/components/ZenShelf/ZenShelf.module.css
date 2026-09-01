@@ -74,15 +74,6 @@
         filter 180ms ease;
 }
 
-.stickerInteractionLift:hover {
-    transform: translateY(var(--sticker-hover-lift, -4px));
-    filter: drop-shadow(
-        0
-        var(--sticker-shadow-y, 8px)
-        var(--sticker-shadow-blur, 16px)
-        rgba(0, 0, 0, 0.18)
-    );
-}
 
 .stickerInteractionScale:hover {
     transform: scale(1.06);
@@ -127,7 +118,6 @@
     .stickerInteraction {
         transition: none;
     }
-    .stickerInteractionLift:hover,
     .stickerInteractionScale:hover,
     .stickerInteractionButton:hover,
     .stickerInteractionButton:active {
@@ -356,24 +346,12 @@
 .textSticker {
     padding: var(--spacing-padding-medium) var(--spacing-padding-large);
     background: transparent;
-    font-family: var(--font-family);
-    font-size: 40px;
-    font-weight: 900;
-    /* 紧凑行间距 */
-    line-height: 0.95;
-    /* 紧凑字间距 (0.9 效果) */
-    letter-spacing: -0.05em;
-    white-space: pre;
     min-width: 60px;
     /* Firefox 文本渲染优化 */
     text-rendering: geometricPrecision;
     -moz-text-size-adjust: none;
     -webkit-text-size-adjust: none;
     text-size-adjust: none;
-    /* 描边宽度由贴纸 scale 的倒数补偿，因此贴纸变大后描边仍保持相同视觉像素。
-       stroke 本身居中绘制，使用 2× 宽度并让 fill 覆盖内半边，得到稳定的向外描边。 */
-    -webkit-text-stroke: calc(var(--sticker-stroke-render-width, 6px) + var(--sticker-stroke-render-width, 6px)) var(--color-sticker-stroke);
-    paint-order: stroke fill;
     position: relative;
 }
 
@@ -444,10 +422,6 @@
 .linkCardSticker {
     width: 292px;
     height: 170px;
-    overflow: hidden;
-    border-radius: 14px;
-    background: #FFFFFF;
-    border: 1px solid color-mix(in srgb, var(--color-border) 76%, transparent);
     cursor: grab;
     user-select: none;
     -webkit-user-select: none;
@@ -466,7 +440,7 @@
     height: 92px;
     display: block;
     object-fit: cover;
-    background: #FFFFFF;
+    background: var(--color-surface);
 }
 
 .linkCardContent {
@@ -494,19 +468,11 @@
 }
 
 .linkCardTitle {
-    color: var(--color-text-primary);
-    font-size: 15px;
-    font-weight: 700;
-    line-height: 1.28;
     -webkit-line-clamp: 2;
     line-clamp: 2;
 }
 
 .linkCardSubtitle {
-    color: var(--color-text-secondary);
-    font-size: 11px;
-    font-weight: 500;
-    line-height: 1.35;
     -webkit-line-clamp: 1;
     line-clamp: 1;
 }
@@ -916,6 +882,13 @@
 /* 样式参考 SpaceManageMenu */
 
 .contextMenu {
+    --menu-item-color: var(--context-menu-text);
+    --menu-item-hover-bg: var(--context-menu-hover);
+    --menu-item-active-bg: var(--context-menu-active);
+    --menu-item-radius: var(--ui-menu-item-radius);
+    --menu-item-padding: var(--spacing-padding-small);
+    --menu-item-gap: var(--spacing-gap-small);
+    --menu-item-font-size: var(--font-size-medium);
     position: fixed;
     z-index: 1000000004;
     backdrop-filter: blur(var(--context-menu-blur));
@@ -985,44 +958,10 @@
 
 /* 菜单项 */
 .menuItem {
-    background: none;
-    border: none;
-    padding: var(--spacing-padding-small);
-    font-family: var(--font-family);
-    font-weight: var(--font-weight-medium);
-    font-size: var(--font-size-medium);
-    line-height: var(--line-height-none);
-    color: var(--context-menu-text);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-gap-small);
-    text-align: left;
-    white-space: nowrap;
-    transition: opacity var(--transition-medium), background var(--transition-medium);
-    opacity: 1;
-    margin: 0;
-    border-radius: var(--radius-small);
+    min-width: 0;
 }
 
-.menuItem:hover {
-    background: var(--context-menu-hover);
-}
-
-.menuItem:active {
-    background: var(--context-menu-active);
-    transform: scale(0.99);
-    transition: background var(--transition-instant), transform var(--transition-instant);
-}
-
-/* 危险操作 (删除) */
-.menuItem.danger {
-    color: var(--red-400);
-}
-
-.menuItem.danger:hover {
-    background: rgba(255, 107, 107, 0.1);
-}
+/* 危险操作图标继续复用模块类；文字/hover 由 .menu-item--danger 负责。 */
 
 /* 菜单图标 */
 .menuIcon {
@@ -1039,7 +978,7 @@
 }
 
 .menuItem.danger .menuIcon {
-    background-color: var(--red-400);
+    background-color: var(--color-danger);
 }
 
 .sticker.deleting .stickerVisual {
@@ -1216,6 +1155,7 @@
 }
 
 .toolbarDrawBtn {
+    --icon-btn-pressed-border: transparent;
     width: 36px;
     height: 36px;
     border: none;
@@ -1454,48 +1394,7 @@
     min-width: 174px;
 }
 
-.toolbarCancelBtn {
-    height: 44px;
-    padding: 0 12px;
-    background: var(--color-bg-secondary);
-    border: none;
-    border-radius: var(--radius-default-in);
-    box-shadow: var(--shadow-small);
-    color: var(--color-text-primary);
-    font-family: var(--font-family);
-    font-size: 16px;
-    font-weight: var(--font-weight-medium);
-    cursor: pointer;
-    transition: background var(--transition-medium);
-}
-
-.toolbarCancelBtn:hover {
-    background: var(--color-bg-primary);
-}
-
-.toolbarConfirmBtn {
-    height: 44px;
-    padding: 0 12px;
-    background: var(--fusion-accent);
-    border: none;
-    border-radius: var(--radius-default-in);
-    box-shadow: var(--shadow-small);
-    color: var(--fusion-on-accent);
-    font-family: var(--font-family);
-    font-size: 16px;
-    font-weight: var(--font-weight-medium);
-    cursor: pointer;
-    transition: background var(--transition-medium), opacity var(--transition-medium);
-}
-
-.toolbarConfirmBtn:hover {
-    background: var(--fusion-accent-strong);
-}
-
-.toolbarConfirmBtn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
+/* 操作按钮改用 brand-recipes 的 .btn / .btn--primary */
 
 /* ===== 文本贴纸复选框样式 ===== */
 .textStickerContainer {
@@ -1545,6 +1444,7 @@
 
 /* 工具栏复选框按钮 */
 .toolbarCheckboxBtn {
+    --icon-btn-pressed-border: var(--ui-control-border);
     width: 44px;
     height: 44px;
     flex: 0 0 44px;
@@ -1575,6 +1475,7 @@
 }
 
 .toolbarLinkCardBtn {
+    --icon-btn-pressed-border: var(--ui-control-border);
     width: 44px;
     height: 44px;
     flex: 0 0 44px;
@@ -1728,7 +1629,22 @@
     font-weight: var(--font-weight-medium, 500);
 }
 
-.stickerPriorityInputRow input,
+.stickerPriorityInputRow input {
+    --field-border: var(--ui-control-border);
+    --field-radius: var(--ui-control-radius);
+    --field-bg: var(--ui-control-bg);
+    --field-color: var(--color-text-primary);
+    --field-hover-border: var(--ui-control-border);
+    --field-focus-border: var(--ui-control-focus-border);
+    --field-focus-bg: var(--ui-control-bg-hover);
+    --field-focus-ring: var(--ui-control-focus-ring);
+    width: 100%;
+    height: 38px;
+    padding: 0 11px;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}
+
 .stickerImageLinkInputRow input {
     box-sizing: border-box;
     width: 100%;
@@ -1744,7 +1660,6 @@
     outline: none;
 }
 
-.stickerPriorityInputRow input:focus,
 .stickerImageLinkInputRow input:focus {
     border-color: var(--fusion-accent);
     box-shadow: 0 0 0 3px var(--fusion-focus-ring);
@@ -1757,28 +1672,9 @@
     margin-top: 16px;
 }
 
-.stickerPriorityEditorActions button {
+/* 操作按钮改用 brand-recipes 的 .btn / .btn--primary */
+.stickerPriorityEditorActions :global(.btn) {
     min-width: 68px;
-    height: 34px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-small, 10px);
-    padding: 0 12px;
-    background: var(--color-bg-secondary);
-    color: var(--color-text-primary);
-    font: inherit;
-    font-size: 12px;
-    font-weight: var(--font-weight-medium, 500);
-    cursor: pointer;
-}
-
-.stickerPriorityEditorActions button:hover {
-    filter: brightness(1.04);
-}
-
-.stickerPriorityEditorActions .stickerPrioritySaveButton {
-    border-color: transparent;
-    background: var(--fusion-accent);
-    color: var(--fusion-on-accent);
 }
 
 .stickerPriorityBadge {
@@ -1906,23 +1802,22 @@
 
 .stickerRotationValueRow>input[type='range'] {
     width: 100%;
-    accent-color: var(--fusion-accent);
 }
 
 .stickerRotationValueRow label {
+    --field-border: var(--ui-control-border);
+    --field-radius: var(--ui-control-radius);
+    --field-bg: var(--ui-control-bg);
+    --field-color: var(--color-text-primary);
+    --field-hover-border: var(--ui-control-border);
+    --field-focus-border: var(--ui-control-focus-border);
+    --field-focus-bg: var(--ui-control-bg-hover);
+    --field-focus-ring: var(--ui-control-focus-ring);
     display: grid;
     grid-template-columns: minmax(0, 1fr) 18px;
     align-items: center;
     height: 38px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-small, 10px);
-    background: var(--color-bg-secondary);
     overflow: hidden;
-}
-
-.stickerRotationValueRow label:focus-within {
-    border-color: var(--fusion-accent);
-    box-shadow: 0 0 0 3px var(--fusion-focus-ring);
 }
 
 .stickerRotationValueRow label input {
@@ -1989,9 +1884,6 @@
 
 .drawingStrokeControl input[type="range"] {
     width: 88px;
-    margin: 0;
-    cursor: pointer;
-    accent-color: var(--fusion-accent);
 }
 
 .drawingStrokeControl output {
@@ -2139,8 +2031,9 @@
     align-self: center;
 }
 
-.drawingActionGroup .toolbarCancelBtn {
+.drawingActionGroup :global(.btn) {
     height: 32px;
+    padding: 0 12px;
     font-size: 13px;
 }
 
@@ -2287,6 +2180,13 @@
 }
 
 .submenu {
+    --menu-item-color: var(--context-menu-text);
+    --menu-item-hover-bg: var(--context-menu-hover);
+    --menu-item-active-bg: var(--context-menu-active);
+    --menu-item-radius: var(--ui-menu-item-radius);
+    --menu-item-padding: var(--spacing-padding-small);
+    --menu-item-gap: var(--spacing-gap-small);
+    --menu-item-font-size: var(--font-size-medium);
     position: absolute;
     top: -4px;
     left: calc(100% + 8px);
@@ -2373,27 +2273,21 @@
 }
 
 .textInput,
-.stickerPriorityEditor input,
 .stickerImageLinkEditor input,
-.stickerFontEditor input,
-.stickerRotationEditor input {
+.stickerFontEditor input {
     border-color: var(--ui-control-border);
     background: var(--ui-control-bg);
 }
 
 .textInput:focus,
-.stickerPriorityEditor input:focus,
 .stickerImageLinkEditor input:focus,
-.stickerFontEditor input:focus,
-.stickerRotationEditor input:focus {
+.stickerFontEditor input:focus {
     border-color: var(--ui-control-focus-border);
     background: var(--ui-control-bg-hover);
     box-shadow: var(--ui-control-focus-ring);
 }
 
 .textInputCancel,
-.stickerPriorityEditorActions button:not(.stickerPrioritySaveButton),
-.toolbarCancelBtn,
 .toolbarCheckboxBtn,
 .toolbarLinkCardBtn {
     border-color: var(--ui-control-border);
@@ -2401,8 +2295,6 @@
 }
 
 .textInputCancel:hover,
-.stickerPriorityEditorActions button:not(.stickerPrioritySaveButton):hover,
-.toolbarCancelBtn:hover,
 .toolbarCheckboxBtn:hover,
 .toolbarLinkCardBtn:hover {
     background: var(--ui-control-bg-hover);
@@ -2416,10 +2308,6 @@
 .submenu .menuItem { border-radius: var(--ui-menu-item-radius); }
 
 /* ===== Unified object inspector ===== */
-.objectInspectorDangerButton {
-    color: var(--color-danger, #ff3b30) !important;
-}
-
 .objectInspectorField {
     display: grid;
     gap: 7px;
@@ -2442,7 +2330,6 @@
 
 .objectInspectorRow input[type='range'] {
     width: 100%;
-    accent-color: var(--fusion-accent);
 }
 
 .objectInspectorRow strong {
@@ -2453,23 +2340,18 @@
 }
 
 .objectInspectorNumberInput {
+    --field-border: var(--ui-control-border);
+    --field-radius: var(--ui-control-radius);
+    --field-bg: var(--ui-control-bg);
+    --field-color: var(--color-text-primary);
+    --field-hover-border: var(--ui-control-border);
+    --field-focus-border: var(--ui-control-focus-border);
+    --field-focus-ring: var(--ui-control-focus-ring);
     width: 88px;
     min-width: 0;
     height: 32px;
-    box-sizing: border-box;
     padding: 0 9px;
-    border: 1px solid var(--ui-control-border);
-    border-radius: var(--ui-control-radius);
-    background: var(--ui-control-bg);
-    color: var(--color-text-primary);
-    font: inherit;
     font-size: 12px;
-    outline: none;
-}
-
-.objectInspectorNumberInput:focus {
-    border-color: var(--ui-control-focus-border);
-    box-shadow: var(--ui-control-focus-ring);
 }
 
 .objectInspectorHint {

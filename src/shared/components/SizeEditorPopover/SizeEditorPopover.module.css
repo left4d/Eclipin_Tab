@@ -46,24 +46,21 @@
 }
 
 .sizeRow input {
+  --field-border: var(--context-menu-border);
+  --field-radius: var(--ui-control-radius, var(--radius-sm));
+  --field-bg: color-mix(in srgb, var(--context-menu-hover) 55%, transparent);
+  --field-color: var(--context-menu-text);
+  --field-hover-border: var(--context-menu-border);
+  --field-hover-bg: color-mix(in srgb, var(--context-menu-hover) 55%, transparent);
+  --field-focus-border: color-mix(in srgb, var(--fusion-accent) 68%, var(--context-menu-border));
+  --field-focus-bg: color-mix(in srgb, var(--context-menu-hover) 55%, transparent);
+  --field-focus-ring: 0 0 0 2px var(--fusion-accent-soft);
   width: 100%;
   min-width: 0;
   height: 36px;
-  box-sizing: border-box;
-  border: 1px solid var(--context-menu-border);
-  border-radius: 9px;
   padding: 0 9px;
-  outline: none;
-  background: color-mix(in srgb, var(--context-menu-hover) 55%, transparent);
-  color: var(--context-menu-text);
-  font: inherit;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
-}
-
-.sizeRow input:focus {
-  border-color: color-mix(in srgb, var(--fusion-accent) 68%, var(--context-menu-border));
-  box-shadow: 0 0 0 2px var(--fusion-accent-soft);
 }
 
 .multiply {

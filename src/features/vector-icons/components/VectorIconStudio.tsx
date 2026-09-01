@@ -278,7 +278,7 @@ export default function VectorIconStudio() {
         <span className={styles.memoryBadge}>LAZY · DISPOSABLE</span>
       </div>
 
-      <div className={styles.importCard}>
+      <div className={`card ${styles.importCard}`}>
         <div className={styles.importHeader}>
           <div><strong>导入 SVG</strong><span>支持文件与代码；危险脚本、外链资源和事件属性会在导入时移除。</span></div>
           <div className={styles.importActions}>
@@ -287,24 +287,24 @@ export default function VectorIconStudio() {
           </div>
         </div>
         <div className={styles.codeImportRow}>
-          <textarea value={codeInput} onChange={event => setCodeInput(event.target.value)} placeholder='<svg viewBox="0 0 24 24">…</svg>' spellCheck={false} />
+          <textarea className="field" value={codeInput} onChange={event => setCodeInput(event.target.value)} placeholder='<svg viewBox="0 0 24 24">…</svg>' spellCheck={false} />
           <button type="button" onClick={handleCodeImport} disabled={!codeInput.trim()}>载入代码</button>
         </div>
       </div>
 
       <div className={styles.workspaceGrid}>
-        <div className={styles.editorCard}>
+        <div className={`card ${styles.editorCard}`}>
           <div className={styles.cardHeading}><div><strong>快速编辑</strong><span>颜色、线条粗细和圆角会直接作用到预览。</span></div>{draft && <small>{draft.id ? '已保存图标' : '未保存草稿'}</small>}</div>
           {draft ? (
             <>
               <div className={styles.editorMain}>
                 <div className={styles.editorPreview} dangerouslySetInnerHTML={{ __html: styledSvg }} />
                 <div className={styles.editorControls}>
-                  <label className={styles.nameField}><span>名称</span><input value={draft.name} onChange={event => setDraft(current => current ? { ...current, name: event.target.value } : current)} /></label>
+                  <label className={styles.nameField}><span>名称</span><input className="field" value={draft.name} onChange={event => setDraft(current => current ? { ...current, name: event.target.value } : current)} /></label>
                   <label><span>颜色</span><div className={styles.colorControl}><input type="color" value={styleOptions.color} onChange={event => setStyleOptions(current => ({ ...current, color: event.target.value }))} /><code>{styleOptions.color}</code></div></label>
-                  <label><span>颜色作用</span><select value={styleOptions.paintMode} onChange={event => setStyleOptions(current => ({ ...current, paintMode: event.target.value as VectorStyleOptions['paintMode'] }))}><option value="existing">原有线/面</option><option value="stroke">线条</option><option value="fill">填充</option></select></label>
-                  <label><span>线条粗细 {styleOptions.strokeWidth.toFixed(1)}</span><input type="range" min="0.5" max="12" step="0.5" value={styleOptions.strokeWidth} onChange={event => setStyleOptions(current => ({ ...current, strokeWidth: Number(event.target.value) }))} /></label>
-                  <label><span>圆角 {styleOptions.roundness}</span><input type="range" min="0" max="24" step="1" value={styleOptions.roundness} onChange={event => setStyleOptions(current => ({ ...current, roundness: Number(event.target.value) }))} /></label>
+                  <label><span>颜色作用</span><select className="field" value={styleOptions.paintMode} onChange={event => setStyleOptions(current => ({ ...current, paintMode: event.target.value as VectorStyleOptions['paintMode'] }))}><option value="existing">原有线/面</option><option value="stroke">线条</option><option value="fill">填充</option></select></label>
+                  <label><span>线条粗细 {styleOptions.strokeWidth.toFixed(1)}</span><input type="range" className="range" min="0.5" max="12" step="0.5" value={styleOptions.strokeWidth} onChange={event => setStyleOptions(current => ({ ...current, strokeWidth: Number(event.target.value) }))} /></label>
+                  <label><span>圆角 {styleOptions.roundness}</span><input type="range" className="range" min="0" max="24" step="1" value={styleOptions.roundness} onChange={event => setStyleOptions(current => ({ ...current, roundness: Number(event.target.value) }))} /></label>
                 </div>
               </div>
               <div className={styles.editorActions}><button type="button" onClick={handleCopySvg}>复制 SVG</button><button type="button" onClick={handleAddDraftToCanvas}>加入画布</button><button type="button" className={styles.primaryButton} onClick={handleSaveDraft}>保存图标</button></div>
@@ -312,13 +312,13 @@ export default function VectorIconStudio() {
           ) : <div className={styles.editorEmpty}><strong>选择或导入一个图标</strong><span>编辑器不会预先加载图标内容；点击图标后才从存储读取 SVG。</span></div>}
         </div>
 
-        <div className={styles.libraryCard}>
+        <div className={`card ${styles.libraryCard}`}>
           <div className={styles.cardHeading}><div><strong>图标库</strong><span>{icons.length} 个已保存图标 · 可直接拖到下方画布</span></div></div>
           <VectorIconLibrary icons={icons} selectedId={draft?.id ?? null} loading={libraryLoading} onSelect={handleSelectIcon} onAddToCanvas={id => void handleAddSavedToCanvas(id)} onDelete={id => void handleDelete(id)} />
         </div>
       </div>
 
-      <div className={styles.canvasCard}>
+      <div className={`card ${styles.canvasCard}`}>
         <div className={styles.cardHeading}><div><strong>拼接画布</strong><span>支持框选/多选、自由缩放、旋转、翻转、透明度、图层顺序、对齐分布、网格吸附、缩放视图与撤销重做；保存时自动裁掉外围空白。</span></div><small>{canvasItems.length} 个元素</small></div>
         <VectorCanvas
           items={canvasItems}

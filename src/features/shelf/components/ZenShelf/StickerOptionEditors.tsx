@@ -131,15 +131,16 @@ export const StickerOptionEditors = ({
           <p>拖动滑杆或输入角度，修改会立即保存。</p>
           <div className={styles.stickerRotationValueRow}>
             <input
-              type="range"
+              type="range" className="range"
               min={-180}
               max={180}
               step={1}
               value={rotationDraft}
               onChange={(event) => updateStickerRotation(Number(event.target.value))}
             />
-            <label>
+            <label className="field-shell">
               <input
+                className="field-shell__input"
                 type="number"
                 min={-180}
                 max={180}
@@ -201,6 +202,7 @@ export const StickerOptionEditors = ({
           <label className={styles.stickerPriorityInputRow}>
             <span>优先级</span>
             <input
+              className="field"
               autoFocus
               type="number"
               min={STICKER_PRIORITY_MIN}
@@ -215,8 +217,8 @@ export const StickerOptionEditors = ({
             />
           </label>
           <div className={styles.stickerPriorityEditorActions}>
-            <button type="button" onClick={() => setPriorityEditor(null)}>取消</button>
-            <button type="submit" className={styles.stickerPrioritySaveButton}>保存</button>
+            <button type="button" className="btn" onClick={() => setPriorityEditor(null)}>取消</button>
+            <button type="submit" className="btn btn--primary">保存</button>
           </div>
         </form>
       </div>,
@@ -245,15 +247,16 @@ export const StickerOptionEditors = ({
           <p>控制描边向外扩展的视觉像素。贴纸放大或缩小时，这个边距保持不变，不再跟随尺寸一起变粗。</p>
           <div className={styles.stickerRotationValueRow}>
             <input
-              type="range"
+              type="range" className="range"
               min={1}
               max={20}
               step={1}
               value={strokeDraft}
               onChange={(event) => updateStickerStrokeWidth(Number(event.target.value))}
             />
-            <label>
+            <label className="field-shell">
               <input
+                className="field-shell__input"
                 autoFocus
                 type="number"
                 min={1}
@@ -311,15 +314,16 @@ export const StickerOptionEditors = ({
           <p>控制图片边角的视觉半径。和描边一样，贴纸放大或缩小时圆角不会跟着变粗。</p>
           <div className={styles.stickerRotationValueRow}>
             <input
-              type="range"
+              type="range" className="range"
               min={0}
               max={STICKER_CORNER_RADIUS_MAX}
               step={1}
               value={cornerRadiusDraft}
               onChange={(event) => updateStickerCornerRadius(Number(event.target.value))}
             />
-            <label>
+            <label className="field-shell">
               <input
+                className="field-shell__input"
                 autoFocus
                 type="number"
                 min={0}

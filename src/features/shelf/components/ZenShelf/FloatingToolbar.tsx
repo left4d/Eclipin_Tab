@@ -53,7 +53,7 @@ const FloatingToolbarComponent: React.FC<FloatingToolbarProps> = ({ sticker, sti
                 <button
                     key={option.value}
                     type="button"
-                    className={`${styles.alignButton} ${currentAlign === option.value ? styles.active : ''}`}
+                    className={`icon-btn icon-btn--ghost ${styles.alignButton} ${currentAlign === option.value ? styles.active : ''}`}
                     onClick={() => onStyleChange({ textAlign: option.value })}
                     title={option.label}
                     aria-label={option.label}

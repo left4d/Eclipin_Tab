@@ -470,7 +470,7 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
     const cornerRadius = sticker.type === 'image' ? getStickerCornerRadius(sticker) : 0;
     const interactionEffect = getStickerInteractionEffect(sticker);
     const interactionClassName = interactionEffect === 'lift'
-        ? styles.stickerInteractionLift
+        ? 'sticker--lift'
         : interactionEffect === 'scale'
             ? styles.stickerInteractionScale
             : interactionEffect === 'button'
@@ -507,7 +507,7 @@ const StickerItemComponent: React.FC<StickerItemProps> = ({
                 onMouseDown={handleMouseDown}
                 onDoubleClick={handleDoubleClick}
             >
-                <div className={`${styles.stickerInteraction} ${interactionClassName}`.trim()}>
+                <div className={`${styles.stickerInteraction} sticker ${interactionClassName}`.trim()}>
                     <div
                         ref={visualRef}
                         className={styles.stickerVisual}

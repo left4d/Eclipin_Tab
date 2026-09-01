@@ -36,7 +36,7 @@ export const BookmarkPermissionCard = () => {
   };
 
   return (
-    <div className={styles.apiPermissionCard}>
+    <div className={`card ${styles.apiPermissionCard}`}>
       <div>
         <strong>Chrome 书签同步</strong>
         <span>{available ? (granted ? '已授权，书签小组件可同步浏览器书签。' : '需要授权 bookmarks 权限后同步。') : '当前不是扩展环境，无法读取浏览器书签。'}</span>

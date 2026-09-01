@@ -57,7 +57,7 @@ export const AddWidgetPage = ({ isOpen, currentPage, onClose }: AddWidgetPagePro
             <h1>添加组件</h1>
             <p>选择一个组件，它会直接添加到目标页面。可以连续添加多个。</p>
           </div>
-          <button type="button" className={styles.closeButton} onClick={onClose} aria-label="关闭添加组件页面" title="关闭">×</button>
+          <button type="button" className={`icon-btn ${styles.closeButton}`} onClick={onClose} aria-label="关闭添加组件页面" title="关闭">×</button>
         </header>
 
         <div className={styles.toolbar}>
@@ -91,7 +91,7 @@ export const AddWidgetPage = ({ isOpen, currentPage, onClose }: AddWidgetPagePro
           </div>
           <div className={styles.widgetGrid}>
             {WIDGET_OPTIONS.map((option) => (
-              <button key={option.type} type="button" className={styles.widgetCard} onClick={() => addWidget(option.type)}>
+              <button key={option.type} type="button" className={`card card--interactive ${styles.widgetCard}`} onClick={() => addWidget(option.type)}>
                 <span className={styles.widgetIcon}>{option.icon}</span>
                 <span className={styles.widgetCopy}>
                   <strong>{option.title}</strong>
@@ -118,7 +118,7 @@ export const AddWidgetPage = ({ isOpen, currentPage, onClose }: AddWidgetPagePro
                     <button
                       key={space.id}
                       type="button"
-                      className={`${styles.spaceCard} ${existingWidget ? styles.spaceCardAdded : ''}`}
+                      className={`card card--interactive ${styles.spaceCard} ${existingWidget ? styles.spaceCardAdded : ''}`}
                       disabled={Boolean(existingWidget)}
                       onClick={() => !existingWidget && addWidget('space', space.id)}
                     >

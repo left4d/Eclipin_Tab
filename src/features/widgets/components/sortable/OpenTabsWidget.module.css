@@ -52,21 +52,20 @@
 }
 
 .spaceSelect {
+  --field-border: var(--widget-border-subtle);
+  --field-radius: var(--radius-sm);
+  --field-bg: var(--widget-control-surface);
+  --field-color: var(--widget-text-secondary);
+  --field-hover-border: var(--widget-border-subtle);
+  --field-focus-border: var(--widget-accent);
+  --field-focus-ring: 0 0 0 2px var(--fusion-focus-ring);
   min-width: 0;
   max-width: 132px;
   height: 30px;
-  border: 1px solid var(--widget-border-subtle);
-  border-radius: 9px;
   padding: 0 26px 0 9px;
-  background: var(--widget-control-surface);
-  color: var(--widget-text-secondary);
-  font: inherit;
   font-size: 0.72rem;
   font-weight: 750;
-  outline: none;
 }
-
-.spaceSelect:focus { box-shadow: 0 0 0 2px var(--fusion-focus-ring); }
 
 .iconButton,
 .addButton,
@@ -86,6 +85,13 @@
 }
 
 .iconButton {
+  --icon-btn-border: transparent;
+  --icon-btn-bg: var(--widget-control-surface);
+  --icon-btn-hover-bg: var(--widget-control-hover);
+  --icon-btn-color: var(--widget-text-secondary);
+  --icon-btn-hover-color: var(--widget-text-secondary);
+  --icon-btn-active-bg: var(--widget-control-hover);
+  --icon-btn-active-transform: translateY(-1px);
   flex: 0 0 auto;
   width: 30px;
   height: 30px;
@@ -113,43 +119,35 @@
 }
 
 .viewTabs {
+  --tabs-gap: var(--space-1);
+  --tabs-padding: 3px;
+  --tabs-border: 1px solid var(--widget-border-subtle);
+  --tabs-radius: var(--radius-md);
+  --tabs-bg: var(--widget-surface-muted);
+  --tabs-item-border: 0;
+  --tabs-item-radius: var(--radius-sm);
+  --tabs-item-color: var(--widget-text-tertiary);
+  --tabs-item-hover-bg: transparent;
+  --tabs-item-hover-color: var(--widget-text-primary);
+  --tabs-item-selected-border: 0;
+  --tabs-item-selected-bg: var(--widget-control-surface);
+  --tabs-item-selected-color: var(--widget-text-primary);
+  --tabs-item-selected-shadow: inset 0 0 0 1px var(--widget-border-subtle);
   flex: 0 0 auto;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
   margin: 0 10px;
-  padding: 3px;
-  border: 1px solid var(--widget-border-subtle);
-  border-radius: 11px;
-  background: var(--widget-surface-muted);
 }
 
-.viewTab,
-.viewTabActive {
+.viewTab {
   min-width: 0;
   height: 31px;
-  border: 0;
-  border-radius: 8px;
   padding: 0 9px;
-  background: transparent;
-  color: var(--widget-text-tertiary);
-  font: inherit;
   font-size: 0.7rem;
   font-weight: 800;
-  cursor: pointer;
-  transition: background 150ms ease, color 150ms ease, transform 150ms ease;
 }
 
-.viewTab:hover { color: var(--widget-text-primary); }
-
-.viewTabActive {
-  background: var(--widget-control-surface);
-  color: var(--widget-text-primary);
-  box-shadow: inset 0 0 0 1px var(--widget-border-subtle);
-}
-
-.viewTab span,
-.viewTabActive span {
+.viewTab span {
   margin-left: 3px;
   color: var(--widget-text-tertiary);
   font-size: 0.64rem;
@@ -342,6 +340,11 @@
 .removeSavedButton,
 .sessionIconButton,
 .pickerClose {
+  --icon-btn-border: transparent;
+  --icon-btn-bg: transparent;
+  --icon-btn-hover-bg: var(--widget-control-hover);
+  --icon-btn-active-bg: var(--widget-control-hover);
+  --icon-btn-active-transform: translateY(-1px);
   flex: 0 0 auto;
   width: 28px;
   height: 28px;
@@ -358,12 +361,12 @@
 }
 
 .saveButton {
+  --icon-btn-color: var(--widget-text-tertiary);
+  --icon-btn-hover-color: var(--widget-text-tertiary);
+  --icon-btn-pressed-border: transparent;
+  --icon-btn-pressed-bg: var(--widget-accent-soft);
+  --icon-btn-pressed-color: var(--widget-accent);
   color: var(--widget-text-tertiary);
-}
-
-.saveButtonActive {
-  color: var(--widget-accent);
-  background: var(--widget-accent-soft);
 }
 
 .actionSvg {
@@ -519,17 +522,17 @@
 }
 
 .pickerPanel {
+  --card-border: 1px solid var(--widget-border-subtle);
+  --card-radius: var(--radius-md);
+  --card-bg: var(--widget-control-surface);
+  --card-shadow: 0 16px 36px color-mix(in srgb, #000 18%, transparent);
+  --card-overflow: auto;
   width: min(100%, 330px);
   max-height: min(88%, 420px);
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border: 1px solid var(--widget-border-subtle);
-  border-radius: 14px;
   padding: 12px;
-  background: var(--widget-control-surface);
-  box-shadow: 0 16px 36px color-mix(in srgb, #000 18%, transparent);
-  overflow: auto;
 }
 
 .pickerHeader {
@@ -612,24 +615,19 @@
 }
 
 .newSessionRow input {
+  --field-border: var(--widget-border-subtle);
+  --field-radius: var(--radius-sm);
+  --field-bg: var(--widget-surface-muted);
+  --field-color: var(--widget-text-primary);
+  --field-hover-border: var(--widget-border-subtle);
+  --field-focus-border: var(--widget-accent);
+  --field-focus-ring: 0 0 0 2px var(--fusion-focus-ring);
   flex: 1;
   min-width: 0;
   height: 34px;
-  box-sizing: border-box;
-  border: 1px solid var(--widget-border-subtle);
-  border-radius: 9px;
   padding: 0 10px;
-  outline: 0;
-  background: var(--widget-surface-muted);
-  color: var(--widget-text-primary);
-  font: inherit;
   font-size: 0.7rem;
   font-weight: 720;
-}
-
-.newSessionRow input:focus {
-  border-color: var(--widget-accent);
-  box-shadow: 0 0 0 2px var(--fusion-focus-ring);
 }
 
 .newSessionRow button {
@@ -660,7 +658,6 @@
   .header { align-items: flex-start; flex-direction: column; }
   .headerActions { width: 100%; justify-content: stretch; }
   .spaceSelect { flex: 1; max-width: none; }
-  .viewTab,
-  .viewTabActive { padding-inline: 5px; font-size: 0.64rem; }
+  .viewTab { padding-inline: 5px; font-size: 0.64rem; }
   .rowActions { gap: 1px; }
 }

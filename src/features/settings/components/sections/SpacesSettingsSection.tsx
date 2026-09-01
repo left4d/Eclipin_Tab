@@ -156,6 +156,7 @@ export const SpacesSettingsSection = () => {
                   <label className={styles.spaceNameField}>
                     <span>空间名称</span>
                     <input
+                      className="field"
                       value={spaceNameDraft}
                       maxLength={30}
                       onChange={(event) => setSpaceNameDraft(event.target.value)}
@@ -205,7 +206,7 @@ export const SpacesSettingsSection = () => {
                 <div className={styles.spaceWebsiteList}>
                   {selectedSpace.apps.length > 0 ? selectedSpace.apps.map((item) => (
                     item.type === 'folder' ? (
-                      <div key={item.id} className={styles.spaceFolderCard}>
+                      <div key={item.id} className={`card ${styles.spaceFolderCard}`}>
                         <div className={styles.spaceFolderHeader}>
                           <span className={styles.spaceFolderIcon}>▦</span>
                           <div>

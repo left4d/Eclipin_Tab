@@ -41,11 +41,12 @@ export const WidgetAnchorEditor = ({ widget, widgets, onClose, onSave }: WidgetA
             <h2>组件标签 ID</h2>
             <p>设置后，任意贴纸都可以使用 <b>#{normalizeInternalAnchorId(draft) || '标签'}</b> 跳转到这个组件。</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="关闭">×</button>
+          <button type="button" className="icon-btn" onClick={onClose} aria-label="关闭">×</button>
         </header>
         <label className={styles.label}>
           <span>标签 ID</span>
           <input
+            className="field"
             autoFocus
             value={draft}
             onChange={(event) => { setDraft(event.target.value); setError(''); }}
@@ -59,9 +60,9 @@ export const WidgetAnchorEditor = ({ widget, widgets, onClose, onSave }: WidgetA
         <p className={styles.help}>支持 <b>weather-main</b>、<b>#weather-main</b> 或 <b>&lt;span id="weather-main"&gt;</b>。</p>
         {error && <div className={styles.error}>{error}</div>}
         <div className={styles.actions}>
-          <button type="button" className={styles.clear} onClick={() => onSave(undefined)}>清除标签</button>
-          <button type="button" onClick={onClose}>取消</button>
-          <button type="button" className={styles.primary} onClick={save}>保存</button>
+          <button type="button" className={`btn btn--danger ${styles.clear}`} onClick={() => onSave(undefined)}>清除标签</button>
+          <button type="button" className="btn" onClick={onClose}>取消</button>
+          <button type="button" className={`btn btn--primary ${styles.primary}`} onClick={save}>保存</button>
         </div>
       </section>
     </div>,

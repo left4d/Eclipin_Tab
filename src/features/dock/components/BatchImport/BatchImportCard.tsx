@@ -172,7 +172,7 @@ export const BatchImportCard: React.FC<BatchImportCardProps> = ({
             className={`${styles.cardWrapper} ${isRemoving ? styles.removing : ''}`}
             style={isEntering ? { opacity: 0, transform: 'scale(0.92)' } : undefined}
         >
-            <div className={styles.card}>
+            <div className={`card ${styles.card}`}>
                 <div className={styles.cardHeader}>
                     <span>#{index + 1}</span>
                     {canRemove && (
@@ -189,7 +189,7 @@ export const BatchImportCard: React.FC<BatchImportCardProps> = ({
                     <label className={styles.label}>{t.modal.address}</label>
                     <input
                         type="text"
-                        className={styles.input}
+                        className={`field ${styles.input}`}
                         value={data.url}
                         onChange={e => handleUrlChange(e.target.value)}
                         placeholder="https://"
@@ -200,7 +200,7 @@ export const BatchImportCard: React.FC<BatchImportCardProps> = ({
                     <label className={styles.label}>{t.modal.name}</label>
                     <input
                         type="text"
-                        className={styles.input}
+                        className={`field ${styles.input}`}
                         value={data.name}
                         onChange={e => onChange(data.id, { name: e.target.value })}
                         placeholder="Name"

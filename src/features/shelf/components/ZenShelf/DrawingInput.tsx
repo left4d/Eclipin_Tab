@@ -165,23 +165,23 @@ export const DrawingInput: React.FC<DrawingInputProps> = ({ onCreateDrawing, onU
                     <section className={styles.drawingToolbarSection} aria-label="绘图形状">
                         <span className={styles.drawingToolbarLabel}>形状</span>
                         <div className={styles.drawingShapeGroup}>
-                            <button type="button" className={`${styles.toolbarDrawBtn} ${drawMode === 'line' ? styles.active : ''}`} aria-pressed={drawMode === 'line'} onClick={() => setDrawMode('line')} title="直线">／</button>
-                            <button type="button" className={`${styles.toolbarDrawBtn} ${drawMode === 'ellipse' ? styles.active : ''}`} aria-pressed={drawMode === 'ellipse'} onClick={() => setDrawMode('ellipse')} title="椭圆">◯</button>
-                            <button type="button" className={`${styles.toolbarDrawBtn} ${drawMode === 'rectangle' ? styles.active : ''}`} aria-pressed={drawMode === 'rectangle'} onClick={() => setDrawMode('rectangle')} title="矩形">▭</button>
+                            <button type="button" className={`icon-btn ${styles.toolbarDrawBtn} ${drawMode === 'line' ? styles.active : ''}`} aria-pressed={drawMode === 'line'} onClick={() => setDrawMode('line')} title="直线">／</button>
+                            <button type="button" className={`icon-btn ${styles.toolbarDrawBtn} ${drawMode === 'ellipse' ? styles.active : ''}`} aria-pressed={drawMode === 'ellipse'} onClick={() => setDrawMode('ellipse')} title="椭圆">◯</button>
+                            <button type="button" className={`icon-btn ${styles.toolbarDrawBtn} ${drawMode === 'rectangle' ? styles.active : ''}`} aria-pressed={drawMode === 'rectangle'} onClick={() => setDrawMode('rectangle')} title="矩形">▭</button>
                         </div>
                     </section>
 
                     <label className={`${styles.drawingToolbarSection} ${styles.drawingStrokeControl}`}>
                         <span className={styles.drawingToolbarLabel}>线宽</span>
                         <div className={styles.drawingStrokeRow}>
-                            <input type="range" min="1" max="12" value={strokeWidth} onChange={(e) => setStrokeWidth(Number(e.target.value))} />
+                            <input type="range" className="range" min="1" max="12" value={strokeWidth} onChange={(e) => setStrokeWidth(Number(e.target.value))} />
                             <output>{strokeWidth}px</output>
                         </div>
                     </label>
 
                     <div className={styles.drawingActionGroup}>
-                        <button type="button" className={styles.toolbarDrawBtn} onClick={onUndo} disabled={!canUndo} title="撤回（Ctrl/Cmd + Z）">↶</button>
-                        <button type="button" className={styles.toolbarCancelBtn} onClick={onCancel} title="完成绘图（Esc）">完成</button>
+                        <button type="button" className={`icon-btn ${styles.toolbarDrawBtn}`} onClick={onUndo} disabled={!canUndo} title="撤回（Ctrl/Cmd + Z）">↶</button>
+                        <button type="button" className="btn btn--primary" onClick={onCancel} title="完成绘图（Esc）">完成</button>
                     </div>
                 </div>
             </div>

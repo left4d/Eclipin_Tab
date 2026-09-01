@@ -111,18 +111,18 @@
 .field > span,
 .anchorSection > span { color: var(--color-text-secondary); font-size: 11px; font-weight: 700; }
 .field input {
+  --field-border: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
+  --field-radius: var(--radius-md);
+  --field-bg: color-mix(in srgb, var(--widget-surface-solid, #fff) 82%, transparent);
+  --field-color: var(--color-text-primary);
+  --field-hover-border: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
+  --field-focus-border: color-mix(in srgb, var(--fusion-accent, #6f7cff) 48%, transparent);
+  --field-focus-ring: 0 0 0 3px color-mix(in srgb, var(--fusion-accent, #6f7cff) 10%, transparent);
   width: 100%;
   min-height: 42px;
-  box-sizing: border-box;
   padding: 0 12px;
-  border: 1px solid color-mix(in srgb, var(--color-text-primary) 12%, transparent);
-  border-radius: 11px;
-  outline: none;
-  background: color-mix(in srgb, var(--widget-surface-solid, #fff) 82%, transparent);
-  color: var(--color-text-primary);
   font-size: 13px;
 }
-.field input:focus { border-color: color-mix(in srgb, var(--fusion-accent, #6f7cff) 48%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--fusion-accent, #6f7cff) 10%, transparent); }
 
 .iconRow { align-items: flex-start; gap: 12px; }
 .iconActions { flex: 1; flex-wrap: wrap; gap: 7px; }

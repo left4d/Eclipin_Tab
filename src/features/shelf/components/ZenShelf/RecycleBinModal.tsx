@@ -376,15 +376,15 @@ const RecycleBinWidgetItem: React.FC<{
         : language === 'zh' ? `第 ${(record.widget.pageId ?? 0) + 1} 页` : `Page ${(record.widget.pageId ?? 0) + 1}`;
 
     return (
-        <div className={styles.deletedWidgetCard} onDoubleClick={() => onRestore(record)}>
+        <div className={`card ${styles.deletedWidgetCard}`} onDoubleClick={() => onRestore(record)}>
             <div className={styles.deletedWidgetIcon}>{meta.icon}</div>
             <div className={styles.deletedWidgetInfo}>
                 <strong>{language === 'zh' ? zhName : enName}</strong>
                 <span>{pageLabel}</span>
             </div>
             <div className={styles.deletedWidgetActions}>
-                <button type="button" onClick={() => onRestore(record)}>{language === 'zh' ? '还原' : 'Restore'}</button>
-                <button type="button" className={styles.deletedWidgetDelete} onClick={() => onDelete(record)}>{language === 'zh' ? '永久删除' : 'Delete forever'}</button>
+                <button type="button" className="btn btn--primary" onClick={() => onRestore(record)}>{language === 'zh' ? '还原' : 'Restore'}</button>
+                <button type="button" className="btn btn--danger" onClick={() => onDelete(record)}>{language === 'zh' ? '永久删除' : 'Delete forever'}</button>
             </div>
         </div>
     );
