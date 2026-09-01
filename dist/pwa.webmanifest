@@ -1,7 +1,7 @@
 {
-  "name": "Eclipse Tab",
-  "short_name": "Eclipse",
-  "description": "个人化新标签页工作台",
+  "name": "Eclipin Tab",
+  "short_name": "Eclipin",
+  "description": "个性化新标签页工作台",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

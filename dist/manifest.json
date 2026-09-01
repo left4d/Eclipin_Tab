@@ -1,33 +1,44 @@
 {
-    "manifest_version": 3,
-    "name": "Eclipse Tab",
-    "version": "1.2.6",
-    "description": "个人化新标签页浏览器扩展",
-    "browser_specific_settings": {
-        "gecko": {
-            "id": "eclipse@encre.com",
-            "strict_min_version": "140.0",
-            "data_collection_permissions": {
-                "required": [
-                    "none"
-                ],
-                "optional": []
-            }
-        }
-    },
-    "permissions": [
-        "search"
-    ],
-    "optional_permissions": [
-        "bookmarks"
-    ],
-    "optional_host_permissions": [
-        "<all_urls>",
-        "https://suggestqueries.google.com/*",
-        "https://www.google.com/*",
-        "https://suggestion.baidu.com/*"
-    ],
-    "chrome_url_overrides": {
-        "newtab": "index.html"
+  "manifest_version": 3,
+  "name": "Eclipin Tab",
+  "version": "1.2.6",
+  "description": "个性化新标签页工作台，支持空间、Dock、贴纸、小组件、壁纸与 WebDAV 同步。",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "eclipin-tab@left4d.github.io",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ],
+        "optional": []
+      }
     }
+  },
+  "permissions": [
+    "search"
+  ],
+  "optional_permissions": [
+    "bookmarks",
+    "tabs"
+  ],
+  "optional_host_permissions": [
+    "<all_urls>",
+    "https://suggestqueries.google.com/*",
+    "https://www.google.com/*",
+    "https://suggestion.baidu.com/*"
+  ],
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "sandbox": {
+    "pages": [
+      "local-web-runner.html"
+    ]
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';",
+    "sandbox": "sandbox allow-scripts allow-forms allow-modals allow-popups allow-downloads; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: https: http:; child-src 'self' blob: data: https: http:; worker-src 'self' blob:; connect-src * data: blob:; img-src * data: blob:; media-src * data: blob:; font-src * data: blob:; style-src 'self' 'unsafe-inline' blob: data: https: http:;"
+  },
+  "homepage_url": "https://github.com/left4d/Eclipin_Tab"
 }

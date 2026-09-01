@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eclipse-tab-pwa-v1';
+const CACHE_NAME = 'eclipin-pwa-v1';
 const APP_SHELL = ['/', '/index.html', '/pwa.webmanifest', '/favicon.png'];
 
 self.addEventListener('install', (event) => {
