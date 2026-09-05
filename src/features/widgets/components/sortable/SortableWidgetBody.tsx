@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { requestBookmarkPermission } from '@/features/dock/utils/bookmarks';
 import { AddEditModal } from '@/features/dock/components/Modal/AddEditModal';
 import type { DockItem } from '@/features/dock/types/dock';
@@ -106,6 +106,27 @@ export const SortableWidgetBody = ({ props, controller }: SortableWidgetBodyProp
     widgetRef,
   } = controller;
   const [editingBookmark, setEditingBookmark] = useState<{ item: DockItem; anchorRect: DOMRect } | null>(null);
+  // 快捷链接组件在拖拽右下角缩放时，预览阶段只改 DOM 尺寸而不更新 React 状态，
+  // 因此图标尺寸无法实时跟随。这里用 ResizeObserver 观察容器实际渲染尺寸，
+  // 让图标在缩放预览期间（以及尺寸编辑器改动后）实时同步。
+  const [linkBox, setLinkBox] = useState<{ w: number; h: number } | null>(null);
+  useEffect(() => {
+    if (widget.type !== 'link') return;
+    const el = widgetRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const border = entry.borderBoxSize && entry.borderBoxSize[0];
+      setLinkBox({
+        w: border ? border.inlineSize : entry.contentRect.width,
+        h: border ? border.blockSize : entry.contentRect.height,
+      });
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [widget.type, widgetRef]);
+
   const handleBookmarkSave = (updates: Partial<DockItem>) => {
     const current = editingBookmark?.item;
     if (!current || current.type !== 'app') return;
@@ -132,9 +153,12 @@ export const SortableWidgetBody = ({ props, controller }: SortableWidgetBodyProp
     if (widget.type === 'link') {
       const name = widget.name || 'GitHub';
       const url = widget.url || 'https://github.com/';
-      const scale = Math.max(0.72, Math.min(widget.w / 112, widget.h / 138));
-      const fontSize = Math.round((widget.linkTextSize ?? 20) * scale);
-      const iconSize = Math.max(52, Math.min(widget.w * 0.86, widget.h - fontSize - 18));
+      const showLinkText = !widget.linkTextHidden;
+      const containerW = linkBox?.w ?? widget.w;
+      const containerH = linkBox?.h ?? widget.h;
+      const scale = Math.max(0.72, Math.min(containerW / 112, containerH / 138));
+      const fontSize = showLinkText ? Math.round((widget.linkTextSize ?? 20) * scale) : 0;
+      const iconSize = Math.max(52, Math.min(containerW * 0.86, containerH - (showLinkText ? fontSize + 18 : 0)));
       const linkStrokeWidth = Math.max(0, widget.linkTextStroke ?? 6);
       const linkStrokeDilate = linkStrokeWidth * 0.75;
       const linkStrokeBlur = Math.max(0.5, linkStrokeWidth * 0.33);
@@ -156,7 +180,7 @@ export const SortableWidgetBody = ({ props, controller }: SortableWidgetBodyProp
             if (widget.action) executeNavigationAction(widget.action, { openInNewTab });
           }}
         >
-          {linkStrokeWidth > 0 && (
+          {showLinkText && linkStrokeWidth > 0 && (
             <svg width="0" height="0" style={{ position: 'absolute', visibility: 'hidden' }} aria-hidden="true">
               <defs>
                 <filter id={linkStrokeFilterId} x="-40%" y="-40%" width="180%" height="180%">
@@ -176,7 +200,9 @@ export const SortableWidgetBody = ({ props, controller }: SortableWidgetBodyProp
             </svg>
           )}
           <img className={`${styles.linkIcon} ${widget.iconSmall ? styles.linkIconSmall : ''}`} src={linkIcon} alt="" draggable={false} style={{ width: iconSize }} />
-          <div className={styles.linkName} style={{ color: getThemeAwareLinkColor(widget.linkTextColor, theme), fontSize, filter: linkStrokeFilter }}>{name}</div>
+          {showLinkText && (
+            <div className={styles.linkName} style={{ color: getThemeAwareLinkColor(widget.linkTextColor, theme), fontSize, filter: linkStrokeFilter }}>{name}</div>
+          )}
         </button>
       );
     }

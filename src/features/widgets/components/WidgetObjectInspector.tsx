@@ -116,6 +116,13 @@ export const WidgetObjectInspector = ({
 
           {widget.type === 'link' && (
             <>
+              <button
+                type="button"
+                className={`${styles.widgetInspectorWideButton} ${widget.linkTextHidden ? styles.widgetInspectorActive : ''}`}
+                onClick={() => onUpdate(widget.id, { linkTextHidden: !widget.linkTextHidden })}
+              >
+                {widget.linkTextHidden ? '显示文字' : '不显示文字'}
+              </button>
               <div className={styles.widgetInspectorRow}>
                 <span>字号</span>
                 <input

@@ -29,7 +29,7 @@ interface WidgetPanelQuickEditorsProps {
   linkTextWidget: WidgetLayout | null;
   linkTextAnchor: DOMRect | null;
   onCloseLinkText: () => void;
-  onUpdateLinkText: (id: string, updates: Pick<Partial<WidgetLayout>, 'linkTextColor' | 'linkTextSize' | 'linkTextStroke'>) => void;
+  onUpdateLinkText: (id: string, updates: Pick<Partial<WidgetLayout>, 'linkTextColor' | 'linkTextSize' | 'linkTextStroke' | 'linkTextHidden'>) => void;
 }
 
 export default function WidgetPanelQuickEditors({
@@ -230,13 +230,22 @@ export default function WidgetPanelQuickEditors({
               />
               <strong>{(linkTextWidget.linkTextStroke ?? 6) === 0 ? '无' : `${linkTextWidget.linkTextStroke ?? 6}`}</strong>
             </label>
-            <button
-              type="button"
-              className={`${styles.linkTextAuto} ${!linkTextWidget.linkTextColor ? styles.linkTextAutoActive : ''}`}
-              onClick={() => onUpdateLinkText(linkTextWidget.id, { linkTextColor: undefined })}
-            >
-              跟随主题
-            </button>
+            <div className={styles.linkTextButtonsRow}>
+              <button
+                type="button"
+                className={`${styles.linkTextAuto} ${linkTextWidget.linkTextHidden ? styles.linkTextAutoActive : ''}`}
+                onClick={() => onUpdateLinkText(linkTextWidget.id, { linkTextHidden: !linkTextWidget.linkTextHidden })}
+              >
+                {linkTextWidget.linkTextHidden ? '显示文字' : '不显示文字'}
+              </button>
+              <button
+                type="button"
+                className={`${styles.linkTextAuto} ${!linkTextWidget.linkTextColor ? styles.linkTextAutoActive : ''}`}
+                onClick={() => onUpdateLinkText(linkTextWidget.id, { linkTextColor: undefined })}
+              >
+                跟随主题
+              </button>
+            </div>
             <div className={styles.linkTextColors}>
               {['#1C1C1E', '#FFFFFF', '#FF3B30', '#FF9500', '#34C759', 'var(--fusion-accent)', '#AF52DE'].map((color) => (
                 <button

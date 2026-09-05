@@ -186,6 +186,8 @@ const EXACT: Record<string, string> = {
   '在新标签页打开': 'Open in new tab',
   '更改网址': 'Change URL',
   '更改文字': 'Change text',
+  '不显示文字': 'Hide text',
+  '显示文字': 'Show text',
   '切换字体': 'Change font',
   '设置天气位置': 'Set weather location',
   '设置嵌入网址': 'Set embed URL',

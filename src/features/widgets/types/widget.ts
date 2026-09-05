@@ -1,4 +1,4 @@
-﻿import type { BuiltInFontId } from '@/shared/constants/builtInFonts';
+import type { BuiltInFontId } from '@/shared/constants/builtInFonts';
 import type { NavigationAction } from '@/shared/navigation';
 import type { TranslatorLanguageCode, TranslatorProvider } from '@/features/translation/types/translation';
 export type { TranslatorLanguageCode, TranslatorProvider } from '@/features/translation/types/translation';
@@ -43,6 +43,8 @@ export interface WidgetLayout {
   linkTextSize?: number;
   /** 快捷链接文字的描边宽度（px）；0 表示关闭描边。 */
   linkTextStroke?: number;
+  /** true 时只显示图标，隐藏快捷链接下方的文字。 */
+  linkTextHidden?: boolean;
   colorValue?: string;
   noteText?: string;
   noteFontSize?: number;

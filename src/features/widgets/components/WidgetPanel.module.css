@@ -1146,6 +1146,18 @@
   color: var(--widget-accent);
 }
 
+.linkTextButtonsRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.linkTextButtonsRow .linkTextAuto {
+  flex: 1 1 0;
+  width: auto;
+  margin-top: 0;
+}
+
 .linkTextColor {
   border-color: var(--widget-border-subtle);
 }
