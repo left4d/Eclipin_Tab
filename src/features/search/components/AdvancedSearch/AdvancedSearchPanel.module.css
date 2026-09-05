@@ -711,6 +711,17 @@
   color: var(--fusion-on-accent);
 }
 
+.editorSaveFav {
+  border: 1px solid var(--fusion-border-accent);
+  background: color-mix(in srgb, var(--fusion-accent) 14%, var(--color-bg-primary));
+  color: var(--fusion-accent);
+}
+
+.editorSaveFav:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
 .editorSave:disabled,
 .searchButton:disabled {
   cursor: not-allowed;
@@ -770,6 +781,94 @@
   font-size: 9px;
   font-weight: var(--font-weight-bold);
   white-space: nowrap;
+}
+
+/* 常用网址列表（已保存的网站，点击套用限定网站） */
+.savedSection {
+  margin-bottom: 18px;
+}
+
+.savedSection .sectionHeading {
+  align-items: center;
+}
+
+.savedClear {
+  flex: 0 0 auto;
+  border: 0;
+  padding: 3px 5px;
+  background: transparent;
+  color: var(--color-text-subtle);
+  font-size: 8px;
+  cursor: pointer;
+}
+
+.savedClear:hover {
+  color: var(--fusion-accent);
+}
+
+.savedList {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.savedItem {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 9px;
+  background: var(--color-bg-primary);
+  overflow: hidden;
+}
+
+.savedItemMain {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.savedItemMain:hover {
+  background: var(--color-bg-tertiary);
+}
+
+.savedItemIcon {
+  flex: 0 0 auto;
+  color: var(--fusion-accent);
+}
+
+.savedItemLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+}
+
+.savedItemRemove {
+  flex: 0 0 auto;
+  border: 0;
+  padding: 0 9px;
+  background: transparent;
+  color: var(--color-text-subtle);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.savedItemRemove:hover {
+  color: var(--color-danger);
+  background: var(--color-bg-tertiary);
 }
 
 .targetNavItem:focus-visible,

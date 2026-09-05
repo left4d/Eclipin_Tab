@@ -284,7 +284,7 @@ export const WidgetPanel = ({ activePage, onPageChange }: WidgetPanelProps) => {
     setEditingLinkTextAnchor(anchorRect);
     setWidgetMenu(null);
   };
-  const updateLinkTextStyle = (id: string, updates: Pick<Partial<WidgetLayout>, 'linkTextColor' | 'linkTextSize'>) => {
+  const updateLinkTextStyle = (id: string, updates: Pick<Partial<WidgetLayout>, 'linkTextColor' | 'linkTextSize' | 'linkTextStroke'>) => {
     setWidgets((prev) => prev.map((widget) => widget.id === id ? { ...widget, ...updates } : widget));
   };
   const toggleWidgetPin = (id: string) => {

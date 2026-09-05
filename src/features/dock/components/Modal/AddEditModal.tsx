@@ -196,7 +196,8 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
   };
 
   const handleSave = () => {
-    if (!name.trim()) return;
+    // 仅重命名场景需要名称；常规新增/编辑允许名称为空。
+    if (nameOnly && !name.trim()) return;
 
     if (nameOnly) {
       onSave({ name: name.trim() });
@@ -215,7 +216,7 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
     }
 
     onSave({
-      name: nameReadOnly ? (item?.name || name.trim()) : name.trim(),
+      name: nameReadOnly ? (item?.name || name.trim()) : (name.trim() || undefined),
       action,
       url: action.type === 'url' ? action.url : undefined,
       icon,
@@ -416,7 +417,7 @@ export const AddEditModal: React.FC<AddEditModalProps> = ({
           type="button"
           className={`${styles.footerButton} ${styles.addButton}`}
           onClick={handleSave}
-          disabled={!name.trim()}
+          disabled={nameOnly && !name.trim()}
         >
           {item ? (
             <>

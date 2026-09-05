@@ -1,14 +1,23 @@
 /* ==========================================================================
- * Design Tokens —— 统一视觉标准（草案 v0.1）
+ * Design Tokens —— 统一视觉标准（草案 v0.2 · 多品牌主题系统）
  * --------------------------------------------------------------------------
  * 三层结构：
  *   ① Primitive 层 —— 由 Open Props 提供（灰阶 --gray-*、间距 --size-*、
  *      圆角 --radius-*、阴影 --shadow-*、缓动 --ease-*、层级 --layer-*、字体 --font-*）
- *   ② Semantic 层 —— 本文件（品牌语义：颜色 / 圆角 / 阴影 / 字体 / 间距 / 层级 / 动效）
- *   ③ Brand 层    —— 品牌配方（sticker/badge/button/card），另见 brand-recipes.css（待补）
+ *   ② Semantic 层 —— 本文件：统一语义角色 + 品牌主题映射 + 表面层级
+ *   ③ Brand 层    —— 品牌配方（sticker/badge/button/menu/tooltip/popover/modal/card），另见 brand-recipes.css
+ *
+ * 主题模型（roadmap §2）：一个主题 = 品牌色阶 + 语义颜色角色 + Canvas/Surface 层级 + Light/Dark 映射。
+ * 二维组合：
+ *   <html data-brand="sage|ocean|violet" data-theme="light|dark">
+ *   其中 sage 是 data-brand 缺省时的默认回退值（不写 data-brand 即等同于 sage）；sage / ocean / violet 是同等级的品牌 accent 选项。
  *
  * 消费规则：
- *   - 组件只允许引用 ②③ 的语义变量，禁止硬编码十六进制颜色、px 圆角、px 间距等魔法数字。
+ *   - 组件只允许引用 ②③ 的语义变量（--color-* / --surface-* 等），禁止硬编码十六进制颜色、
+ *     px 圆角、px 间距等魔法数字。
+ *   - 业务组件不得直接依赖具体品牌色阶（--brand-accent-*），只消费语义角色（--color-accent*）。
+ *   - 中性色、状态色、圆角、阴影、间距、字号、动效、--opacity-disabled / --press-scale 由所有主题共享；
+ *     主题只改变 accent 相关语义角色与少量品牌装饰色。
  *   - Primitive 层（--gray-* / --size-* 等）仅供 Semantic 层与极少数一次性场景使用。
  *
  * 用法：
@@ -20,18 +29,25 @@
  * ========================================================================== */
 
 /* ==========================================================================
- * ② Semantic 层 —— 亮色主题
+ * ① Primitive 由 Open Props 提供；本文件只通过明确的 bridge 消费 primitive。
+ * Open Props 基线：1.7.23（详细映射见 archive/PRIMITIVE-INVENTORY.md）。
+ *
+ * ② Semantic 层 —— 默认主品牌 sage · 亮色主题（:root 同时承担所有品牌的共享基座）
  * ========================================================================== */
 :root {
-  /* ---------- 颜色：表面（bg / surface） ---------- */
+  /* ---------- 颜色：表面（bg / surface 层级） ---------- */
   --color-bg: #E8E8ED;                 /* 页面底色：中性灰 gray-200（去绿调） */
   --color-bg-rgb: 232 232 237;
+  --color-bg-subtle: #f0f0f4;          /* 页面次级区域：比主底色更浅的中性灰 */
   --color-surface: #ffffff;            /* 卡片/面板主表面 */
   --color-surface-rgb: 255 255 255;
   --color-surface-muted: #f6f6f7;      /* 次级表面（纯灰） */
   --color-surface-raised: #e0e2e6;     /* 悬浮/抬升表面（纯灰，有对比层次） */
+  --color-surface-sunken: #e1e3e8;     /* 凹陷/内嵌表面（纯灰，比表面更深） */
+  --color-surface-selected: rgb(120 145 108 / 0.09);   /* 选中表面（Sage 品牌淡 wash，方案 B） */
+  --color-surface-overlay: #fdfdfe;    /* 浮层/弹层表面（实体抬升） */
   --color-sidebar: #eef0f3;            /* 侧栏（纯灰） */
-  --color-input-bg: #fafafa;           /* 输入框底（纯灰） */
+  --color-input-bg: #fafafa;           /* 输入框底（纯灰，兼容桥） */
 
   /* ---------- 颜色：文字 ---------- */
   --color-text: #20262f;               /* 主文字 */
@@ -42,16 +58,22 @@
   /* ---------- 颜色：描边 ---------- */
   --color-border: rgb(32 38 47 / 0.10);
   --color-border-strong: rgb(32 38 47 / 0.17);
+  /* 文字贴纸描边专用：必须不透明，避免 -webkit-text-stroke 在复杂字符/负字距下多次 source-over 合成导致重叠处发白。 */
+  --color-sticker-stroke-opaque: #ffffff;
 
-  /* ---------- 颜色：强调（brand accent = sage 绿） ---------- */
+  /* ---------- 颜色：强调（默认品牌 = sage 绿） ---------- */
   --color-accent: #78916c;
   --color-accent-rgb: 120 145 108;
   --color-accent-hover: #687f5e;
+  --color-accent-active: #5a6f52;      /* 按压/激活态（比 hover 更深） */
   --color-accent-soft: rgb(120 145 108 / 0.16);
   --color-accent-softer: rgb(120 145 108 / 0.09);
+  --color-accent-subtle: rgb(120 145 108 / 0.05); /* 最轻微的强调染色 */
+  --color-on-accent: #ffffff;          /* accent 之上的文字 */
+  --color-focus-ring: rgb(120 145 108 / 0.34);
 
-  /* SnapWrite palette reference: restrained sage surfaces and neutral ink.
-   * Brand consumers may override these semantic values without changing recipes. */
+  /* SnapWrite palette reference：品牌参考/兼容桥。品牌主题可通过覆写语义角色来改变，
+   * 业务组件不得绕过语义层直接依赖这些变量；新组件只消费 --color-accent*。 */
   --palette-snapwrite-sage: #78916c;
   --palette-snapwrite-sage-hover: #687f5e;
   --palette-snapwrite-sage-soft: rgb(120 145 108 / 0.16);
@@ -60,8 +82,18 @@
   --palette-snapwrite-canvas: #f4f6f2;
   --palette-snapwrite-surface: #ffffff;
   --palette-snapwrite-surface-muted: #f7f8f6;
-  --color-on-accent: #ffffff;          /* accent 之上的文字 */
-  --color-focus-ring: rgb(120 145 108 / 0.34);
+
+  /* sage 品牌色阶：主题内部原料，业务组件不得直接依赖（语义角色 --color-accent* 才是入口） */
+  --brand-accent-50: #eff4ec;
+  --brand-accent-100: #dbe5d5;
+  --brand-accent-200: #b9ccb1;
+  --brand-accent-300: #97b18d;
+  --brand-accent-400: #82a075;
+  --brand-accent-500: #78916c;
+  --brand-accent-600: #687f5e;
+  --brand-accent-700: #55694e;
+  --brand-accent-800: #42553d;
+  --brand-accent-900: #334331;
 
   /* ---------- 颜色：语义状态（iOS 系，已确认） ---------- */
   --color-danger: #ff3b30;
@@ -73,6 +105,10 @@
   --color-overlay: rgb(16 24 40 / 0.45);   /* 遮罩（Untitled gray-900 的 45%） */
   --color-scrollbar: #c7c9ce;
   --color-code-bg: #eef0f2;
+  /* 浅色模式：终端仍保持深色可读性，同时以中度强调色染色，随品牌 accent 变化 */
+  --color-terminal-bg: color-mix(in srgb, #111418 78%, var(--color-accent) 22%);
+  --color-terminal-text: #e5e7eb;
+  --color-terminal-border: rgb(255 255 255 / 0.14);
 
   /* ---------- 圆角（品牌尺度：合并 snapwrite 8/12/16 与 Eclipin 4/…/24） ---------- */
   --radius-xs: 4px;
@@ -81,27 +117,27 @@
   --radius-lg: 16px;
   --radius-xl: 20px;
   --radius-2xl: 24px;
-  --radius-round: 999px;
+  --radius-pill: 999px;                 /* 品牌语义名，避免覆盖 Open Props --radius-round */
 
   /* ---------- 阴影（品牌轻阴影，替代 Open Props 较重的 --shadow-*） ---------- */
   --shadow-sm: 0 1px 2px rgb(26 34 45 / 0.05), 0 4px 14px rgb(26 34 45 / 0.04);
   --shadow-md: 0 8px 28px rgb(26 34 45 / 0.08);
   --shadow-lg: 0 24px 60px rgb(26 34 45 / 0.18);
 
-  /* ---------- 字体族（本地系统字体栈；后续接 Open Props 时可由其 primitive 提供） ---------- */
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto,
+  /* ---------- 字体族（Semantic 名称不覆盖 Open Props 的 --font-sans/--font-mono） ---------- */
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto,
              "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
-  --font-display: "Bricolage Grotesque", var(--font-sans);   /* Eclipin 品牌字体 */
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-display: "Bricolage Grotesque", var(--font-body);   /* Eclipin 品牌字体 */
+  --font-code: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* ---------- 字号（品牌尺度） ---------- */
-  --text-xs: 10px;
-  --text-sm: 12px;
-  --text-base: 13px;                   /* 正文，你项目里用得最多的档 */
-  --text-md: 14px;
-  --text-lg: 16px;
-  --text-xl: 20px;
-  --text-2xl: 24px;
+  /* ---------- 字号（品牌尺度；可兼容的档位桥接 Open Props） ---------- */
+  --text-xs: 10px;                     /* 品牌补充：OP 无对应档位 */
+  --text-sm: var(--font-size-0, 12px);
+  --text-base: 13px;                   /* 品牌补充：正文档，OP 无对应档位 */
+  --text-md: 14px;                     /* 品牌补充：OP 无对应档位 */
+  --text-lg: var(--font-size-1, 16px);
+  --text-xl: var(--font-size-3, 20px);
+  --text-2xl: var(--font-size-4, 24px);
 
   /* ---------- 字重（引用 Open Props） ---------- */
   --font-weight-regular: var(--font-weight-4, 400);
@@ -109,16 +145,16 @@
   --font-weight-semibold: var(--font-weight-6, 600);
   --font-weight-bold: var(--font-weight-7, 700);
 
-  /* ---------- 间距（4px 基准；品牌补了 Open Props 缺的 12px 档） ---------- */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
+  /* ---------- 间距（4px 基准；优先使用 Open Props 精确 px primitive） ---------- */
+  --space-1: var(--size-px-1, 4px);
+  --space-2: var(--size-px-2, 8px);
+  --space-3: 12px;                     /* 品牌补充：OP 无 12px px 档 */
+  --space-4: var(--size-px-3, 16px);
+  --space-5: var(--size-px-4, 20px);
+  --space-6: var(--size-px-5, 24px);
+  --space-8: var(--size-px-7, 32px);
+  --space-10: 40px;                    /* 品牌补充：OP 无对应 px 档 */
+  --space-12: 48px;                    /* 品牌补充：OP 无 48px 语义档 */
 
   /* ---------- 层级（引用 Open Props --layer-*） ---------- */
   --z-base: var(--layer-1, 1);
@@ -150,17 +186,21 @@
 }
 
 /* ==========================================================================
- * ② Semantic 层 —— 暗色主题（纯灰中性，去绿调）
+ * ② Semantic 层 —— 默认回退值 sage · 暗色主题（基础表面值）
  * ========================================================================== */
 :root[data-theme="dark"] {
   color-scheme: dark;
 
   --color-bg: #1c1c1e;
   --color-bg-rgb: 28 28 30;
+  --color-bg-subtle: #232326;
   --color-surface: #2c2c2e;
   --color-surface-rgb: 44 44 46;
   --color-surface-muted: #2c2c2e;
   --color-surface-raised: #3a3a3c;
+  --color-surface-sunken: #252528;
+  --color-surface-selected: rgb(145 173 130 / 0.09);   /* 暗色 Sage 选中表面（方案 B） */
+  --color-surface-overlay: #343438;
   --color-sidebar: #1e1e20;
   --color-input-bg: #262629;
 
@@ -171,12 +211,15 @@
 
   --color-border: rgb(255 255 255 / 0.10);
   --color-border-strong: rgb(255 255 255 / 0.16);
+  --color-sticker-stroke-opaque: #38383a;
 
   --color-accent: #91ad82;
   --color-accent-rgb: 145 173 130;
   --color-accent-hover: #9fb98f;
+  --color-accent-active: #a9c29b;
   --color-accent-soft: rgb(145 173 130 / 0.16);
   --color-accent-softer: rgb(145 173 130 / 0.09);
+  --color-accent-subtle: rgb(145 173 130 / 0.05);
   --color-on-accent: #111711;
   --color-focus-ring: rgb(145 173 130 / 0.34);
 
@@ -188,10 +231,165 @@
   --color-overlay: rgb(0 0 0 / 0.5);
   --color-scrollbar: #3a3a3c;
   --color-code-bg: #26282a;
+  /* 深色终端保持纯黑，模拟真实 terminal 画布 */
+  /* 深色终端使用近黑色，保留真实终端的视觉质感 */
+  --color-terminal-bg: #0c0c0c;
+  --color-terminal-text: #e5e7eb;
+  --color-terminal-border: rgb(255 255 255 / 0.16);
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.18), 0 10px 28px rgb(0 0 0 / 0.28);
   --shadow-md: 0 18px 48px rgb(0 0 0 / 0.38);
   --shadow-lg: 0 30px 86px rgb(0 0 0 / 0.5);
+}
+
+/* ==========================================================================
+ * 品牌变体 —— ocean（冷静、工具型、技术型）
+ * --------------------------------------------------------------------------
+ * 主题只覆写 accent 语义角色 + 品牌色阶；中性色、状态色、圆角、阴影等仍共享 :root / dark 基座。
+ * 高亮/暗 mapping 符合 roadmap §2.3：Light 用中深色阶、Dark 用偏亮色阶，并校验 on-accent 对比度。
+ * ========================================================================== */
+:root[data-brand="ocean"] {
+  /* ocean 品牌色阶（主题内部原料） */
+  --brand-accent-50: #eef4fb;
+  --brand-accent-100: #d8e6f6;
+  --brand-accent-200: #b3cfee;
+  --brand-accent-300: #88b1e1;
+  --brand-accent-400: #5f8cc9;
+  --brand-accent-500: #3e5f8a;
+  --brand-accent-600: #34507a;
+  --brand-accent-700: #2c425f;
+  --brand-accent-800: #253950;
+  --brand-accent-900: #1e2e42;
+
+  --color-accent: #3e5f8a;
+  --color-accent-rgb: 62 95 138;
+  --color-accent-hover: #34507a;
+  --color-accent-active: #2c425f;
+  --color-accent-soft: rgb(62 95 138 / 0.16);
+  --color-accent-softer: rgb(62 95 138 / 0.09);
+  --color-accent-subtle: rgb(62 95 138 / 0.05);
+  --color-on-accent: #ffffff;
+  --color-focus-ring: rgb(62 95 138 / 0.34);
+
+  /* Canvas / Surface 品牌色调（路线②：细微冷调，保持中性层级与对比） */
+  --color-bg: color-mix(in srgb, #e8e8ed 94%, var(--color-accent) 6%);
+  --color-bg-subtle: color-mix(in srgb, #f0f0f4 94%, var(--color-accent) 6%);
+  --color-surface: color-mix(in srgb, #ffffff 96%, var(--color-accent) 4%);
+  --color-surface-muted: color-mix(in srgb, #f6f6f7 95%, var(--color-accent) 5%);
+  --color-surface-raised: color-mix(in srgb, #e0e2e6 95%, var(--color-accent) 5%);
+  --color-surface-sunken: color-mix(in srgb, #e1e3e8 95%, var(--color-accent) 5%);
+  --color-surface-selected: color-mix(in srgb, #e8e9ee 88%, var(--color-accent) 12%);
+  --color-surface-overlay: color-mix(in srgb, #fdfdfe 97%, var(--color-accent) 3%);
+  --color-sidebar: color-mix(in srgb, #eef0f3 95%, var(--color-accent) 5%);
+  --color-input-bg: color-mix(in srgb, #fafafa 96%, var(--color-accent) 4%);
+}
+
+:root[data-brand="ocean"][data-theme="dark"] {
+  --brand-accent-50: #f2f7fc;
+  --brand-accent-100: #d6e6f4;
+  --brand-accent-200: #aecfe9;
+  --brand-accent-300: #86b4de;
+  --brand-accent-400: #6396c9;
+  --brand-accent-500: #4a76a8;
+  --brand-accent-600: #3e6290;
+  --brand-accent-700: #33537a;
+  --brand-accent-800: #2a4465;
+  --brand-accent-900: #223852;
+
+  --color-accent: #7fa8cf;
+  --color-accent-rgb: 127 168 207;
+  --color-accent-hover: #8fb5d8;
+  --color-accent-active: #9cc1e1;
+  --color-accent-soft: rgb(127 168 207 / 0.16);
+  --color-accent-softer: rgb(127 168 207 / 0.09);
+  --color-accent-subtle: rgb(127 168 207 / 0.05);
+  --color-on-accent: #0e1520;
+  --color-focus-ring: rgb(127 168 207 / 0.34);
+
+  /* Canvas / Surface 品牌色调（暗色冷调） */
+  --color-bg: color-mix(in srgb, #1c1c1e 94%, var(--color-accent) 6%);
+  --color-bg-subtle: color-mix(in srgb, #232326 94%, var(--color-accent) 6%);
+  --color-surface: color-mix(in srgb, #2c2c2e 96%, var(--color-accent) 4%);
+  --color-surface-muted: color-mix(in srgb, #2c2c2e 96%, var(--color-accent) 4%);
+  --color-surface-raised: color-mix(in srgb, #3a3a3c 95%, var(--color-accent) 5%);
+  --color-surface-sunken: color-mix(in srgb, #252528 95%, var(--color-accent) 5%);
+  --color-surface-selected: color-mix(in srgb, #3f3f42 86%, var(--color-accent) 14%);
+  --color-surface-overlay: color-mix(in srgb, #343438 96%, var(--color-accent) 4%);
+  --color-sidebar: color-mix(in srgb, #1e1e20 95%, var(--color-accent) 5%);
+  --color-input-bg: color-mix(in srgb, #262629 96%, var(--color-accent) 4%);
+}
+
+/* ==========================================================================
+ * 品牌变体 —— violet（创意、AI、媒体或实验性产品）
+ * ========================================================================== */
+:root[data-brand="violet"] {
+  --brand-accent-50: #f1edfb;
+  --brand-accent-100: #e0d6f6;
+  --brand-accent-200: #c4b0ec;
+  --brand-accent-300: #a78bdf;
+  --brand-accent-400: #8b67d0;
+  --brand-accent-500: #6d4ba0;
+  --brand-accent-600: #5d3f8a;
+  --brand-accent-700: #4f3480;
+  --brand-accent-800: #403064;
+  --brand-accent-900: #353050;
+
+  --color-accent: #6d4ba0;
+  --color-accent-rgb: 109 75 160;
+  --color-accent-hover: #5d3f8a;
+  --color-accent-active: #4f3480;
+  --color-accent-soft: rgb(109 75 160 / 0.16);
+  --color-accent-softer: rgb(109 75 160 / 0.09);
+  --color-accent-subtle: rgb(109 75 160 / 0.05);
+  --color-on-accent: #ffffff;
+  --color-focus-ring: rgb(109 75 160 / 0.34);
+
+  /* Canvas / Surface 品牌色调（路线②：细微暖紫调，保持中性层级与对比） */
+  --color-bg: color-mix(in srgb, #e8e8ed 94%, var(--color-accent) 6%);
+  --color-bg-subtle: color-mix(in srgb, #f0f0f4 94%, var(--color-accent) 6%);
+  --color-surface: color-mix(in srgb, #ffffff 96%, var(--color-accent) 4%);
+  --color-surface-muted: color-mix(in srgb, #f6f6f7 95%, var(--color-accent) 5%);
+  --color-surface-raised: color-mix(in srgb, #e0e2e6 95%, var(--color-accent) 5%);
+  --color-surface-sunken: color-mix(in srgb, #e1e3e8 95%, var(--color-accent) 5%);
+  --color-surface-selected: color-mix(in srgb, #e8e9ee 88%, var(--color-accent) 12%);
+  --color-surface-overlay: color-mix(in srgb, #fdfdfe 97%, var(--color-accent) 3%);
+  --color-sidebar: color-mix(in srgb, #eef0f3 95%, var(--color-accent) 5%);
+  --color-input-bg: color-mix(in srgb, #fafafa 96%, var(--color-accent) 4%);
+}
+
+:root[data-brand="violet"][data-theme="dark"] {
+  --brand-accent-50: #f6f3fd;
+  --brand-accent-100: #e7dffa;
+  --brand-accent-200: #d0c0f3;
+  --brand-accent-300: #b7a0ea;
+  --brand-accent-400: #9f86df;
+  --brand-accent-500: #8a6cc8;
+  --brand-accent-600: #7a5aae;
+  --brand-accent-700: #6a4d99;
+  --brand-accent-800: #5b4284;
+  --brand-accent-900: #4c3870;
+
+  --color-accent: #b49ae0;
+  --color-accent-rgb: 180 154 224;
+  --color-accent-hover: #c1a9e8;
+  --color-accent-active: #cdb8ef;
+  --color-accent-soft: rgb(180 154 224 / 0.16);
+  --color-accent-softer: rgb(180 154 224 / 0.09);
+  --color-accent-subtle: rgb(180 154 224 / 0.05);
+  --color-on-accent: #1a1026;
+  --color-focus-ring: rgb(180 154 224 / 0.34);
+
+  /* Canvas / Surface 品牌色调（暗色暖紫调） */
+  --color-bg: color-mix(in srgb, #1c1c1e 94%, var(--color-accent) 6%);
+  --color-bg-subtle: color-mix(in srgb, #232326 94%, var(--color-accent) 6%);
+  --color-surface: color-mix(in srgb, #2c2c2e 96%, var(--color-accent) 4%);
+  --color-surface-muted: color-mix(in srgb, #2c2c2e 96%, var(--color-accent) 4%);
+  --color-surface-raised: color-mix(in srgb, #3a3a3c 95%, var(--color-accent) 5%);
+  --color-surface-sunken: color-mix(in srgb, #252528 95%, var(--color-accent) 5%);
+  --color-surface-selected: color-mix(in srgb, #3f3f42 86%, var(--color-accent) 14%);
+  --color-surface-overlay: color-mix(in srgb, #343438 96%, var(--color-accent) 4%);
+  --color-sidebar: color-mix(in srgb, #1e1e20 95%, var(--color-accent) 5%);
+  --color-input-bg: color-mix(in srgb, #262629 96%, var(--color-accent) 4%);
 }
 
 /* ==========================================================================

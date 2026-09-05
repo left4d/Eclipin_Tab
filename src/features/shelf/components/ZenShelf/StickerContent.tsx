@@ -6,6 +6,8 @@ import { ensureBuiltInFontLoaded, getBuiltInFontFamily } from '@/shared/constant
 import { hasMarkdownLinks, splitTextWithLinks } from '@/shared/utils/markdownLinks';
 import checkIcon from '@/assets/icons/for-checkbox.svg';
 import { getThemeAwareStickerColor } from '@/features/shelf/utils/stickerPresentation';
+import { getStickerStrokeWidth } from '@/features/shelf/utils/stickerAppearance';
+import { clampStickerScale } from '@/features/shelf/utils/stickerSizing';
 import { DrawingShape } from './DrawingShape';
 import { getStickerLinkTarget } from '@/features/shelf/utils/stickerNavigation';
 import styles from './ZenShelf.module.css';
@@ -36,6 +38,13 @@ const TextStickerContent: React.FC<Pick<StickerContentProps,
     useEffect(() => {
         void ensureBuiltInFontLoaded(sticker.style?.fontFamily);
     }, [sticker.style?.fontFamily]);
+
+    // 每张贴纸独立的联合描边：半径跟随描边宽度 × 缩放倒数，实现逐张贴纸可调厚度。
+    const strokeRenderWidth = getStickerStrokeWidth(sticker) * (1 / clampStickerScale(sticker.scale ?? 1));
+    const strokeDilate = strokeRenderWidth * 0.75;
+    const strokeBlur = Math.max(0.5, strokeRenderWidth * 0.33);
+    const strokeFilterId = `text-sticker-stroke-${sticker.id}`;
+    const strokeFilter = sticker.hideStroke ? 'none' : `url(#${strokeFilterId})`;
 
     return (
         <div
@@ -115,6 +124,23 @@ const TextStickerContent: React.FC<Pick<StickerContentProps,
                         fontFamily,
                     }}
                 >
+                    <svg width="0" height="0" style={{ position: 'absolute', visibility: 'hidden' }} aria-hidden="true">
+                        <defs>
+                            <filter id={strokeFilterId} x="-30%" y="-30%" width="160%" height="160%">
+                                <feMorphology in="SourceAlpha" operator="dilate" radius={strokeDilate} result="dilated" />
+                                <feGaussianBlur in="dilated" stdDeviation={strokeBlur} result="blurred" />
+                                <feComponentTransfer in="blurred" result="rounded">
+                                    <feFuncA type="discrete" tableValues="0 1" />
+                                </feComponentTransfer>
+                                <feFlood style={{ floodColor: 'var(--color-sticker-stroke)' }} result="flood" />
+                                <feComposite in="flood" in2="rounded" operator="in" result="stroke" />
+                                <feMerge>
+                                    <feMergeNode in="stroke" />
+                                    <feMergeNode in="SourceGraphic" />
+                                </feMerge>
+                            </filter>
+                        </defs>
+                    </svg>
                     {sticker.drawings && sticker.drawings.length > 0 && (
                         <svg className={styles.textStickerDrawingLayer}>
                             {sticker.drawings.map((drawing) => (
@@ -122,7 +148,10 @@ const TextStickerContent: React.FC<Pick<StickerContentProps,
                             ))}
                         </svg>
                     )}
-                    <span className={styles.textStickerContent}>
+                    <span
+                        className={[styles.textStickerContent, sticker.hideStroke ? styles.noStickerStroke : ''].filter(Boolean).join(' ')}
+                        style={{ filter: strokeFilter }}
+                    >
                         {hasMarkdownLinks(sticker.content)
                             ? splitTextWithLinks(sticker.content).map((fragment, index) => (
                                 fragment.type === 'link' ? (

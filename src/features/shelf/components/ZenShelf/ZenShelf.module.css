@@ -347,6 +347,9 @@
     padding: var(--spacing-padding-medium) var(--spacing-padding-large);
     background: transparent;
     min-width: 60px;
+    /* 描边交给 .textStickerContent 的 SVG 联合滤镜，避免 -webkit-text-stroke 半透明叠加变白。
+       用 !important 覆盖设计系统 .sticker__text 的 -webkit-text-stroke（其在本应用里晚于组件样式加载）。 */
+    -webkit-text-stroke: 0 !important;
     /* Firefox 文本渲染优化 */
     text-rendering: geometricPrecision;
     -moz-text-size-adjust: none;
@@ -357,6 +360,8 @@
 
 .textSticker.noStickerStroke {
     -webkit-text-stroke: 0 transparent;
+    /* 隐藏 SVG 联合描边 */
+    filter: none;
 }
 
 .imageSticker.noStickerStroke {
@@ -370,6 +375,13 @@
 .textStickerContent {
     position: relative;
     z-index: 1;
+    /* 描边由每张贴纸内联生成的 SVG 联合滤镜提供（见 StickerContent），
+       半径跟随描边宽度，因此这里不写死 filter，避免固定宽度。 */
+}
+
+/* 隐藏描边时，显式关掉联合描边（内联 filter 已设为 none，此为兜底）。 */
+.textStickerContent.noStickerStroke {
+    filter: none !important;
 }
 
 .textStickerDrawingLayer {

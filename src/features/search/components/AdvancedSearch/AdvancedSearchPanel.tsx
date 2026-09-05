@@ -12,6 +12,14 @@ import {
   type AdvancedSearchFilterValues,
   type AdvancedSearchTarget,
 } from '@/features/search/constants/advancedSearch';
+import {
+  addSavedSite,
+  clearSavedSites,
+  normalizeSite,
+  readSavedSites,
+  removeSavedSite,
+  type SavedSite,
+} from '@/features/search/services/savedSites';
 import styles from './AdvancedSearchPanel.module.css';
 
 interface AdvancedSearchPanelProps {
@@ -191,6 +199,38 @@ export const AdvancedSearchPanel = ({
     }
   };
 
+  const [savedSites, setSavedSites] = useState<SavedSite[]>(readSavedSites);
+
+  // 直接为指定目标写某个筛选条件，绕过当前 target（用于保存的网址跨目标套用）。
+  const setFilterForTarget = (targetId: AdvancedSearchTarget, id: AdvancedSearchFilterId, value: AdvancedSearchFilterValue) => {
+    setFiltersByTarget((current) => ({ ...current, [targetId]: { ...current[targetId], [id]: value } }));
+    clearManualQuery(targetId);
+  };
+
+  // 在「限定网站」编辑器里保存常用网址：把当前草稿值存为常用网址。
+  const saveSiteFromEditor = () => {
+    const site = normalizeSite(typeof draftValue === 'string' ? draftValue : '');
+    if (!site) return;
+    setSavedSites(addSavedSite(site));
+  };
+
+  // 点击一个已保存的网址：把它套用到「限定网站」条件。当前平台不支持 site: 时切回网页目标。
+  const applySavedSite = (site: string) => {
+    const canUseSite = getAdvancedSearchFilterDefinitions(target).some((definition) => definition.id === 'site');
+    const targetId: AdvancedSearchTarget = canUseSite ? target : 'engine';
+    if (targetId !== target) setTarget(targetId);
+    setFilterForTarget(targetId, 'site', site);
+  };
+
+  const deleteSavedSite = (id: string) => {
+    setSavedSites(removeSavedSite(id));
+  };
+
+  const clearSites = () => {
+    clearSavedSites();
+    setSavedSites([]);
+  };
+
   const commonDefinitions = definitions.filter((definition) => definition.group === 'common' && !hasValue(filters[definition.id]));
   const moreDefinitions = definitions.filter((definition) => definition.group === 'more' && !hasValue(filters[definition.id]));
   const quickDefinitions = definitions.filter((definition) => definition.quick);
@@ -307,6 +347,29 @@ export const AdvancedSearchPanel = ({
             </div>
 
             <div ref={workspaceRef} className={styles.workspace} data-advanced-search-scroll="true">
+              <section className={styles.savedSection}>
+                <div className={styles.sectionHeading}>
+                  <div>
+                    <strong>常用网址</strong>
+                    <span>保存经常搜索的网站，点一下即可套用「限定网站」</span>
+                  </div>
+                  {savedSites.length > 0 && <button type="button" className={styles.savedClear} onClick={clearSites}>全部清除</button>}
+                </div>
+                {savedSites.length > 0 && (
+                  <div className={styles.savedList}>
+                    {savedSites.map((saved) => (
+                      <div className={styles.savedItem} key={saved.id}>
+                        <button type="button" className={styles.savedItemMain} onClick={() => applySavedSite(saved.site)} title={`套用限定网站 ${saved.site}`}>
+                          <span className={styles.savedItemIcon}>⌕</span>
+                          <span className={styles.savedItemLabel}>{saved.site}</span>
+                        </button>
+                        <button type="button" className={styles.savedItemRemove} onClick={() => deleteSavedSite(saved.id)} aria-label={`删除 ${saved.site}`}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
               <section className={styles.filterSection}>
                 <div className={styles.sectionHeading}>
                   <div>
@@ -466,6 +529,9 @@ export const AdvancedSearchPanel = ({
 
                     <div className={styles.editorActions}>
                       <button type="button" className={styles.editorCancel} onClick={() => setEditingFilter(null)}>取消</button>
+                      {editingDefinition.id === 'site' && (
+                        <button type="button" className={styles.editorSaveFav} onClick={saveSiteFromEditor} disabled={!normalizeSite(typeof draftValue === 'string' ? draftValue : '')}>常用网址</button>
+                      )}
                       <button type="button" className={styles.editorSave} onClick={saveFilter} disabled={!canSaveDraft}>保存</button>
                     </div>
                   </div>

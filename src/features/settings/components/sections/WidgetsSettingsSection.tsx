@@ -17,6 +17,7 @@ export const WIDGET_OPTIONS: Array<{ type: WidgetType; icon: ReactNode; title: s
   { type: 'calendar', icon: '▦', title: '月历', description: '查看当月日期并快速切换月份' },
   { type: 'countdown', icon: 'D−', title: '倒数日', description: '记录重要日期和剩余天数' },
   { type: 'gtrend', icon: '□', title: '空白容器', description: '为画板或贴纸提供装饰背景' },
+  { type: 'colorPicker', icon: '◉', title: '颜色选择器', description: '选择颜色并复制颜色值，容器样式跟随设置' },
   { type: 'embed', icon: '🧩', title: '网页嵌入', description: '嵌入 NAS、仪表盘或内网页面' },
   { type: 'bookmarks', icon: '★', title: '书签', description: '同步浏览器书签，界面与空间网站一致' },
   { type: 'openTabs', icon: '▤', title: '打开的标签页', description: '按域名整理当前窗口，可加入空间并保存为会话' },

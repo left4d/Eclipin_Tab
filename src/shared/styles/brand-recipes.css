@@ -68,7 +68,7 @@
 
 /* 文字贴纸：用 text-stroke 描边 */
 .sticker__text {
-  font-family: var(--font-display, var(--font-sans));
+  font-family: var(--font-display, var(--font-body));
   font-size: 40px;
   font-weight: 900;
   line-height: 0.95;
@@ -76,7 +76,7 @@
   white-space: pre;
   color: var(--sticker-color, var(--sticker-ink));
   -webkit-text-stroke: calc(var(--sticker-stroke-render-width, var(--sticker-stroke-width)) * 2)
-    var(--color-sticker-stroke, var(--sticker-stroke));
+    var(--color-sticker-stroke-opaque, var(--sticker-stroke));
   paint-order: stroke fill;
 }
 
@@ -129,7 +129,7 @@
   min-height: var(--space-6);
   padding: 0 var(--space-2);
   border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
-  border-radius: var(--radius-round);
+  border-radius: var(--radius-pill);
   background: var(--color-accent-soft);
   color: var(--color-text-muted);
   font-size: var(--text-xs);
@@ -146,7 +146,7 @@
   overflow: hidden;
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-round);
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--color-text-muted);
   font-size: var(--text-xs);
@@ -159,6 +159,10 @@
   border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
   background: var(--color-accent-soft);
   color: var(--color-text);
+}
+.chip:focus-visible {
+  outline: var(--chip-focus-width, 2px) solid var(--chip-focus-ring, var(--color-focus-ring));
+  outline-offset: var(--chip-focus-offset, 1px);
 }
 
 /* ==========================================================================
@@ -197,6 +201,10 @@
   transform: var(--btn-active-transform, none);
 }
 .btn:disabled { cursor: default; opacity: var(--btn-disabled-opacity, var(--opacity-disabled)); }
+.btn:focus-visible {
+  outline: var(--btn-focus-width, 2px) solid var(--btn-focus-ring, var(--color-focus-ring));
+  outline-offset: var(--btn-focus-offset, 2px);
+}
 
 
 .btn--primary {
@@ -273,13 +281,17 @@
   cursor: default;
   opacity: var(--icon-btn-disabled-opacity, var(--opacity-disabled));
 }
+.icon-btn:focus-visible {
+  outline: var(--icon-btn-focus-width, 2px) solid var(--icon-btn-focus-ring, var(--color-focus-ring));
+  outline-offset: var(--icon-btn-focus-offset, 2px);
+}
 .icon-btn--ghost {
   --icon-btn-border: transparent;
   --icon-btn-bg: transparent;
   --icon-btn-pressed-border: transparent;
 }
 .icon-btn--round {
-  --icon-btn-radius: var(--radius-round);
+  --icon-btn-radius: var(--radius-pill);
 }
 .icon-btn--danger {
   --icon-btn-border: color-mix(in srgb, var(--color-danger) 56%, transparent);
@@ -333,9 +345,156 @@
   cursor: default;
   opacity: var(--menu-item-disabled-opacity, var(--opacity-disabled));
 }
+.menu-item:focus-visible {
+  outline: var(--menu-item-focus-width, 2px) solid var(--menu-item-focus-ring, var(--color-focus-ring));
+  outline-offset: var(--menu-item-focus-offset, 1px);
+}
 .menu-item--danger {
   color: var(--color-danger);
   --menu-item-hover-bg: color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
+/* 浮层菜单容器（右键菜单 / dropdown / popover 下拉）
+ * --------------------------------------------------------------------------
+ * 只提供"悬浮表面 + 分隔 + 标签 + 进出场"，不接管定位（碰撞翻转、贴边由 JS 负责）。
+ * 默认实体表面（SKILL：实体优先）；需要跨壁纸/背景的悬浮层可加 .menu--glass 开 blur。
+ * 与 .menu-item 组合使用：
+ *   <div class="menu" role="menu" data-state="open">
+ *     <div class="menu__label">分组</div>
+ *     <button class="menu-item" role="menuitem">…</button>
+ *     <div class="menu__divider"></div>
+ *     <button class="menu-item menu-item--danger" role="menuitem">…</button>
+ *   </div>
+ * 进出场对齐 modal 约定：data-state="open|closed" 或 .is-open/.is-closed。
+ * ========================================================================== */
+.menu {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: var(--menu-padding, var(--space-1));
+  border: 1px solid var(--menu-border, var(--color-border));
+  border-radius: var(--menu-radius, var(--radius-md));
+  background: var(--menu-bg, var(--color-surface));
+  color: var(--menu-color, var(--color-text));
+  box-shadow: var(--menu-shadow, var(--shadow-md));
+  z-index: var(--menu-z, var(--z-dropdown));
+}
+
+/* 玻璃悬浮菜单：跨壁纸/背景时开 blur（对齐 .glass-panel 材质思路） */
+.menu--glass {
+  --menu-bg: color-mix(in srgb, var(--color-surface) 86%, transparent);
+  --menu-blur: var(--glass-panel-blur, 24px);
+}
+
+.menu__label {
+  padding: var(--menu-label-padding, var(--space-1) var(--space-2));
+  color: var(--menu-label-color, var(--color-text-subtle));
+  font-size: var(--menu-label-font-size, var(--text-xs));
+  font-weight: var(--menu-label-font-weight, var(--font-weight-medium));
+  line-height: var(--menu-label-line-height, 1.4);
+}
+
+.menu__divider {
+  margin: var(--menu-divider-margin, var(--space-1) 0);
+  border: 0;
+  border-top: 1px solid var(--menu-divider-color, var(--color-border));
+}
+
+/* 进场：fade + zoom（对齐 modal / shadcn 浮层 fade-in-0 + zoom-in-95） */
+.menu[data-state="open"],
+.menu.is-open {
+  animation: menu-in var(--duration-normal) var(--ease-out);
+}
+.menu[data-state="closed"],
+.menu.is-closed {
+  animation: menu-out var(--duration-fast) var(--ease-standard) forwards;
+}
+
+@keyframes menu-in {
+  from { opacity: 0; transform: scale(var(--menu-scale, 0.95)); }
+}
+@keyframes menu-out {
+  to { opacity: 0; transform: scale(var(--menu-scale, 0.95)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu { animation: none; }
+}
+
+
+/* ==========================================================================
+ * 工具提示（tooltip）
+ * --------------------------------------------------------------------------
+ * 参考 shadcn/ui Tooltip 行为契约重制：
+ *   - 反色表面（默认 --color-text 底 / --color-bg 字，亮暗主题都保持对比度）；
+ *     业务已有玻璃方案可通过 --tooltip-bg/color 覆写。
+ *   - pointer-events: none（不挡鼠标）；定位（fixed/absolute、居中偏移）属 JS 职责，
+ *     容器自带的 transform 不被本 recipe 动画覆盖——进出场只动 opacity + translate
+ *     （CSS translate 属性与 transform 独立合成，不会互相覆盖）。
+ *   - 进出场由 data-state="open|closed" / .is-open/.is-closed 驱动；reduced-motion 关闭。
+ *
+ * DOM 契约：
+ *   <div class="tooltip" role="tooltip" data-state="open" style="top:…;left:…">
+ *     提示文字
+ *   </div>
+ * ========================================================================== */
+.tooltip {
+  box-sizing: border-box;
+  position: var(--tooltip-position, fixed);
+  z-index: var(--tooltip-z, var(--z-max));
+  display: inline-block;
+  max-width: var(--tooltip-max-width, 18rem);
+  padding: var(--tooltip-padding, var(--space-1) var(--space-2));
+  border: 1px solid var(--tooltip-border, color-mix(in srgb, var(--color-text) 88%, transparent));
+  border-radius: var(--tooltip-radius, var(--radius-sm));
+  background: var(--tooltip-bg, var(--color-text));
+  color: var(--tooltip-color, var(--color-bg));
+  font-size: var(--tooltip-font-size, var(--text-xs));
+  font-weight: var(--tooltip-font-weight, var(--font-weight-medium));
+  line-height: var(--tooltip-line-height, 1.4);
+  text-align: var(--tooltip-align, left);
+  white-space: var(--tooltip-whitespace, nowrap);
+  pointer-events: none;
+  box-shadow: var(--tooltip-shadow, var(--shadow-sm));
+  /* 默认隐藏：状态由 data-state / .is-open 驱动，未声明或 closed 时不显示 */
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* 可选小三角（对齐 shadcn Tooltip.Arrow；旋转 45° 方块，同色填充） */
+.tooltip__arrow {
+  position: absolute;
+  width: var(--tooltip-arrow-size, 8px);
+  height: var(--tooltip-arrow-size, 8px);
+  background: var(--tooltip-bg, var(--color-text));
+  rotate: 45deg;
+}
+
+/* 进出场：只动 opacity + translate（不与业务容器的 transform 冲突）。
+ * open → 显示 + 入场；closed → 退场后保持隐藏（forwards）。 */
+.tooltip[data-state="open"],
+.tooltip.is-open {
+  opacity: 1;
+  visibility: visible;
+  animation: tooltip-in var(--duration-normal) var(--ease-out);
+}
+.tooltip[data-state="closed"],
+.tooltip.is-closed {
+  opacity: 0;
+  visibility: hidden;
+  animation: tooltip-out var(--duration-fast) var(--ease-standard) forwards;
+}
+
+@keyframes tooltip-in {
+  from { opacity: 0; translate: 0 var(--tooltip-slide, 2px); }
+}
+@keyframes tooltip-out {
+  to { opacity: 0; translate: 0 var(--tooltip-slide, 2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tooltip { animation: none; }
 }
 
 
@@ -367,13 +526,52 @@
   background: var(--field-hover-bg, var(--field-bg, var(--color-input-bg)));
   color: var(--field-hover-color, var(--field-color, var(--color-text)));
 }
-.field:focus {
+.field:focus-visible {
   border-color: var(--field-focus-border, var(--color-accent));
   background: var(--field-focus-bg, var(--field-bg, var(--color-input-bg)));
   color: var(--field-focus-color, var(--field-color, var(--color-text)));
   box-shadow: var(--field-focus-ring, 0 0 0 3px var(--color-accent-soft));
 }
-.field:disabled {
+.field[aria-invalid="true"],
+.field.is-invalid,
+.field[data-invalid="true"] {
+  border-color: var(--field-invalid-border, var(--color-danger));
+  background: var(--field-invalid-bg, var(--color-input-bg));
+  box-shadow: var(--field-invalid-ring, 0 0 0 3px color-mix(in srgb, var(--color-danger) 18%, transparent));
+}
+.field[aria-invalid="true"]:focus-visible,
+.field.is-invalid:focus-visible,
+.field[data-invalid="true"]:focus-visible {
+  border-color: var(--field-invalid-focus-border, var(--color-danger));
+  box-shadow: var(--field-invalid-focus-ring, 0 0 0 3px color-mix(in srgb, var(--color-danger) 24%, transparent));
+}
+.field[aria-invalid="false"],
+.field.is-valid,
+.field[data-valid="true"] {
+  border-color: var(--field-valid-border, var(--color-success));
+}
+.field__label,
+.field-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--field-label-gap, var(--space-1));
+  color: var(--field-label-color, var(--color-text));
+  font-size: var(--field-label-font-size, var(--text-sm));
+  font-weight: var(--field-label-font-weight, var(--font-weight-medium));
+}
+.field__help,
+.field-help {
+  color: var(--field-help-color, var(--color-text-muted));
+  font-size: var(--field-help-font-size, var(--text-sm));
+  line-height: 1.4;
+}
+.field__error,
+.field-error {
+  color: var(--field-error-color, var(--color-danger));
+  font-size: var(--field-error-font-size, var(--text-sm));
+  line-height: 1.4;
+}
+.field:disabled { 
   cursor: default;
   opacity: var(--field-disabled-opacity, var(--opacity-disabled));
 }
@@ -462,6 +660,221 @@
 }
 .field-shell__input::placeholder {
   color: var(--field-placeholder, var(--color-text-subtle));
+}
+
+/* ==========================================================================
+ * 选择控件（switch / checkbox / radio）
+ * --------------------------------------------------------------------------
+ * 只负责材质、状态和 focus；checked 状态由原生 input/业务 JS 管理。
+ * switch DOM：<label class="switch"><input type="checkbox"><span class="switch__track"><span class="switch__thumb"></span></span><span class="switch__label">...</span></label>
+ * checkbox/radio DOM：原生 input 加对应 class；radio-group 只负责组间距。
+ * ========================================================================== */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--switch-gap, var(--space-2));
+  color: var(--switch-color, var(--color-text));
+  font: inherit;
+  cursor: pointer;
+}
+.switch > input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.checkbox {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.switch__track {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  width: var(--switch-width, 36px);
+  height: var(--switch-height, 20px);
+  padding: var(--switch-track-padding, 2px);
+  border: 1px solid var(--switch-border, var(--color-border-strong));
+  border-radius: var(--radius-pill);
+  background: var(--switch-bg, var(--color-surface-raised));
+  transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.switch__thumb {
+  display: block;
+  width: var(--switch-thumb-size, 14px);
+  height: var(--switch-thumb-size, 14px);
+  border-radius: var(--radius-pill);
+  background: var(--switch-thumb-bg, var(--color-surface));
+  box-shadow: var(--switch-thumb-shadow, var(--shadow-sm));
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+.switch > input:checked + .switch__track {
+  border-color: var(--switch-checked-border, var(--color-accent));
+  background: var(--switch-checked-bg, var(--color-accent));
+}
+.switch > input:checked + .switch__track .switch__thumb {
+  transform: translateX(var(--switch-thumb-offset, 16px));
+}
+.switch > input:focus-visible + .switch__track,
+.checkbox:focus-visible + .checkbox__box,
+.radio:focus-visible + .radio__control {
+  outline: var(--control-focus-width, 2px) solid var(--control-focus-ring, var(--color-focus-ring));
+  outline-offset: var(--control-focus-offset, 2px);
+}
+.switch > input:disabled ~ *,
+.checkbox:disabled ~ *,
+.radio:disabled ~ * {
+  cursor: default;
+  opacity: var(--control-disabled-opacity, var(--opacity-disabled));
+}
+.switch__label { font-size: var(--switch-label-size, var(--text-sm)); }
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--control-gap, var(--space-2));
+  color: var(--control-color, var(--color-text));
+  font: inherit;
+  cursor: pointer;
+}
+.radio-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--control-gap, var(--space-2));
+  color: var(--control-color, var(--color-text));
+  font: inherit;
+  cursor: pointer;
+}
+.checkbox__box,
+.radio__control {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: var(--control-size, 16px);
+  height: var(--control-size, 16px);
+  border: 1px solid var(--control-border, var(--color-border-strong));
+  background: var(--control-bg, var(--color-input-bg));
+  color: var(--control-checked-color, var(--color-on-accent));
+  transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+.checkbox__box { border-radius: var(--control-radius, var(--radius-sm)); }
+.radio__control { border-radius: var(--radius-pill); }
+.checkbox:checked + .checkbox__box,
+.radio:checked + .radio__control {
+  border-color: var(--control-checked-border, var(--color-accent));
+  background: var(--control-checked-bg, var(--color-accent));
+}
+.checkbox:checked + .checkbox__box::after {
+  content: "";
+  width: 7px;
+  height: 4px;
+  border: solid currentColor;
+  border-width: 0 0 2px 2px;
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+.radio:checked + .radio__control::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+}
+.checkbox:indeterminate + .checkbox__box::after {
+  content: "";
+  width: 8px;
+  height: 2px;
+  background: currentColor;
+}
+.checkbox-label:has(:disabled),
+.radio-label:has(:disabled) { cursor: default; opacity: var(--control-disabled-opacity, var(--opacity-disabled)); }
+.radio-group { display: flex; flex-direction: column; gap: var(--control-group-gap, var(--space-2)); }
+.checkbox-group { display: flex; flex-direction: column; gap: var(--control-group-gap, var(--space-2)); }
+
+/* ==========================================================================
+ * 反馈与基础展示（alert / spinner / skeleton / progress / empty / separator / label / kbd）
+ * --------------------------------------------------------------------------
+ * 这些 recipe 不接管生命周期、异步状态或布局；业务层负责显示/隐藏与进度值。
+ * ========================================================================== */
+.alert {
+  display: flex;
+  gap: var(--alert-gap, var(--space-3));
+  padding: var(--alert-padding, var(--space-3));
+  border: 1px solid var(--alert-border, var(--color-border));
+  border-radius: var(--alert-radius, var(--radius-md));
+  background: var(--alert-bg, var(--color-surface-muted));
+  color: var(--alert-color, var(--color-text));
+}
+.alert--info { --alert-border: color-mix(in srgb, var(--color-info) 34%, var(--color-border)); --alert-bg: color-mix(in srgb, var(--color-info) 10%, var(--color-surface)); }
+.alert--success { --alert-border: color-mix(in srgb, var(--color-success) 34%, var(--color-border)); --alert-bg: color-mix(in srgb, var(--color-success) 10%, var(--color-surface)); }
+.alert--warning { --alert-border: color-mix(in srgb, var(--color-warning) 38%, var(--color-border)); --alert-bg: color-mix(in srgb, var(--color-warning) 10%, var(--color-surface)); }
+.alert--danger { --alert-border: color-mix(in srgb, var(--color-danger) 38%, var(--color-border)); --alert-bg: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface)); }
+.alert__title { font-weight: var(--alert-title-weight, var(--font-weight-semibold)); }
+.alert__description { color: var(--alert-description-color, var(--color-text-muted)); font-size: var(--text-sm); line-height: 1.4; }
+.spinner {
+  display: inline-block;
+  width: var(--spinner-size, 20px);
+  height: var(--spinner-size, 20px);
+  border: var(--spinner-border-width, 2px) solid var(--spinner-track, var(--color-border));
+  border-top-color: var(--spinner-color, var(--color-accent));
+  border-radius: var(--radius-pill);
+  animation: spinner-rotate var(--spinner-duration, 800ms) linear infinite;
+}
+@keyframes spinner-rotate { to { transform: rotate(360deg); } }
+.skeleton {
+  display: block;
+  min-height: var(--skeleton-height, var(--space-4));
+  border-radius: var(--skeleton-radius, var(--radius-sm));
+  background: linear-gradient(100deg, var(--color-surface-muted) 30%, var(--color-surface-raised) 50%, var(--color-surface-muted) 70%);
+  background-size: 300% 100%;
+  animation: skeleton-shimmer var(--skeleton-duration, 1400ms) var(--ease-standard) infinite;
+}
+@keyframes skeleton-shimmer { to { background-position: -300% 0; } }
+.progress {
+  display: block;
+  width: 100%;
+  height: var(--progress-height, 6px);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--progress-track, var(--color-surface-raised));
+}
+.progress__bar { display: block; width: var(--progress-value, 0%); height: 100%; border-radius: inherit; background: var(--progress-color, var(--color-accent)); transition: width var(--duration-normal) var(--ease-standard); }
+.progress--indeterminate { }
+.progress--indeterminate .progress__bar {
+  width: var(--progress-indeterminate-width, 36%);
+  animation: progress-indeterminate var(--progress-indeterminate-duration, 1400ms) var(--ease-in-out, ease-in-out) infinite;
+}
+@keyframes progress-indeterminate {
+  from { translate: -100% 0; }
+  to { translate: 280% 0; }
+}
+.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--empty-gap, var(--space-2)); padding: var(--empty-padding, var(--space-8)); text-align: center; color: var(--empty-color, var(--color-text-muted)); }
+.empty__title { color: var(--empty-title-color, var(--color-text)); font-weight: var(--font-weight-semibold); }
+.empty__description { max-width: var(--empty-description-width, 34rem); font-size: var(--text-sm); }
+.separator { height: var(--separator-size, 1px); border: 0; background: var(--separator-color, var(--color-border)); }
+.separator[aria-orientation="vertical"] { width: var(--separator-size, 1px); height: auto; align-self: stretch; }
+.label { display: inline-flex; align-items: center; gap: var(--label-gap, var(--space-1)); color: var(--label-color, var(--color-text-muted)); font-size: var(--label-size, var(--text-xs)); font-weight: var(--label-weight, var(--font-weight-semibold)); }
+.kbd { display: inline-flex; align-items: center; min-width: var(--kbd-min-width, 1.5em); justify-content: center; padding: var(--kbd-padding, var(--space-1)); border: 1px solid var(--kbd-border, var(--color-border-strong)); border-bottom-width: var(--kbd-bottom-border, 2px); border-radius: var(--kbd-radius, var(--radius-sm)); background: var(--kbd-bg, var(--color-surface-muted)); color: var(--kbd-color, var(--color-text-muted)); font-family: var(--font-code); font-size: var(--kbd-size, var(--text-xs)); line-height: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .switch__track, .switch__thumb, .checkbox__box, .radio__control, .spinner, .skeleton, .progress__bar { transition: none; animation: none; }
 }
 
 /* ==========================================================================
@@ -604,7 +1017,7 @@
 .range:focus-visible {
   outline: var(--range-focus-width, 2px) solid var(--range-focus-ring, var(--color-focus-ring));
   outline-offset: var(--range-focus-offset, 2px);
-  border-radius: var(--range-focus-radius, var(--radius-round));
+  border-radius: var(--range-focus-radius, var(--radius-pill));
 }
 .range:disabled {
   cursor: default;
@@ -623,6 +1036,13 @@
   border-radius: var(--card-radius, var(--radius-lg));
   background: var(--card-bg, var(--color-surface));
   box-shadow: var(--card-shadow, var(--shadow-sm));
+}
+
+/* 虚线边缘卡片（上传 / 拖放区等“待填入”语义）。
+ * 默认跟随主题描边（亮色=深线，暗色=浅线），保证随主题切换自动适应；
+ * 需要强调色可用 --card-dashed-color 覆写。 */
+.card--dashed {
+  --card-border: 2px dashed var(--card-dashed-color, var(--color-border-strong));
 }
 
 /* 可点击 / 可选择卡片：内容布局仍由业务组件决定。 */
@@ -650,7 +1070,7 @@
 .card--interactive[aria-pressed="true"],
 .card--interactive.is-active {
   border-color: var(--card-selected-border, var(--color-accent));
-  background: var(--card-selected-bg, var(--color-accent-softer));
+  background: var(--card-selected-bg, var(--color-surface-selected));
   box-shadow: var(--card-selected-shadow, 0 0 0 2px var(--color-focus-ring));
 }
 .card--interactive:disabled {
@@ -678,6 +1098,27 @@
   line-height: 1.35;
 }
 
+/* 终端输出视觉层：不负责命令执行、日志生命周期或滚动控制。 */
+.terminal {
+  --terminal-bg: var(--color-terminal-bg);
+  --terminal-color: var(--color-terminal-text);
+  --terminal-border: var(--color-terminal-border);
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--terminal-border);
+  border-radius: var(--radius-lg);
+  background: var(--terminal-bg);
+  color: var(--terminal-color);
+  box-shadow: var(--shadow-md);
+}
+.terminal__toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--terminal-border); }
+.terminal__output { min-height: 12rem; max-height: 28rem; overflow: auto; padding: var(--space-4); color: var(--terminal-color); font-family: var(--font-code); font-size: var(--text-sm); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
+.terminal__meta { color: var(--color-text-muted); font-size: var(--text-xs); }
+.terminal--empty .terminal__output, .terminal--loading .terminal__output, .terminal--error .terminal__output { display: grid; place-items: center; min-height: 10rem; text-align: center; }
+.terminal--error { --terminal-border: color-mix(in srgb, var(--color-danger) 48%, var(--color-border)); }
+
 /* ==========================================================================
  * 遮罩与玻璃面板（overlay / glass-panel）
  * --------------------------------------------------------------------------
@@ -701,4 +1142,256 @@
   box-shadow: var(--glass-panel-shadow, var(--shadow-lg));
   backdrop-filter: blur(var(--glass-panel-blur, 24px)) saturate(1.08);
   -webkit-backdrop-filter: blur(var(--glass-panel-blur, 24px)) saturate(1.08);
+}
+
+/* ==========================================================================
+ * 模态对话框（modal）
+ * --------------------------------------------------------------------------
+ * 参考 shadcn/ui Dialog 的行为契约重制（只借鉴行为与状态，不搬视觉）：
+ *   - 遮罩 = 自带 --color-overlay 材质（经 --modal-backdrop-* hook 覆写）+ 居中定位 + fade 进出场；
+ *   - 面板 = 表面无关，叠加 .card（实体）或 .glass-panel（玻璃）+ fade/zoom 进出场；
+ *   - 进出场由 data-state="open|closed" 驱动（对齐 Radix 约定），也可用
+ *     .is-open / .is-closed 类名钩子；JS 负责在退场动画结束后卸载节点。
+ *   - 关闭按钮使用 .icon-btn，不内嵌样式；焦点陷阱、Esc、焦点归还属 JS 职责。
+ *
+ * DOM 契约：
+ *   <div class="modal-backdrop" data-state="open">
+ *     <div class="modal-panel card" role="dialog" aria-modal="true" aria-labelledby="…">
+ *       <div class="modal-panel__head">… <button class="icon-btn">×</button></div>
+ *       <div class="modal-panel__body">…</div>
+ *       <div class="modal-panel__foot">…</div>
+ *     </div>
+ *   </div>
+ * ========================================================================== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--modal-z, var(--z-modal));
+  display: flex;
+  align-items: var(--modal-align, center);
+  justify-content: center;
+  padding: var(--modal-padding, var(--space-6));
+  overflow-y: auto;
+  background: var(--modal-backdrop-bg, var(--color-overlay));
+  backdrop-filter: blur(var(--modal-backdrop-blur, 0));
+  -webkit-backdrop-filter: blur(var(--modal-backdrop-blur, 0));
+}
+
+.modal-panel {
+  width: var(--modal-panel-width, min(460px, 100%));
+  box-shadow: var(--modal-panel-shadow, var(--shadow-lg));
+  /* 进出场缩放幅度（对齐 shadcn zoom-in/out-95；供 keyframes 引用） */
+  --modal-panel-scale: 0.95;
+}
+
+.modal-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--modal-head-gap, var(--space-3));
+  padding: var(--modal-head-padding, var(--space-4) var(--space-4) 0);
+}
+.modal-panel__body {
+  padding: var(--modal-body-padding, var(--space-4));
+}
+.modal-panel__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--modal-foot-gap, var(--space-2));
+  padding: var(--modal-foot-padding, 0 var(--space-4) var(--space-4));
+}
+
+/* 进出场动画：遮罩仅 fade；面板 fade + zoom（对齐 shadcn fade-in-0 + zoom-in-95）。
+ * 面板动画默认跟随遮罩状态；面板单独控制状态时可用自身 data-state / 类名覆盖。 */
+.modal-backdrop[data-state="open"],
+.modal-backdrop.is-open {
+  animation: modal-fade-in var(--duration-normal) var(--ease-standard);
+}
+.modal-backdrop[data-state="closed"],
+.modal-backdrop.is-closed {
+  animation: modal-fade-out var(--duration-normal) var(--ease-standard) forwards;
+}
+.modal-backdrop[data-state="open"] .modal-panel,
+.modal-backdrop.is-open .modal-panel,
+.modal-panel[data-state="open"],
+.modal-panel.is-open {
+  animation: modal-panel-in var(--duration-normal) var(--ease-out);
+}
+.modal-backdrop[data-state="closed"] .modal-panel,
+.modal-backdrop.is-closed .modal-panel,
+.modal-panel[data-state="closed"],
+.modal-panel.is-closed {
+  animation: modal-panel-out var(--duration-fast) var(--ease-standard) forwards;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+}
+@keyframes modal-fade-out {
+  to { opacity: 0; }
+}
+@keyframes modal-panel-in {
+  from { opacity: 0; transform: scale(var(--modal-panel-scale, 0.95)); }
+}
+@keyframes modal-panel-out {
+  to { opacity: 0; transform: scale(var(--modal-panel-scale, 0.95)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop,
+  .modal-panel { animation: none; }
+}
+
+
+/* ==========================================================================
+ * 浮动上下文面板（popover / hover-card）
+ * --------------------------------------------------------------------------
+ * 参考 shadcn/ui Popover / HoverCard 的行为契约重制（只借鉴行为与状态，不搬视觉）。
+ * 与 .menu 共用"悬浮表面"材质思路，但 .popover 是布局中立的通用面板，
+ * 不强制 flex-column / menuitem 结构，用于点击触发的上下文编辑、筛选、快捷面板。
+ * .hover-card 是它的"富预览"变体（合成 .popover，见下），用于 hover 触发的
+ * 头像/媒体/文字预览卡片，可复用 .popover__header/__title/__description。
+ *
+ * 浮层表面：surface + border + radius-md + shadow-md + z-dropdown。
+ * 默认隐藏（opacity:0; visibility:hidden），由 data-state="open|closed"
+ * 或 .is-open/.is-closed 驱动显隐与进出场；JS 负责定位、碰撞翻转、焦点与关闭。
+ *
+ * 定位：recipe 不做定位（--popover-position 默认 absolute，可覆写 fixed），
+ * 消费方自行用 top/left/transform 决定位置。本 recipe 进出场动画只动
+ * opacity + scale/translate（独立 CSS 属性，不覆盖消费方的 position/transform）。
+ *
+ * DOM 契约（popover）：
+ *   <button class="btn">触发</button>
+ *   <div class="popover" role="dialog" data-state="open" style="top:…;left:…">
+ *     <div class="popover__header">
+ *       <div class="popover__title">标题</div>
+ *       <div class="popover__description">说明</div>
+ *     </div>
+ *     …内容…
+ *     <div class="popover__footer">…操作…</div>
+ *   </div>
+ *
+ * DOM 契约（hover-card，合成 .popover）：
+ *   <div class="popover hover-card" role="tooltip" data-state="open" style="top:…;left:…">
+ *     <img class="hover-card__media" src="…" alt="">
+ *     <div class="popover__title">标题</div>
+ *     <div class="popover__description">说明</div>
+ *   </div>
+ * ========================================================================== */
+.popover {
+  box-sizing: border-box;
+  position: var(--popover-position, absolute);
+  z-index: var(--popover-z, var(--z-dropdown));
+  width: var(--popover-width, 18rem);
+  max-width: var(--popover-max-width, calc(100vw - var(--space-6)));
+  padding: var(--popover-padding, var(--space-4));
+  border: 1px solid var(--popover-border, var(--color-border));
+  border-radius: var(--popover-radius, var(--radius-md));
+  background: var(--popover-bg, var(--color-surface));
+  color: var(--popover-color, var(--color-text));
+  box-shadow: var(--popover-shadow, var(--shadow-md));
+  /* 默认隐藏：显隐由 data-state / .is-open/.is-closed 驱动（未声明或 closed 不显示） */
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* 玻璃浮动面板：跨壁纸/背景时开 blur（对齐 .glass-panel / .menu--glass 材质思路） */
+.popover--glass {
+  --popover-bg: color-mix(in srgb, var(--color-surface) 82%, transparent);
+  --popover-blur: var(--glass-panel-blur, 24px);
+  backdrop-filter: blur(var(--popover-blur, 0)) saturate(var(--popover-saturate, 1.08));
+  -webkit-backdrop-filter: blur(var(--popover-blur, 0)) saturate(var(--popover-saturate, 1.08));
+}
+
+.popover__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--popover-header-gap, var(--space-1));
+  margin-bottom: var(--popover-header-margin, var(--space-3));
+}
+.popover__title {
+  color: var(--popover-title-color, var(--color-text));
+  font-size: var(--popover-title-font-size, var(--text-base));
+  font-weight: var(--popover-title-font-weight, var(--font-weight-semibold));
+  line-height: var(--popover-title-line-height, 1.3);
+}
+.popover__description {
+  color: var(--popover-description-color, var(--color-text-muted));
+  font-size: var(--popover-description-font-size, var(--text-sm));
+  font-weight: var(--popover-description-font-weight, var(--font-weight-regular));
+  line-height: var(--popover-description-line-height, 1.4);
+}
+.popover__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--popover-footer-gap, var(--space-2));
+  margin-top: var(--popover-footer-margin, var(--space-3));
+}
+
+/* 富预览变体（合成 .popover）：仅覆写几何/排版，复用 .popover 表面与进出场 */
+.hover-card {
+  --popover-width: var(--hover-card-width, 16rem);
+  --popover-padding: var(--hover-card-padding, var(--space-3));
+}
+.hover-card__media {
+  display: block;
+  width: 100%;
+  height: var(--hover-card-media-height, 6rem);
+  margin-bottom: var(--hover-card-media-margin, var(--space-3));
+  border: 1px solid var(--hover-card-media-border, var(--color-border));
+  border-radius: var(--hover-card-media-radius, var(--radius-sm));
+  object-fit: cover;
+}
+
+/* 进出场：fade + zoom（对齐 shadcn fade-in/out + zoom-in/out-95），
+ * open 额外按 data-side 侧向滑入（slide-in-from-<side>-2）；只动独立属性，
+ * 不与消费方 position/transform 冲突。reduced-motion 下关闭动画。 */
+.popover[data-state="open"],
+.popover.is-open {
+  opacity: 1;
+  visibility: visible;
+  animation: popover-in var(--duration-normal) var(--ease-out);
+}
+.popover[data-state="closed"],
+.popover.is-closed {
+  opacity: 0;
+  visibility: hidden;
+  animation: popover-out var(--duration-fast) var(--ease-standard) forwards;
+}
+
+/* 侧向进场位移（JS 提供 data-side；shadcn 契约：面板在 bottom 侧则由上方滑入） */
+.popover[data-side="bottom"] {
+  --popover-slide-x: 0;
+  --popover-slide-y: calc(var(--popover-slide, 2px) * -1);
+}
+.popover[data-side="top"] {
+  --popover-slide-x: 0;
+  --popover-slide-y: var(--popover-slide, 2px);
+}
+.popover[data-side="left"] {
+  --popover-slide-x: var(--popover-slide, 2px);
+  --popover-slide-y: 0;
+}
+.popover[data-side="right"] {
+  --popover-slide-x: calc(var(--popover-slide, 2px) * -1);
+  --popover-slide-y: 0;
+}
+
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    scale: var(--popover-scale, 0.95);
+    translate: var(--popover-slide-x, 0) var(--popover-slide-y, 0);
+  }
+}
+@keyframes popover-out {
+  to {
+    opacity: 0;
+    scale: var(--popover-scale, 0.95);
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popover { animation: none; }
 }

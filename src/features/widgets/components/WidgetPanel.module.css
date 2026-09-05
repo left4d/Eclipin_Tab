@@ -179,6 +179,31 @@
   padding: 0;
 }
 
+.colorPickerWidget .widgetHeader { display: none; }
+.colorPickerWidget .body { padding: 0; }
+/* 小组件主体：可换行的紧凑布局，窄容器不裁剪。 */
+.colorPickerBody { display: flex; flex-wrap: wrap; gap: 10px 14px; padding: 12px; min-height: 0; box-sizing: border-box; align-items: center; }
+.colorPickerSwatches { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+.colorPickerCurrentBtn { width: 30px; height: 30px; padding: 0; border: 1px solid rgb(0 0 0 / 0.14); border-radius: 8px; cursor: pointer; box-sizing: border-box; display: grid; place-items: center; background: var(--color-bg-tertiary, rgb(255 255 255 / 0.6)); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.35); }
+.colorPickerCurrentBtn:hover { transform: scale(1.08); }
+.colorPickerCurrentLine { width: 18px; height: 8px; border-radius: 999px; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.14); }
+.colorPickerSwatch { width: 22px; height: 22px; padding: 0; border: 1px solid rgb(0 0 0 / 0.12); border-radius: 50%; cursor: pointer; box-sizing: border-box; }
+.colorPickerSwatch:hover { transform: scale(1.12); }
+.colorPickerValueRow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+.colorPickerValueRow input { width: 116px; min-width: 0; }
+.colorPickerValueRow select { width: 62px; padding-inline: 6px; }
+
+/* 自研取色弹出层（portal 到 body，不受容器 overflow 裁剪）。 */
+.colorPickerPopover { position: fixed; z-index: 1000000001; width: 248px; padding: 12px; border: 1px solid var(--color-border, rgb(255 255 255 / 0.18)); border-radius: var(--radius-lg, 18px); background: var(--color-bg-primary, rgb(28 28 30 / 0.96)); color: var(--color-text-primary, #f5f5f7); box-shadow: 0 18px 42px rgb(0 0 0 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.08); backdrop-filter: blur(20px) saturate(1.08); -webkit-backdrop-filter: blur(20px) saturate(1.08); box-sizing: border-box; }
+.colorPickerSv { position: relative; height: 132px; overflow: hidden; border: 1px solid var(--color-border, rgb(255 255 255 / 0.16)); border-radius: var(--radius-md, 12px); background-image: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent); cursor: crosshair; touch-action: none; }
+.colorPickerThumb, .colorPickerHueThumb { position: absolute; z-index: 2; width: 14px; height: 14px; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 1px 5px rgb(0 0 0 / 0.45); pointer-events: none; transform: translate(-50%, -50%); }
+.colorPickerHue { position: relative; height: 12px; margin: 10px 1px; border: 1px solid var(--color-border, rgb(255 255 255 / 0.16)); border-radius: 999px; background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); cursor: ew-resize; touch-action: none; }
+.colorPickerHueThumb { top: 50%; width: 12px; height: 18px; }
+.colorPickerPopoverFooter { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.colorPickerPopoverSwatch { width: 26px; height: 26px; flex: 0 0 auto; border: 1px solid var(--color-border, rgb(255 255 255 / 0.16)); border-radius: var(--radius-sm, 8px); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.3); }
+.colorPickerPopoverValue { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font: 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; color: var(--color-text-secondary); }
+
+
 .linkWidget .resizeHandle {
   right: -2px;
   bottom: -2px;
@@ -307,15 +332,14 @@
 .linkName {
   margin-top: 8px;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* 描边会超出文字盒，overflow:visible 避免描边被裁剪；长名称交给外层组件裁剪。 */
   white-space: nowrap;
   font-weight: 900;
   font-size: clamp(1rem, 2.4vw, 1.35rem);
   line-height: 0.95;
   color: rgba(18, 23, 34, 0.9);
   letter-spacing: -0.05em;
-  filter: url(#text-sticker-stroke);
+  /* 描边由内联 SVG 联合滤镜提供（见 SortableWidgetBody rgb 链接），不在这里写死宽度。 */
   text-rendering: geometricPrecision;
 }
 

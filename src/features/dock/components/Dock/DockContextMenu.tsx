@@ -166,7 +166,7 @@ export const DockContextMenu: React.FC<DockContextMenuProps> = ({
                 style={{ left: adjustedX, top: adjustedY }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className={styles.menuLabel}>{item.name}</div>
+                <div className={styles.menuLabel}>{item.name || item.url || ''}</div>
                 <div className={styles.menuDivider} />
                 <div className={styles.menuOptions}>
                 {/* 编辑图标 - 仅适用于非文件夹项目 */}

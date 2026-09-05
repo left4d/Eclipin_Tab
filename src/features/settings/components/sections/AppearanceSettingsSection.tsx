@@ -86,7 +86,9 @@ export const AppearanceSettingsSection = () => {
   }, [followSystem, setFollowSystem, setTheme]);
 
   const handleGradientSelect = useCallback((id: string) => {
-    if (wallpaper) setWallpaper(null);
+    // 切换纯色/渐变时必须清除壁纸及其 ID。weScene 等多资源壁纸会把 wallpaper 置为
+    // null 但仍保留 wallpaperId，若不清理，切回纯色时旧的 weScene 渲染层会继续覆盖背景。
+    setWallpaper(null);
     if (isDefaultTheme) {
       if (gradientId === id) {
         setGradientId('theme-default');
@@ -97,7 +99,7 @@ export const AppearanceSettingsSection = () => {
       return;
     }
     setSolidId(id);
-  }, [gradientId, isDefaultTheme, setGradientId, setSolidId, setWallpaper, wallpaper]);
+  }, [gradientId, isDefaultTheme, setGradientId, setSolidId, setWallpaper]);
 
   const handleTextureSelect = useCallback((selectedTexture: Texture) => {
     setTexture(selectedTexture);

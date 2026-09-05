@@ -29,7 +29,7 @@ interface WidgetPanelQuickEditorsProps {
   linkTextWidget: WidgetLayout | null;
   linkTextAnchor: DOMRect | null;
   onCloseLinkText: () => void;
-  onUpdateLinkText: (id: string, updates: Pick<Partial<WidgetLayout>, 'linkTextColor' | 'linkTextSize'>) => void;
+  onUpdateLinkText: (id: string, updates: Pick<Partial<WidgetLayout>, 'linkTextColor' | 'linkTextSize' | 'linkTextStroke'>) => void;
 }
 
 export default function WidgetPanelQuickEditors({
@@ -218,6 +218,17 @@ export default function WidgetPanelQuickEditors({
                 onChange={(event) => onUpdateLinkText(linkTextWidget.id, { linkTextSize: Number(event.target.value) })}
               />
               <strong>{linkTextWidget.linkTextSize ?? 20}</strong>
+            </label>
+            <label className={styles.linkTextRow}>
+              <span>描边</span>
+              <input
+                type="range" className="range"
+                min="0"
+                max="20"
+                value={linkTextWidget.linkTextStroke ?? 6}
+                onChange={(event) => onUpdateLinkText(linkTextWidget.id, { linkTextStroke: Number(event.target.value) })}
+              />
+              <strong>{(linkTextWidget.linkTextStroke ?? 6) === 0 ? '无' : `${linkTextWidget.linkTextStroke ?? 6}`}</strong>
             </label>
             <button
               type="button"

@@ -12,7 +12,8 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Sage Workshop',
         gradient: 'linear-gradient(145deg, #f8faf6 0%, #e8eee3 48%, #d5dfcf 100%)',
         solid: '#F4F6F2',
-        solidDark: '#172019',
+        // Design System Sage dark canvas: neutral base with a restrained accent wash.
+        solidDark: 'color-mix(in srgb, #1c1c1e 94%, #91ad82 6%)',
     },
     {
         id: 'gradient-1',
@@ -20,7 +21,8 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Pink',
         gradient: 'linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%)',
         solid: '#FFF5F7',
-        solidDark: '#2B2026',
+        // Design System Rose dark canvas.
+        solidDark: 'color-mix(in srgb, #1c1c1e 94%, #dd829c 6%)',
     },
     {
         id: 'gradient-2',
@@ -28,7 +30,8 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Blue',
         gradient: 'linear-gradient(to top, #fbc2eb 0%, #a6c1ee 100%)',
         solid: '#F5F9FF',
-        solidDark: '#1B2432',
+        // Design System Ocean dark canvas.
+        solidDark: 'color-mix(in srgb, #1c1c1e 94%, #7fa8cf 6%)',
     },
     {
         id: 'gradient-3',
@@ -36,7 +39,8 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Green',
         gradient: 'linear-gradient(to top, #b8cf81ff 0%, #014108ff 100%)',
         solid: '#F1F6EF',
-        solidDark: '#1A281F',
+        // Design System Sage dark canvas with a restrained green wash.
+        solidDark: 'color-mix(in srgb, #1c1c1e 94%, #91ad82 6%)',
     },
     {
         id: 'gradient-4',
@@ -44,7 +48,8 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Grey',
         gradient: 'linear-gradient(to top, #6a85b6 0%, #bac8e0 100%)',
         solid: '#F8FAFC',
-        solidDark: '#222831',
+        // Design System Graphite dark canvas.
+        solidDark: '#1c1c1e',
     },
     {
         id: 'gradient-5',
@@ -52,7 +57,8 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Purple',
         gradient: 'linear-gradient(to top, #505285 0%, #585e92 12%, #65689f 25%, #7474b0 37%, #7e7ebb 50%, #8389c7 62%, #9795d4 75%, #a2a1dc 87%, #b5aee4 100%)',
         solid: '#F9F5FF',
-        solidDark: '#262130',
+        // Design System Violet dark canvas.
+        solidDark: 'color-mix(in srgb, #1c1c1e 94%, #b49ae0 6%)'
     },
     {
         id: 'gradient-6',
@@ -60,7 +66,8 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Brown',
         gradient: 'linear-gradient(to top, #bdc2e8 0%, #bdc2e8 1%, #e6dee9 100%)',
         solid: '#EAE6DB',
-        solidDark: '#29241F',
+        // Design System Sand dark canvas.
+        solidDark: 'color-mix(in srgb, #1c1c1e 94%, #d39a62 6%)'
     },
     {
         id: 'gradient-7',
@@ -68,7 +75,8 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Orange',
         gradient: 'linear-gradient(to bottom, #323232 0%, #3F3F3F 40%, #1C1C1C 150%), linear-gradient(to top, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.25) 200%)',
         solid: '#F2E8DF',
-        solidDark: '#2B211B',
+        // Design System Orange dark canvas.
+        solidDark: 'color-mix(in srgb, #1c1c1e 94%, #ed8b55 6%)'
     },
     {
         id: 'gradient-8',
@@ -76,7 +84,8 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Indigo',
         gradient: 'linear-gradient(to top, #0c3483 0%, #a2b6df 100%, #6b8cce 100%, #a2b6df 100%)',
         solid: '#F5F7FF',
-        solidDark: '#22253D',
+        // Indigo follows the Design System Ocean dark canvas family.
+        solidDark: 'color-mix(in srgb, #1c1c1e 94%, #7fa8cf 6%)',
     },
     {
         id: 'gradient-9',
@@ -84,7 +93,8 @@ export const GRADIENT_PRESETS = [
         nameEn: 'Black',
         gradient: 'linear-gradient(-225deg, #473B7B 0%, #3584A7 51%, #30D2BE 100%)',
         solid: '#323232',
-        solidDark: '#121212',
+        // Keep the black preset near-black while matching the dark canvas scale.
+        solidDark: '#161618'
     },
 ] as const;
 

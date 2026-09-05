@@ -368,7 +368,7 @@ function App() {
       <svg width="0" height="0" style={{ position: 'absolute', visibility: 'hidden' }}>
         <defs>
           {/* 圆角描边滤镜：使用 feMorphology dilate + 模糊 + 锐化实现圆角效果 */}
-          <filter id="text-sticker-stroke" x="-25%" y="-25%" width="150%" height="150%">
+          <filter id="text-sticker-stroke" x="-30%" y="-30%" width="160%" height="160%">
             {/* 步骤1: 扩展原始图形轮廓 */}
             <feMorphology in="SourceAlpha" operator="dilate" radius="4.5" result="dilated" />
             {/* 步骤2: 轻微模糊使边缘变圆滑 */}

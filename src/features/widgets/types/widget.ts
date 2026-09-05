@@ -1,9 +1,9 @@
-import type { BuiltInFontId } from '@/shared/constants/builtInFonts';
+﻿import type { BuiltInFontId } from '@/shared/constants/builtInFonts';
 import type { NavigationAction } from '@/shared/navigation';
 import type { TranslatorLanguageCode, TranslatorProvider } from '@/features/translation/types/translation';
 export type { TranslatorLanguageCode, TranslatorProvider } from '@/features/translation/types/translation';
 
-export type WidgetType = 'clock' | 'analogClock' | 'weather' | 'translate' | 'link' | 'notes' | 'todo' | 'pomodoro' | 'calendar' | 'countdown' | 'gtrend' | 'embed' | 'space' | 'bookmarks' | 'openTabs';
+export type WidgetType = 'clock' | 'analogClock' | 'weather' | 'translate' | 'link' | 'notes' | 'todo' | 'pomodoro' | 'calendar' | 'countdown' | 'gtrend' | 'colorPicker' | 'embed' | 'space' | 'bookmarks' | 'openTabs';
 export type WidgetPageId = number;
 export type WidgetContainerStyle = 'classic' | 'frame' | 'ambient' | 'veil';
 export type WeatherLocationMode = 'current' | 'custom';
@@ -41,6 +41,9 @@ export interface WidgetLayout {
   iconSmall?: boolean;
   linkTextColor?: string;
   linkTextSize?: number;
+  /** 快捷链接文字的描边宽度（px）；0 表示关闭描边。 */
+  linkTextStroke?: number;
+  colorValue?: string;
   noteText?: string;
   noteFontSize?: number;
   fontFamily?: BuiltInFontId;

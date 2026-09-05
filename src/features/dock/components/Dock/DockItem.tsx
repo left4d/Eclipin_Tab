@@ -223,7 +223,7 @@ const DockItemComponent: React.FC<DockItemProps> = ({
         ) : (
           <img
             src={resolvedIcon}
-            alt={item.name}
+            alt={item.name || item.url || ''}
             className={`${styles.icon} ${item.iconSmall ? styles.iconSmall : ''}`}
             onError={(event) => {
               if (event.currentTarget.dataset.fallbackApplied === 'true') return;
@@ -243,7 +243,7 @@ const DockItemComponent: React.FC<DockItemProps> = ({
         </button>
       )}
       {showTooltip && (
-        <Tooltip text={item.name} targetRef={rootRef} />
+        <Tooltip text={item.name || item.url || ''} targetRef={rootRef} />
       )}
     </div>
   );

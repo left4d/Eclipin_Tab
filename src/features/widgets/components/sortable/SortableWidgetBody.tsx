@@ -15,6 +15,7 @@ import { WeatherWidgetBody } from './WeatherWidgetBody';
 import { TranslatorWidgetBody } from './TranslatorWidgetBody';
 import { PomodoroDurationMenu } from './PomodoroDurationMenu';
 import { OpenTabsWidgetBody } from './OpenTabsWidgetBody';
+import { ColorPickerWidgetBody } from './ColorPickerWidgetBody';
 import bookmarkStyles from './BookmarkWidget.module.css';
 import type { SortableWidgetProps } from './SortableWidget.types';
 import type { SortableWidgetController } from '../../hooks/useSortableWidgetController';
@@ -126,6 +127,7 @@ export const SortableWidgetBody = ({ props, controller }: SortableWidgetBodyProp
     if (widget.type === 'weather') return <WeatherWidgetBody props={props} controller={controller} />;
     if (widget.type === 'translate') return <TranslatorWidgetBody props={props} controller={controller} />;
     if (widget.type === 'openTabs') return <OpenTabsWidgetBody widget={widget} onUpdate={props.onUpdate} startDrag={startDrag} />;
+    if (widget.type === 'colorPicker') return <ColorPickerWidgetBody widget={widget} onUpdate={props.onUpdate} startDrag={startDrag} />;
 
     if (widget.type === 'link') {
       const name = widget.name || 'GitHub';
@@ -133,6 +135,11 @@ export const SortableWidgetBody = ({ props, controller }: SortableWidgetBodyProp
       const scale = Math.max(0.72, Math.min(widget.w / 112, widget.h / 138));
       const fontSize = Math.round((widget.linkTextSize ?? 20) * scale);
       const iconSize = Math.max(52, Math.min(widget.w * 0.86, widget.h - fontSize - 18));
+      const linkStrokeWidth = Math.max(0, widget.linkTextStroke ?? 6);
+      const linkStrokeDilate = linkStrokeWidth * 0.75;
+      const linkStrokeBlur = Math.max(0.5, linkStrokeWidth * 0.33);
+      const linkStrokeFilterId = `link-text-stroke-${widget.id}`;
+      const linkStrokeFilter = linkStrokeWidth === 0 ? 'none' : `url(#${linkStrokeFilterId})`;
       return (
         <button
           type="button"
@@ -149,8 +156,27 @@ export const SortableWidgetBody = ({ props, controller }: SortableWidgetBodyProp
             if (widget.action) executeNavigationAction(widget.action, { openInNewTab });
           }}
         >
+          {linkStrokeWidth > 0 && (
+            <svg width="0" height="0" style={{ position: 'absolute', visibility: 'hidden' }} aria-hidden="true">
+              <defs>
+                <filter id={linkStrokeFilterId} x="-40%" y="-40%" width="180%" height="180%">
+                  <feMorphology in="SourceAlpha" operator="dilate" radius={linkStrokeDilate} result="dilated" />
+                  <feGaussianBlur in="dilated" stdDeviation={linkStrokeBlur} result="blurred" />
+                  <feComponentTransfer in="blurred" result="rounded">
+                    <feFuncA type="discrete" tableValues="0 1" />
+                  </feComponentTransfer>
+                  <feFlood style={{ floodColor: 'var(--color-sticker-stroke)' }} result="flood" />
+                  <feComposite in="flood" in2="rounded" operator="in" result="stroke" />
+                  <feMerge>
+                    <feMergeNode in="stroke" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+            </svg>
+          )}
           <img className={`${styles.linkIcon} ${widget.iconSmall ? styles.linkIconSmall : ''}`} src={linkIcon} alt="" draggable={false} style={{ width: iconSize }} />
-          <div className={styles.linkName} style={{ color: getThemeAwareLinkColor(widget.linkTextColor, theme), fontSize }}>{name}</div>
+          <div className={styles.linkName} style={{ color: getThemeAwareLinkColor(widget.linkTextColor, theme), fontSize, filter: linkStrokeFilter }}>{name}</div>
         </button>
       );
     }

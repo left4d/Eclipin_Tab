@@ -49,7 +49,7 @@ export const SortableWidget = (props: SortableWidgetProps) => {
       data-widget-page={currentPageId}
       data-widget-container-style={widget.containerStyle || undefined}
       data-selected={props.isSelected ? 'true' : undefined}
-      className={`${styles.widget} ${widget.type === 'clock' ? styles.clockWidget : ''} ${widget.type === 'analogClock' ? styles.analogClockWidget : ''} ${widget.type === 'weather' ? styles.weatherWidget : ''} ${widget.type === 'translate' ? styles.translateWidget : ''} ${widget.type === 'link' ? styles.linkWidget : ''} ${widget.type === 'space' || widget.type === 'bookmarks' ? styles.spaceWidget : ''} ${widget.type === 'bookmarks' ? styles.bookmarksWidget : ''} ${widget.type === 'openTabs' ? styles.openTabsWidget : ''} ${widget.type === 'notes' ? styles.notesWidget : ''} ${widget.type === 'todo' ? styles.calculatorWidget : ''} ${widget.type === 'pomodoro' ? styles.pomodoroWidget : ''} ${widget.type === 'calendar' ? styles.calendarWidget : ''} ${widget.type === 'countdown' ? styles.countdownWidget : ''} ${widget.type === 'gtrend' ? styles.blankWidget : ''} ${widget.type === 'embed' ? styles.embedWidget : ''} ${isDragging ? styles.dragging : ''} ${isEditMode ? styles.editing : ''} ${widget.isPinned ? styles.pinned : ''} ${widget.positionMode === 'viewport' ? styles.viewportFixed : ''}`}
+      className={`${styles.widget} ${widget.type === 'clock' ? styles.clockWidget : ''} ${widget.type === 'analogClock' ? styles.analogClockWidget : ''} ${widget.type === 'weather' ? styles.weatherWidget : ''} ${widget.type === 'translate' ? styles.translateWidget : ''} ${widget.type === 'link' ? styles.linkWidget : ''} ${widget.type === 'space' || widget.type === 'bookmarks' ? styles.spaceWidget : ''} ${widget.type === 'bookmarks' ? styles.bookmarksWidget : ''} ${widget.type === 'openTabs' ? styles.openTabsWidget : ''} ${widget.type === 'notes' ? styles.notesWidget : ''} ${widget.type === 'todo' ? styles.calculatorWidget : ''} ${widget.type === 'pomodoro' ? styles.pomodoroWidget : ''} ${widget.type === 'calendar' ? styles.calendarWidget : ''} ${widget.type === 'countdown' ? styles.countdownWidget : ''} ${widget.type === 'gtrend' ? styles.blankWidget : ''} ${widget.type === 'colorPicker' ? styles.colorPickerWidget : ''} ${widget.type === 'embed' ? styles.embedWidget : ''} ${isDragging ? styles.dragging : ''} ${isEditMode ? styles.editing : ''} ${widget.isPinned ? styles.pinned : ''} ${widget.positionMode === 'viewport' ? styles.viewportFixed : ''}`}
       style={widgetStyle}
       onPointerDownCapture={(event) => {
         if (isEditMode) onActivate(widget.id, event.ctrlKey || event.metaKey || event.shiftKey);
@@ -61,7 +61,7 @@ export const SortableWidget = (props: SortableWidgetProps) => {
       }}
     >
       <div className={styles.widgetInner}>
-        {!['clock', 'analogClock', 'weather', 'translate', 'notes', 'todo', 'pomodoro', 'calendar', 'countdown', 'gtrend', 'embed', 'space', 'bookmarks', 'openTabs'].includes(widget.type) && (
+        {!['clock', 'analogClock', 'weather', 'translate', 'notes', 'todo', 'pomodoro', 'calendar', 'countdown', 'gtrend', 'colorPicker', 'embed', 'space', 'bookmarks', 'openTabs'].includes(widget.type) && (
           <div className={styles.widgetHeader} onPointerDown={startDrag}>
             <div className={styles.widgetTitle}>
               <span className={styles.widgetIcon}>{meta.icon}</span>

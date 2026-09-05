@@ -14,6 +14,7 @@ export const widgetMeta: Record<WidgetType, { name: string; icon: ReactNode }> =
   calendar: { name: '月历', icon: '▦' },
   countdown: { name: '倒数日', icon: 'D−' },
   gtrend: { name: '空白容器', icon: '□' },
+  colorPicker: { name: '颜色选择器', icon: '◉' },
   embed: { name: '网页嵌入', icon: '🧩' },
   space: { name: '空间网站', icon: '▦' },
   bookmarks: { name: '书签', icon: '★' },

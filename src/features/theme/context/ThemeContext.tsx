@@ -21,7 +21,8 @@ export type PageSlideDirection = 'vertical' | 'horizontal';
 
 export const DEFAULT_THEME_COLORS = {
     light: '#f1f1f1',
-    dark: '#202225',
+    // 与共享 Design System 的暗色背景保持一致，避免旧版 #202225 偏亮且偏中性的观感。
+    dark: '#1c1c1e',
 };
 
 // ============================================================================
