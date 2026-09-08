@@ -193,10 +193,11 @@ export const WidgetObjectInspector = ({
           <div className={styles.widgetInspectorToggleGrid}>
             <button
               type="button"
-              className={widget.lockAspectRatio ? styles.widgetInspectorActive : ''}
+              className={(widget.type === 'analogClock' || widget.lockAspectRatio) ? styles.widgetInspectorActive : ''}
+              disabled={widget.type === 'analogClock'}
               onClick={() => onUpdate(widget.id, { lockAspectRatio: !widget.lockAspectRatio })}
             >
-              {widget.lockAspectRatio ? '✓ 锁定宽高比' : '锁定宽高比'}
+              {widget.type === 'analogClock' ? '✓ 固定 1:1' : (widget.lockAspectRatio ? '✓ 锁定宽高比' : '锁定宽高比')}
             </button>
             <button
               type="button"
