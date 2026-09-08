@@ -2,9 +2,12 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerE
 import { createPortal } from 'react-dom';
 import { colord } from 'colord';
 import type { WidgetLayout } from '../../types/widget';
+import { openExternalUrl } from '../../utils/widgetFormatters';
 import styles from '../WidgetPanel.module.css';
 
 type ColorFormat = 'hex' | 'rgb' | 'hsl';
+
+const HTML_COLOR_CODES_PICKER_URL = 'https://htmlcolorcodes.com/zh/yanse-xuanze-qi/';
 
 const PALETTE = [
   '#1C1C1E', '#FFFFFF', '#FF3B30', '#FF9500', '#FFD60A', '#34C759', '#0A84FF', '#AF52DE', '#FF2D55', '#64748B',
@@ -18,6 +21,38 @@ const formatColor = (value: string, format: ColorFormat) => {
   if (format === 'rgb') return color.toRgbString();
   if (format === 'hsl') return color.toHslString();
   return color.toHex().toUpperCase();
+};
+
+const relativeLuminance = (value: string) => {
+  const { r, g, b } = colord(value).toRgb();
+  const channels = [r, g, b].map((channel) => {
+    const normalized = channel / 255;
+    return normalized <= 0.04045
+      ? normalized / 12.92
+      : ((normalized + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+};
+
+const contrastRatio = (first: string, second: string) => {
+  const firstLuminance = relativeLuminance(first);
+  const secondLuminance = relativeLuminance(second);
+  const lighter = Math.max(firstLuminance, secondLuminance);
+  const darker = Math.min(firstLuminance, secondLuminance);
+  return (lighter + 0.05) / (darker + 0.05);
+};
+
+const getRecommendedTextContrast = (background: string) => {
+  const blackRatio = contrastRatio(background, '#000000');
+  const whiteRatio = contrastRatio(background, '#FFFFFF');
+  const useBlack = blackRatio >= whiteRatio;
+  const ratio = useBlack ? blackRatio : whiteRatio;
+  return {
+    color: useBlack ? '#000000' : '#FFFFFF',
+    label: useBlack ? '黑字' : '白字',
+    ratio,
+    grade: ratio >= 7 ? 'AAA' : ratio >= 4.5 ? 'AA' : '大字 AA',
+  };
 };
 
 /** 0-255 rgb -> { h: 0-360, s: 0-100, v: 0-100 } */
@@ -72,6 +107,7 @@ function ColorPickerPopover({ color, onChange, onClose, style }: {
   const lastEmittedRef = useRef(initialColor);
   const svRef = useRef<HTMLDivElement>(null);
   const hueRef = useRef<HTMLDivElement>(null);
+  const textContrast = useMemo(() => getRecommendedTextContrast(color), [color]);
 
   useEffect(() => { hsvRef.current = hsv; }, [hsv]);
   // 颜色来自外部（如色板/文本输入）且不是本面板拖拽产生的，才重置 HSV，避免拖拽被打断。
@@ -141,6 +177,19 @@ function ColorPickerPopover({ color, onChange, onClose, style }: {
       >
         <span className={styles.colorPickerHueThumb} style={{ left: `${(hsv.h / 360) * 100}%` }} />
       </div>
+      <div
+        className={styles.colorPickerContrast}
+        title="当前颜色作为背景时的推荐文字颜色（WCAG 对比度）"
+      >
+        <span
+          className={styles.colorPickerContrastPreview}
+          style={{ background: color, color: textContrast.color }}
+          aria-hidden="true"
+        >Aa</span>
+        <span className={styles.colorPickerContrastText}>
+          推荐{textContrast.label} · {textContrast.ratio.toFixed(2)}:1 · {textContrast.grade}
+        </span>
+      </div>
       <div className={styles.colorPickerPopoverFooter}>
         <span className={styles.colorPickerPopoverSwatch} style={{ background: color }} />
         <code className={styles.colorPickerPopoverValue}>{formatColor(color, 'hex')}</code>
@@ -150,10 +199,11 @@ function ColorPickerPopover({ color, onChange, onClose, style }: {
   );
 }
 
-export const ColorPickerWidgetBody = ({ widget, onUpdate, startDrag }: {
+export const ColorPickerWidgetBody = ({ widget, onUpdate, startDrag, openInNewTab }: {
   widget: WidgetLayout;
   onUpdate: (id: string, updates: Partial<WidgetLayout>) => void;
   startDrag: (event: ReactPointerEvent<HTMLElement>) => void;
+  openInNewTab: boolean;
 }) => {
   const [color, setColor] = useState(widget.colorValue ?? '#0A84FF');
   const [input, setInput] = useState(widget.colorValue ?? '#0A84FF');
@@ -180,6 +230,14 @@ export const ColorPickerWidgetBody = ({ widget, onUpdate, startDrag }: {
     try { await navigator.clipboard.writeText(output); } catch { /* clipboard may be unavailable */ }
   };
 
+  const openHtmlColorCodes = () => {
+    // HTML Color Codes 当前没有公开、可靠的“通过 URL 带入颜色”深链格式。
+    // 打开页面的同时把当前 HEX 放进剪贴板，用户落地后可直接粘贴。
+    const currentHex = formatColor(color, 'hex');
+    try { void navigator.clipboard?.writeText(currentHex).catch(() => undefined); } catch { /* clipboard may be unavailable */ }
+    openExternalUrl(HTML_COLOR_CODES_PICKER_URL, openInNewTab);
+  };
+
   const openPicker = (event: ReactPointerEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     if (pickerAnchor) { setPickerAnchor(null); return; }
@@ -204,7 +262,7 @@ export const ColorPickerWidgetBody = ({ widget, onUpdate, startDrag }: {
   // 弹出层定位：贴近触发按钮且不超出视口。
   const pickerStyle = useMemo(() => {
     if (!pickerAnchor) return undefined;
-    const width = 248, height = 224, margin = 8;
+    const width = 248, height = 266, margin = 8;
     let left = pickerAnchor.right + 8;
     if (left + width > window.innerWidth - margin) left = pickerAnchor.left - width - 8;
     if (left < margin) left = clamp(pickerAnchor.left, margin, window.innerWidth - width - margin);
@@ -247,6 +305,14 @@ export const ColorPickerWidgetBody = ({ widget, onUpdate, startDrag }: {
           <option value="hsl">HSL</option>
         </select>
         <button type="button" className="btn btn--sm" title={`复制 ${output}`} onPointerDown={(event) => event.stopPropagation()} onClick={copyColor}>复制</button>
+        <button
+          type="button"
+          className={styles.colorPickerExternalButton}
+          title="在 HTML Color Codes 打开（同时复制当前 HEX）"
+          aria-label="在 HTML Color Codes 颜色选择器中打开"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={openHtmlColorCodes}
+        >↗</button>
       </div>
       {pickerAnchor && createPortal(<ColorPickerPopover color={color} onChange={selectColor} onClose={() => setPickerAnchor(null)} style={pickerStyle} />, document.body, 'color-picker-popover')}
     </div>
