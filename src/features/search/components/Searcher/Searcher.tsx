@@ -85,11 +85,7 @@ export const Searcher: React.FC<SearcherProps> = ({
     const trimmedQuery = searchQuery.trim();
     if (!trimmedQuery) return;
 
-    // The global navigation parser reserves `#foo` for internal anchors.
-    // Inside the search box, however, a leading `#` is a valid search query
-    // (hashtags, issue numbers, CSS selectors, etc.). Keep `anchor:foo` as the
-    // explicit internal-anchor syntax and send `#foo` to the selected engine.
-    if (trimmedQuery.startsWith('#') || !executeNavigationInput(trimmedQuery, { openInNewTab })) {
+    if (!executeNavigationInput(trimmedQuery, { openInNewTab })) {
       onSearch(trimmedQuery);
     }
 

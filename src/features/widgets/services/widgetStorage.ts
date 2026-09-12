@@ -77,11 +77,8 @@ const normalizeWidgets = (value: unknown): WidgetLayout[] => {
 const convertVerticalToHorizontal = (widgets: WidgetLayout[]): WidgetLayout[] => {
   const viewport = getWidgetViewport();
   return widgets.map((widget) => {
-    const squareSide = widget.type === 'analogClock'
-      ? Math.min(Math.max(widget.w, widget.h), viewport.w, viewport.h)
-      : null;
-    const w = squareSide ?? Math.min(widget.w, viewport.w);
-    const h = squareSide ?? Math.min(widget.h, viewport.h);
+    const w = Math.min(widget.w, viewport.w);
+    const h = Math.min(widget.h, viewport.h);
     if (widget.positionMode === 'viewport') {
       return {
         ...widget,

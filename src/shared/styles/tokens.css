@@ -72,6 +72,90 @@
   --color-on-accent: #ffffff;          /* accent 之上的文字 */
   --color-focus-ring: rgb(120 145 108 / 0.34);
 
+  /* ---------- 颜色：氛围轨（OKLCH） ----------
+   * 与可读 accent 分离，只用于低对比、大面积背景和玻璃边缘，不用于文字或实底按钮。 */
+  --color-atmosphere-1: oklch(72% 0.055 132);
+  --color-atmosphere-2: oklch(78% 0.045 92);
+  --color-atmosphere-3: oklch(76% 0.04 182);
+  --background-canvas:
+    radial-gradient(circle at 12% 0%, color-mix(in oklch, var(--color-atmosphere-1) 24%, transparent), transparent 42%),
+    radial-gradient(circle at 92% 8%, color-mix(in oklch, var(--color-atmosphere-2) 18%, transparent), transparent 38%),
+    linear-gradient(145deg, color-mix(in oklch, var(--color-atmosphere-3) 8%, var(--color-bg)), var(--color-bg));
+
+  /* ---------- 玻璃主题背景渐变（Bloom 气质轨） ----------
+   * 这些是“背景/壁纸级”的语义渐变，不是 accent。色相来自 dsh-bloom-theme 的
+   * morandi + motion 双轨：大面积使用低彩度、低对比的气质色，避免把可读 accent
+   * 直接铺满整个画布。业务层只引用 --background-gradient-*，不复制色值。
+   *
+   * hue 对应：mist 240；cinnabar 25；petal 350/310/20；ripple 195/225/165；
+   * sage 115/83/152；stone 29/0/60；lapis 258/226/295；amber 70/38/100；
+   * aurora 165/210/300。
+   */
+  --background-gradient-glass:
+    radial-gradient(1200px circle at 10% -6%, color-mix(in oklch, oklch(72% 0.085 210) 48%, transparent), transparent 56%),
+    radial-gradient(1000px circle at 92% 8%, color-mix(in oklch, oklch(70% 0.075 292) 38%, transparent), transparent 54%),
+    radial-gradient(900px circle at 88% 100%, color-mix(in oklch, oklch(68% 0.07 165) 28%, transparent), transparent 58%),
+    linear-gradient(150deg, oklch(20% 0.028 248) 0%, oklch(27% 0.045 242) 46%, oklch(36% 0.05 215) 100%);
+
+  --background-gradient-mist:
+    radial-gradient(1200px circle at 8% 0%, color-mix(in oklch, oklch(76% 0.055 240) 54%, transparent), transparent 58%),
+    radial-gradient(960px circle at 92% 10%, color-mix(in oklch, oklch(82% 0.045 210) 44%, transparent), transparent 56%),
+    radial-gradient(860px circle at 100% 100%, color-mix(in oklch, oklch(82% 0.04 275) 34%, transparent), transparent 60%),
+    linear-gradient(150deg, oklch(98% 0.008 240), oklch(92% 0.025 235) 55%, oklch(95% 0.02 260));
+
+  --background-gradient-cinnabar:
+    radial-gradient(1180px circle at 10% 0%, color-mix(in oklch, oklch(76% 0.09 25) 48%, transparent), transparent 58%),
+    radial-gradient(980px circle at 92% 8%, color-mix(in oklch, oklch(82% 0.07 65) 38%, transparent), transparent 56%),
+    radial-gradient(820px circle at 92% 100%, color-mix(in oklch, oklch(80% 0.065 350) 30%, transparent), transparent 60%),
+    linear-gradient(150deg, oklch(98% 0.008 25), oklch(93% 0.03 28) 54%, oklch(95% 0.02 52));
+
+  --background-gradient-petal:
+    radial-gradient(1200px circle at 8% 0%, color-mix(in oklch, oklch(82% 0.075 350) 52%, transparent), transparent 58%),
+    radial-gradient(960px circle at 94% 6%, color-mix(in oklch, oklch(84% 0.065 310) 42%, transparent), transparent 56%),
+    radial-gradient(820px circle at 90% 100%, color-mix(in oklch, oklch(86% 0.055 20) 32%, transparent), transparent 60%),
+    linear-gradient(150deg, oklch(99% 0.008 350), oklch(94% 0.028 345) 52%, oklch(96% 0.02 315));
+
+  --background-gradient-ripple:
+    radial-gradient(1180px circle at 8% 0%, color-mix(in oklch, oklch(78% 0.065 195) 52%, transparent), transparent 58%),
+    radial-gradient(980px circle at 94% 10%, color-mix(in oklch, oklch(82% 0.06 225) 42%, transparent), transparent 56%),
+    radial-gradient(820px circle at 92% 100%, color-mix(in oklch, oklch(82% 0.055 165) 34%, transparent), transparent 60%),
+    linear-gradient(150deg, oklch(98% 0.009 195), oklch(92% 0.028 195) 54%, oklch(95% 0.02 175));
+
+  --background-gradient-sage:
+    radial-gradient(1200px circle at 8% 0%, color-mix(in oklch, oklch(76% 0.06 115) 50%, transparent), transparent 58%),
+    radial-gradient(980px circle at 92% 8%, color-mix(in oklch, oklch(82% 0.05 83) 40%, transparent), transparent 56%),
+    radial-gradient(840px circle at 94% 100%, color-mix(in oklch, oklch(80% 0.045 152) 32%, transparent), transparent 60%),
+    linear-gradient(150deg, oklch(98% 0.009 112), oklch(93% 0.025 115) 54%, oklch(95% 0.018 140));
+
+  --background-gradient-stone:
+    radial-gradient(1160px circle at 10% 0%, color-mix(in oklch, oklch(78% 0.035 29) 48%, transparent), transparent 58%),
+    radial-gradient(940px circle at 90% 8%, color-mix(in oklch, oklch(82% 0.03 0) 36%, transparent), transparent 56%),
+    radial-gradient(820px circle at 92% 100%, color-mix(in oklch, oklch(82% 0.03 60) 28%, transparent), transparent 60%),
+    linear-gradient(150deg, oklch(97% 0.006 25), oklch(92% 0.018 30) 54%, oklch(94% 0.014 55));
+
+  --background-gradient-lapis:
+    radial-gradient(1180px circle at 8% 0%, color-mix(in oklch, oklch(68% 0.09 258) 44%, transparent), transparent 58%),
+    radial-gradient(980px circle at 94% 8%, color-mix(in oklch, oklch(66% 0.075 226) 36%, transparent), transparent 56%),
+    radial-gradient(820px circle at 92% 100%, color-mix(in oklch, oklch(66% 0.07 295) 28%, transparent), transparent 60%),
+    linear-gradient(150deg, oklch(20% 0.035 255), oklch(27% 0.055 252) 54%, oklch(34% 0.05 235));
+
+  --background-gradient-amber:
+    radial-gradient(1180px circle at 8% 0%, color-mix(in oklch, oklch(80% 0.075 70) 50%, transparent), transparent 58%),
+    radial-gradient(980px circle at 94% 8%, color-mix(in oklch, oklch(84% 0.065 38) 38%, transparent), transparent 56%),
+    radial-gradient(820px circle at 92% 100%, color-mix(in oklch, oklch(84% 0.055 100) 30%, transparent), transparent 60%),
+    linear-gradient(150deg, oklch(99% 0.008 74), oklch(94% 0.03 72) 54%, oklch(96% 0.02 92));
+
+  --background-gradient-aurora:
+    radial-gradient(1200px circle at 8% 0%, color-mix(in oklch, oklch(72% 0.085 165) 46%, transparent), transparent 58%),
+    radial-gradient(980px circle at 94% 8%, color-mix(in oklch, oklch(70% 0.085 210) 38%, transparent), transparent 56%),
+    radial-gradient(860px circle at 86% 100%, color-mix(in oklch, oklch(68% 0.085 300) 32%, transparent), transparent 60%),
+    linear-gradient(150deg, oklch(19% 0.03 175), oklch(25% 0.045 205) 48%, oklch(31% 0.05 278));
+
+  --background-gradient-graphite:
+    radial-gradient(1120px circle at 10% 0%, color-mix(in oklch, oklch(62% 0.025 240) 24%, transparent), transparent 58%),
+    radial-gradient(920px circle at 92% 10%, color-mix(in oklch, oklch(58% 0.025 290) 18%, transparent), transparent 56%),
+    linear-gradient(150deg, oklch(17% 0.008 250), oklch(23% 0.012 250) 52%, oklch(30% 0.015 235));
+
   /* SnapWrite palette reference：品牌参考/兼容桥。品牌主题可通过覆写语义角色来改变，
    * 业务组件不得绕过语义层直接依赖这些变量；新组件只消费 --color-accent*。 */
   --palette-snapwrite-sage: #78916c;
@@ -178,11 +262,19 @@
   --overlay-bg: var(--color-overlay);             /* 全屏遮罩 tint */
   --overlay-blur: 14px;
   --overlay-saturate: 108%;
-  --glass-panel-bg: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  --glass-panel-bg: color-mix(in oklch, var(--color-surface) 88%, transparent);
   --glass-panel-blur: 24px;
-  --glass-panel-border: var(--color-border);
+  --glass-panel-saturate: 108%;
+  --glass-panel-border: color-mix(in oklch, var(--color-surface) 58%, var(--color-atmosphere-1));
+  --glass-panel-highlight: color-mix(in oklch, white 52%, transparent);
   --glass-panel-radius: var(--radius-lg);
   --glass-panel-shadow: var(--shadow-lg);
+
+  /* 玻璃分级：content 最实，chrome 可透出背景，floating 保证覆盖内容时的可读性。 */
+  --glass-content-bg: color-mix(in oklch, var(--color-surface) 90%, transparent);
+  --glass-chrome-bg: color-mix(in oklch, var(--color-surface) 76%, transparent);
+  --glass-floating-bg: color-mix(in oklch, var(--color-surface-overlay) 94%, transparent);
+  --glass-floating-blur: 28px;
 }
 
 /* ==========================================================================
@@ -223,6 +315,14 @@
   --color-on-accent: #111711;
   --color-focus-ring: rgb(145 173 130 / 0.34);
 
+  --color-atmosphere-1: oklch(58% 0.07 132);
+  --color-atmosphere-2: oklch(54% 0.055 92);
+  --color-atmosphere-3: oklch(52% 0.05 182);
+  --background-canvas:
+    radial-gradient(circle at 12% 0%, color-mix(in oklch, var(--color-atmosphere-1) 28%, transparent), transparent 42%),
+    radial-gradient(circle at 92% 8%, color-mix(in oklch, var(--color-atmosphere-2) 20%, transparent), transparent 38%),
+    linear-gradient(145deg, color-mix(in oklch, var(--color-atmosphere-3) 10%, var(--color-bg)), var(--color-bg));
+
   --color-danger: #ff3b30;
   --color-success: #34c759;
   --color-warning: #ff9500;
@@ -240,6 +340,12 @@
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.18), 0 10px 28px rgb(0 0 0 / 0.28);
   --shadow-md: 0 18px 48px rgb(0 0 0 / 0.38);
   --shadow-lg: 0 30px 86px rgb(0 0 0 / 0.5);
+
+  --glass-panel-border: color-mix(in oklch, var(--color-atmosphere-1) 28%, var(--color-border-strong));
+  --glass-panel-highlight: color-mix(in oklch, white 16%, transparent);
+  --glass-content-bg: color-mix(in oklch, var(--color-surface) 82%, transparent);
+  --glass-chrome-bg: color-mix(in oklch, var(--color-surface) 68%, transparent);
+  --glass-floating-bg: color-mix(in oklch, var(--color-surface-overlay) 92%, transparent);
 }
 
 /* ==========================================================================
@@ -270,6 +376,10 @@
   --color-accent-subtle: rgb(62 95 138 / 0.05);
   --color-on-accent: #ffffff;
   --color-focus-ring: rgb(62 95 138 / 0.34);
+
+  --color-atmosphere-1: oklch(70% 0.07 248);
+  --color-atmosphere-2: oklch(76% 0.055 205);
+  --color-atmosphere-3: oklch(72% 0.05 282);
 
   /* Canvas / Surface 品牌色调（路线②：细微冷调，保持中性层级与对比） */
   --color-bg: color-mix(in srgb, #e8e8ed 94%, var(--color-accent) 6%);
@@ -305,6 +415,10 @@
   --color-accent-subtle: rgb(127 168 207 / 0.05);
   --color-on-accent: #0e1520;
   --color-focus-ring: rgb(127 168 207 / 0.34);
+
+  --color-atmosphere-1: oklch(58% 0.08 248);
+  --color-atmosphere-2: oklch(55% 0.065 205);
+  --color-atmosphere-3: oklch(54% 0.06 282);
 
   /* Canvas / Surface 品牌色调（暗色冷调） */
   --color-bg: color-mix(in srgb, #1c1c1e 94%, var(--color-accent) 6%);
@@ -344,6 +458,10 @@
   --color-on-accent: #ffffff;
   --color-focus-ring: rgb(109 75 160 / 0.34);
 
+  --color-atmosphere-1: oklch(70% 0.075 305);
+  --color-atmosphere-2: oklch(76% 0.055 350);
+  --color-atmosphere-3: oklch(72% 0.06 255);
+
   /* Canvas / Surface 品牌色调（路线②：细微暖紫调，保持中性层级与对比） */
   --color-bg: color-mix(in srgb, #e8e8ed 94%, var(--color-accent) 6%);
   --color-bg-subtle: color-mix(in srgb, #f0f0f4 94%, var(--color-accent) 6%);
@@ -378,6 +496,10 @@
   --color-accent-subtle: rgb(180 154 224 / 0.05);
   --color-on-accent: #1a1026;
   --color-focus-ring: rgb(180 154 224 / 0.34);
+
+  --color-atmosphere-1: oklch(59% 0.085 305);
+  --color-atmosphere-2: oklch(56% 0.065 350);
+  --color-atmosphere-3: oklch(55% 0.07 255);
 
   /* Canvas / Surface 品牌色调（暗色暖紫调） */
   --color-bg: color-mix(in srgb, #1c1c1e 94%, var(--color-accent) 6%);

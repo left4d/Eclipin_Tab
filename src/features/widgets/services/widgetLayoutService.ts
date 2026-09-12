@@ -46,31 +46,15 @@ export const migrateWidgetToFreeLayout = (widget: WidgetLayout): WidgetLayout =>
 export const clampWidgetToViewport = (widget: WidgetLayout, viewport = getWidgetViewport()): WidgetLayout => {
   const pageId = widget.pageId ?? 1;
   const min = WIDGET_MIN_SIZE[widget.type];
-  const maxHeight = pageId === 0 ? viewport.h : Number.POSITIVE_INFINITY;
-  const squareSide = widget.type === 'analogClock'
-    ? Math.min(
-      Math.max(min.w, min.h, widget.w, widget.h),
-      viewport.w,
-      maxHeight,
-    )
-    : null;
-  const w = squareSide ?? Math.min(Math.max(min.w, widget.w), viewport.w);
-  const h = squareSide ?? (pageId === 0
+  const w = Math.min(Math.max(min.w, widget.w), viewport.w);
+  const h = pageId === 0
     ? Math.min(Math.max(min.h, widget.h), viewport.h)
-    : Math.max(min.h, widget.h));
+    : Math.max(min.h, widget.h);
   const x = clampFreeLayoutAxis(widget.x, viewport.w, w);
   const y = pageId === 0
     ? clampFreeLayoutAxis(widget.y, viewport.h, h)
     : Math.max(-h * FREE_LAYOUT_OVERFLOW_RATIO, widget.y);
-  return {
-    ...widget,
-    pageId,
-    x,
-    y,
-    w,
-    h,
-    ...(widget.type === 'analogClock' ? { lockAspectRatio: true } : {}),
-  };
+  return { ...widget, pageId, x, y, w, h };
 };
 
 /**
@@ -82,13 +66,8 @@ export const normalizeStoredWidget = (widget: WidgetLayout): WidgetLayout => {
   const min = WIDGET_MIN_SIZE[widget.type];
   const rawWidth = Number.isFinite(widget.w) ? widget.w : min.w;
   const rawHeight = Number.isFinite(widget.h) ? widget.h : min.h;
-  const normalizedWidth = Math.max(min.w, rawWidth);
-  const normalizedHeight = Math.max(min.h, rawHeight);
-  const squareSide = widget.type === 'analogClock'
-    ? Math.max(normalizedWidth, normalizedHeight)
-    : null;
-  const w = squareSide ?? normalizedWidth;
-  const h = squareSide ?? normalizedHeight;
+  const w = Math.max(min.w, rawWidth);
+  const h = Math.max(min.h, rawHeight);
   const rawX = Number.isFinite(widget.x) ? widget.x : 0;
   const rawY = Number.isFinite(widget.y) ? widget.y : 0;
   const priority = widget.priority ?? (widget.type === 'gtrend' ? -1 : undefined);
@@ -107,7 +86,6 @@ export const normalizeStoredWidget = (widget: WidgetLayout): WidgetLayout => {
     y: Math.max(-h * FREE_LAYOUT_OVERFLOW_RATIO, rawY),
     w,
     h,
-    ...(widget.type === 'analogClock' ? { lockAspectRatio: true } : {}),
   };
 };
 
@@ -247,7 +225,6 @@ export const createWidget = ({
     translateSourceLanguage: type === 'translate' ? 'auto' : undefined,
     translateTargetLanguage: type === 'translate' ? 'zh-CN' : undefined,
     weatherLocationMode: type === 'weather' ? 'current' : undefined,
-    lockAspectRatio: type === 'analogClock' ? true : undefined,
     ...position,
     ...size,
   };

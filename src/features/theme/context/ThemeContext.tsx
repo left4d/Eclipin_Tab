@@ -364,12 +364,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     // 将壁纸或渐变/纯色/纹理应用到 body 背景
     // 计算背景值和混合模式
-    const { backgroundValue, backgroundBaseValue, backgroundTextureValue, backgroundTextureTileSize, backgroundBlendMode } = React.useMemo(() => {
+    const { backgroundValue, backgroundBaseValue, backgroundTextureValue, backgroundTextureTileSize, backgroundBlendMode, backgroundPresetBrightness } = React.useMemo(() => {
         let fullBgValue = '';
         let baseValue = '';
         let textureValue: string | null = null;
         let textureTileSize = 'cover';
         let blendMode = 'normal';
+        let presetBrightness: 'light' | 'dark' | null = null;
         const hasWeSceneWallpaper = wallpaperType === 'weScene' && wallpaperId !== null;
 
         if (wallpaper) {
@@ -384,13 +385,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 if (preset) {
                     if (preset.id === 'theme-default') {
                         if (isDefaultTheme) {
-                            baseValue = 'linear-gradient(180deg, #00020E 0%, #071633 25%, #3966AD 65%, #7e9ecb 100%)';
+                            baseValue = preset.gradient;
+                            presetBrightness = preset.brightness;
                         } else {
                             const isDarkTheme = theme === 'dark';
                             baseValue = isDarkTheme ? DEFAULT_THEME_COLORS.dark : DEFAULT_THEME_COLORS.light;
                         }
                     } else if (isDefaultTheme) {
                         baseValue = preset.gradient;
+                        presetBrightness = preset.brightness;
                     } else {
                         const isDarkTheme = theme === 'dark' || (followSystem && systemTheme === 'dark');
                         baseValue = isDarkTheme && 'solidDark' in preset ? preset.solidDark : preset.solid;
@@ -403,7 +406,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             } else {
                 // 如果没有显式设置 ID，尝试使用默认逻辑
                 if (isDefaultTheme) {
-                    baseValue = 'linear-gradient(180deg, #00020E 0%, #071633 25%, #3966AD 65%, #7e9ecb 100%)';
+                    baseValue = 'var(--background-gradient-glass)';
+                    presetBrightness = 'dark';
                 } else {
                     const isDarkTheme = theme === 'dark';
                     baseValue = isDarkTheme ? DEFAULT_THEME_COLORS.dark : DEFAULT_THEME_COLORS.light;
@@ -429,7 +433,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             backgroundBaseValue: baseValue,
             backgroundTextureValue: textureValue,
             backgroundTextureTileSize: textureTileSize,
-            backgroundBlendMode: blendMode
+            backgroundBlendMode: blendMode,
+            backgroundPresetBrightness: presetBrightness
         };
     }, [wallpaper, wallpaperId, wallpaperType, gradientId, solidId, texture, isDefaultTheme, theme, followSystem, systemTheme]);
 
@@ -442,7 +447,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         // 仅对默认主题检测背景亮度
         if (isDefaultTheme && backgroundBaseValue) {
-            const isLight = isBackgroundLight(backgroundBaseValue);
+            const isLight = backgroundPresetBrightness
+                ? backgroundPresetBrightness === 'light'
+                : isBackgroundLight(backgroundBaseValue);
             root.setAttribute('data-background-brightness', isLight ? 'light' : 'dark');
         } else {
             root.removeAttribute('data-background-brightness');
@@ -483,7 +490,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 ? (supportsSuperellipse ? '18px' : '12px')
                 : (supportsSuperellipse ? '24px' : '16px')
         );
-    }, [backgroundValue, backgroundBaseValue, backgroundBlendMode, isDefaultTheme, iconSize, texture, wallpaper, wallpaperType]);
+    }, [backgroundValue, backgroundBaseValue, backgroundBlendMode, backgroundPresetBrightness, isDefaultTheme, iconSize, texture, wallpaper, wallpaperType]);
 
     // ========================================================================
     // 性能优化: 分离 data 和 actions context values

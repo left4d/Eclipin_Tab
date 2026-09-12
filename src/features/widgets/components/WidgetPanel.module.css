@@ -192,8 +192,6 @@
 .colorPickerValueRow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
 .colorPickerValueRow input { width: 116px; min-width: 0; }
 .colorPickerValueRow select { width: 62px; padding-inline: 6px; }
-.colorPickerExternalButton { flex: 0 0 auto; width: 28px; height: 28px; border: 0; border-radius: 999px; background: var(--widget-accent, var(--color-accent)); color: var(--widget-on-accent, var(--color-on-accent)); font: inherit; font-size: 0.82rem; cursor: pointer; transition: transform 160ms ease, background 160ms ease, color 160ms ease; }
-.colorPickerExternalButton:hover { transform: translateY(-1px); background: var(--widget-accent-hover, color-mix(in srgb, var(--color-accent) 88%, black)); }
 
 /* 自研取色弹出层（portal 到 body，不受容器 overflow 裁剪）。 */
 .colorPickerPopover { position: fixed; z-index: 1000000001; width: 248px; padding: 12px; border: 1px solid var(--color-border, rgb(255 255 255 / 0.18)); border-radius: var(--radius-lg, 18px); background: var(--color-bg-primary, rgb(28 28 30 / 0.96)); color: var(--color-text-primary, #f5f5f7); box-shadow: 0 18px 42px rgb(0 0 0 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.08); backdrop-filter: blur(20px) saturate(1.08); -webkit-backdrop-filter: blur(20px) saturate(1.08); box-sizing: border-box; }
@@ -201,9 +199,6 @@
 .colorPickerThumb, .colorPickerHueThumb { position: absolute; z-index: 2; width: 14px; height: 14px; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 1px 5px rgb(0 0 0 / 0.45); pointer-events: none; transform: translate(-50%, -50%); }
 .colorPickerHue { position: relative; height: 12px; margin: 10px 1px; border: 1px solid var(--color-border, rgb(255 255 255 / 0.16)); border-radius: 999px; background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); cursor: ew-resize; touch-action: none; }
 .colorPickerHueThumb { top: 50%; width: 12px; height: 18px; }
-.colorPickerContrast { display: flex; align-items: center; gap: 8px; min-height: 30px; margin-top: 8px; padding: 4px 6px; border-radius: var(--radius-md, 12px); background: var(--color-bg-tertiary, rgb(255 255 255 / 0.07)); box-sizing: border-box; }
-.colorPickerContrastPreview { display: grid; flex: 0 0 auto; width: 38px; height: 24px; place-items: center; border: 1px solid rgb(127 127 127 / 0.28); border-radius: var(--radius-sm, 8px); font-size: 12px; font-weight: 900; line-height: 1; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12); }
-.colorPickerContrastText { min-width: 0; overflow: hidden; color: var(--color-text-secondary); font-size: 11px; font-weight: 750; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
 .colorPickerPopoverFooter { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .colorPickerPopoverSwatch { width: 26px; height: 26px; flex: 0 0 auto; border: 1px solid var(--color-border, rgb(255 255 255 / 0.16)); border-radius: var(--radius-sm, 8px); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.3); }
 .colorPickerPopoverValue { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font: 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; color: var(--color-text-secondary); }

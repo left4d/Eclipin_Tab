@@ -148,7 +148,7 @@ export const SortableWidgetBody = ({ props, controller }: SortableWidgetBodyProp
     if (widget.type === 'weather') return <WeatherWidgetBody props={props} controller={controller} />;
     if (widget.type === 'translate') return <TranslatorWidgetBody props={props} controller={controller} />;
     if (widget.type === 'openTabs') return <OpenTabsWidgetBody widget={widget} onUpdate={props.onUpdate} startDrag={startDrag} />;
-    if (widget.type === 'colorPicker') return <ColorPickerWidgetBody widget={widget} onUpdate={props.onUpdate} startDrag={startDrag} openInNewTab={openInNewTab} />;
+    if (widget.type === 'colorPicker') return <ColorPickerWidgetBody widget={widget} onUpdate={props.onUpdate} startDrag={startDrag} />;
 
     if (widget.type === 'link') {
       const name = widget.name || 'GitHub';

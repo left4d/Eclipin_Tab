@@ -383,8 +383,10 @@
 
 /* 玻璃悬浮菜单：跨壁纸/背景时开 blur（对齐 .glass-panel 材质思路） */
 .menu--glass {
-  --menu-bg: color-mix(in srgb, var(--color-surface) 86%, transparent);
-  --menu-blur: var(--glass-panel-blur, 24px);
+  --menu-bg: var(--glass-floating-bg);
+  --menu-blur: var(--glass-floating-blur);
+  backdrop-filter: blur(var(--menu-blur)) saturate(var(--glass-panel-saturate));
+  -webkit-backdrop-filter: blur(var(--menu-blur)) saturate(var(--glass-panel-saturate));
 }
 
 .menu__label {
@@ -1133,15 +1135,37 @@
   -webkit-backdrop-filter: blur(var(--overlay-blur, 14px)) saturate(var(--overlay-saturate, 108%));
 }
 
+.theme-canvas {
+  background-color: var(--color-bg);
+  background-image: var(--background-canvas);
+  background-attachment: fixed;
+}
+
 .glass-panel {
   box-sizing: border-box;
   border: 1px solid var(--glass-panel-border, var(--color-border));
   border-radius: var(--glass-panel-radius, var(--radius-lg));
-  background: var(--glass-panel-bg, color-mix(in srgb, var(--color-surface) 88%, transparent));
+  background: var(--glass-panel-bg, var(--glass-content-bg));
   color: var(--glass-panel-color, var(--color-text));
-  box-shadow: var(--glass-panel-shadow, var(--shadow-lg));
-  backdrop-filter: blur(var(--glass-panel-blur, 24px)) saturate(1.08);
-  -webkit-backdrop-filter: blur(var(--glass-panel-blur, 24px)) saturate(1.08);
+  box-shadow:
+    inset 0 1px 0 var(--glass-panel-highlight),
+    var(--glass-panel-shadow, var(--shadow-lg));
+  backdrop-filter: blur(var(--glass-panel-blur)) saturate(var(--glass-panel-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-panel-blur)) saturate(var(--glass-panel-saturate));
+}
+
+.glass-panel--content {
+  --glass-panel-bg: var(--glass-content-bg);
+}
+
+.glass-panel--chrome {
+  --glass-panel-bg: var(--glass-chrome-bg);
+  --glass-panel-shadow: var(--shadow-md);
+}
+
+.glass-panel--floating {
+  --glass-panel-bg: var(--glass-floating-bg);
+  --glass-panel-blur: var(--glass-floating-blur);
 }
 
 /* ==========================================================================

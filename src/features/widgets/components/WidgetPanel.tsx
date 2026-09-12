@@ -326,14 +326,11 @@ export const WidgetPanel = ({ activePage, onPageChange }: WidgetPanelProps) => {
   const openSizeEditor = (id: string, anchorRect: DOMRect) => {
     const current = widgets.find((widget) => widget.id === id);
     if (!current) return;
-    const analogSide = current.type === 'analogClock' ? Math.max(current.w, current.h) : null;
     setSizeEditor({
       id,
       anchorRect,
-      size: analogSide === null
-        ? { width: current.w, height: current.h }
-        : { width: analogSide, height: analogSide },
-      lockAspectRatio: current.type === 'analogClock' || Boolean(current.lockAspectRatio),
+      size: { width: current.w, height: current.h },
+      lockAspectRatio: Boolean(current.lockAspectRatio),
     });
     setWidgetMenu(null);
   };
@@ -688,8 +685,7 @@ export const WidgetPanel = ({ activePage, onPageChange }: WidgetPanelProps) => {
             anchorRect={sizeEditor.anchorRect}
             width={sizeEditor.size.width}
             height={sizeEditor.size.height}
-            lockAspectRatio={targetWidget.type === 'analogClock' ? true : sizeEditor.lockAspectRatio}
-            lockAspectRatioDisabled={targetWidget.type === 'analogClock'}
+            lockAspectRatio={sizeEditor.lockAspectRatio}
             onClose={() => setSizeEditor(null)}
             onApply={(size, lockAspectRatio) => {
               resizeWidget(targetWidget.id, size.width, size.height, lockAspectRatio);

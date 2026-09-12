@@ -271,15 +271,6 @@ export const useWidgetPanelLayout = (
       const maxH = pageSlideDirection === 'horizontal' || pageId === 0
         ? Math.min(viewport.h, Math.max(min.h, (viewport.h - widget.y) / visibleRatio))
         : Number.POSITIVE_INFINITY;
-      if (widget.type === 'analogClock') {
-        const widthDelta = Math.abs(w - widget.w);
-        const heightDelta = Math.abs(h - widget.h);
-        const requestedSide = widthDelta >= heightDelta ? w : h;
-        const minSide = Math.max(min.w, min.h);
-        const maxSide = Math.min(maxW, maxH);
-        const side = Math.min(maxSide, Math.max(minSide, requestedSide));
-        return { ...widget, lockAspectRatio: true, w: side, h: side };
-      }
       const lockAspectRatio = lockAspectRatioOverride ?? Boolean(widget.lockAspectRatio);
       if (lockAspectRatio) {
         const widthScale = w / Math.max(1, widget.w);

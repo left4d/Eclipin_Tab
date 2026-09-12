@@ -1,6 +1,5 @@
 import { deleteLocalWebPage } from './localWebPageService';
 import { hasStoredWidgets, loadWidgets, persistAndEmitWidgets, type WidgetLayoutMode } from './widgetStorage';
-import { normalizeStoredWidget } from './widgetLayoutService';
 import type { WidgetLayout } from '../types/widget';
 
 export const DELETED_WIDGETS_CHANGED_EVENT = 'eclipin:deleted-widgets-changed';
@@ -115,11 +114,10 @@ export const restoreDeletedWidget = (recordId: string, mode: WidgetLayoutMode): 
   if (!record) return null;
 
   const active = loadWidgets(mode);
-  const normalizedWidget = normalizeStoredWidget(record.widget);
-  const hasIdCollision = active.some((widget) => widget.id === normalizedWidget.id);
+  const hasIdCollision = active.some((widget) => widget.id === record.widget.id);
   const restored: WidgetLayout = hasIdCollision
-    ? { ...normalizedWidget, id: `${normalizedWidget.id}-restored-${Date.now().toString(36)}` }
-    : normalizedWidget;
+    ? { ...record.widget, id: `${record.widget.id}-restored-${Date.now().toString(36)}` }
+    : { ...record.widget };
 
   persistAndEmitWidgets([...active, restored], mode);
   saveDeletedWidgets(mode, current.filter((item) => item.id !== recordId));

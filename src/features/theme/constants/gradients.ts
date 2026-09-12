@@ -1,99 +1,118 @@
+/**
+ * 玻璃主题背景预设。
+ *
+ * 渐变色值由 Design System 的 --background-gradient-* 统一提供；这里仅保留
+ * 业务稳定 ID、展示名、亮度元数据，以及 light/dark 实体主题所需的纯色回退。
+ * IDs 保持不变，避免已有用户设置失效。
+ */
 export const GRADIENT_PRESETS = [
     {
         id: 'theme-default',
         name: '默认',
         nameEn: 'Default',
-        gradient: '#F3F3F3', // 浅色主题默认值
-        solid: '#F3F3F3',    // 在主题逻辑中按明暗模式切换默认背景色
+        gradient: 'var(--background-gradient-glass)',
+        brightness: 'dark',
+        solid: '#F3F3F3', // 浅色主题默认值
+        solidDark: '#1c1c1e',
     },
     {
         id: 'workshop-sage',
-        name: '雾松',
-        nameEn: 'Sage Workshop',
-        gradient: 'linear-gradient(145deg, #f8faf6 0%, #e8eee3 48%, #d5dfcf 100%)',
+        name: '鼠尾草',
+        nameEn: 'Sage',
+        gradient: 'var(--background-gradient-sage)',
+        brightness: 'light',
         solid: '#F4F6F2',
         // Design System Sage dark canvas: neutral base with a restrained accent wash.
         solidDark: 'color-mix(in srgb, #1c1c1e 94%, #91ad82 6%)',
     },
     {
         id: 'gradient-1',
-        name: '粉',
-        nameEn: 'Pink',
-        gradient: 'linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%)',
+        name: '花瓣',
+        nameEn: 'Petal',
+        gradient: 'var(--background-gradient-petal)',
+        brightness: 'light',
         solid: '#FFF5F7',
         // Design System Rose dark canvas.
         solidDark: 'color-mix(in srgb, #1c1c1e 94%, #dd829c 6%)',
     },
     {
         id: 'gradient-2',
-        name: '蓝',
-        nameEn: 'Blue',
-        gradient: 'linear-gradient(to top, #fbc2eb 0%, #a6c1ee 100%)',
+        name: '雾蓝',
+        nameEn: 'Mist',
+        gradient: 'var(--background-gradient-mist)',
+        brightness: 'light',
         solid: '#F5F9FF',
         // Design System Ocean dark canvas.
         solidDark: 'color-mix(in srgb, #1c1c1e 94%, #7fa8cf 6%)',
     },
     {
         id: 'gradient-3',
-        name: '绿',
-        nameEn: 'Green',
-        gradient: 'linear-gradient(to top, #b8cf81ff 0%, #014108ff 100%)',
+        name: '涟漪',
+        nameEn: 'Ripple',
+        gradient: 'var(--background-gradient-ripple)',
+        brightness: 'light',
         solid: '#F1F6EF',
-        // Design System Sage dark canvas with a restrained green wash.
-        solidDark: 'color-mix(in srgb, #1c1c1e 94%, #91ad82 6%)',
+        // Design System Teal/Sage dark canvas family.
+        solidDark: 'color-mix(in srgb, #1c1c1e 94%, #58b8aa 6%)',
     },
     {
         id: 'gradient-4',
-        name: '灰',
-        nameEn: 'Grey',
-        gradient: 'linear-gradient(to top, #6a85b6 0%, #bac8e0 100%)',
-        solid: '#F8FAFC',
-        // Design System Graphite dark canvas.
-        solidDark: '#1c1c1e',
+        name: '暖石',
+        nameEn: 'Stone',
+        gradient: 'var(--background-gradient-stone)',
+        brightness: 'light',
+        solid: '#F8F6F4',
+        // Neutral-first dark canvas with a restrained warm-stone wash.
+        solidDark: 'color-mix(in srgb, #1c1c1e 96%, #b4a09b 4%)',
     },
     {
         id: 'gradient-5',
-        name: '紫',
-        nameEn: 'Purple',
-        gradient: 'linear-gradient(to top, #505285 0%, #585e92 12%, #65689f 25%, #7474b0 37%, #7e7ebb 50%, #8389c7 62%, #9795d4 75%, #a2a1dc 87%, #b5aee4 100%)',
+        name: '极光',
+        nameEn: 'Aurora',
+        gradient: 'var(--background-gradient-aurora)',
+        brightness: 'dark',
         solid: '#F9F5FF',
         // Design System Violet dark canvas.
         solidDark: 'color-mix(in srgb, #1c1c1e 94%, #b49ae0 6%)'
     },
     {
         id: 'gradient-6',
-        name: '褐',
-        nameEn: 'Brown',
-        gradient: 'linear-gradient(to top, #bdc2e8 0%, #bdc2e8 1%, #e6dee9 100%)',
-        solid: '#EAE6DB',
+        name: '琥珀',
+        nameEn: 'Amber',
+        gradient: 'var(--background-gradient-amber)',
+        brightness: 'light',
+        solid: '#FAF5E9',
         // Design System Sand dark canvas.
         solidDark: 'color-mix(in srgb, #1c1c1e 94%, #d39a62 6%)'
     },
     {
         id: 'gradient-7',
-        name: '橙',
-        nameEn: 'Orange',
-        gradient: 'linear-gradient(to bottom, #323232 0%, #3F3F3F 40%, #1C1C1C 150%), linear-gradient(to top, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.25) 200%)',
-        solid: '#F2E8DF',
-        // Design System Orange dark canvas.
+        name: '朱砂',
+        nameEn: 'Cinnabar',
+        gradient: 'var(--background-gradient-cinnabar)',
+        brightness: 'light',
+        solid: '#FAF1EF',
+        // Warm dark canvas, kept restrained so accent carries the chroma.
         solidDark: 'color-mix(in srgb, #1c1c1e 94%, #ed8b55 6%)'
     },
     {
         id: 'gradient-8',
-        name: '靛',
-        nameEn: 'Indigo',
-        gradient: 'linear-gradient(to top, #0c3483 0%, #a2b6df 100%, #6b8cce 100%, #a2b6df 100%)',
+        name: '青金',
+        nameEn: 'Lapis',
+        gradient: 'var(--background-gradient-lapis)',
+        brightness: 'dark',
         solid: '#F5F7FF',
         // Indigo follows the Design System Ocean dark canvas family.
         solidDark: 'color-mix(in srgb, #1c1c1e 94%, #7fa8cf 6%)',
     },
     {
         id: 'gradient-9',
-        name: '黑',
-        nameEn: 'Black',
-        gradient: 'linear-gradient(-225deg, #473B7B 0%, #3584A7 51%, #30D2BE 100%)',
+        name: '石墨',
+        nameEn: 'Graphite',
+        gradient: 'var(--background-gradient-graphite)',
+        brightness: 'dark',
         solid: '#323232',
-        // Keep the black preset near-black while matching the dark canvas scale.
+        // Keep the graphite preset near-black while matching the dark canvas scale.
         solidDark: '#161618'
     },
 ] as const;
@@ -103,6 +122,7 @@ export interface GradientPreset {
     readonly name: string;
     readonly nameEn: string;
     readonly gradient: string;
+    readonly brightness: 'light' | 'dark';
     readonly solid: string;
     readonly solidDark?: string;
     readonly blendMode?: string;

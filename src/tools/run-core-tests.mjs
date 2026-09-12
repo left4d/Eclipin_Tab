@@ -164,8 +164,7 @@ const normalizedAnalog = widgetLayoutService.normalizeStoredWidget({
 assert.equal(normalizedAnalog.x, -4);
 assert.equal(normalizedAnalog.y, -2);
 assert.equal(normalizedAnalog.w, 240);
-assert.equal(normalizedAnalog.h, 240);
-assert.equal(normalizedAnalog.lockAspectRatio, true);
+assert.equal(normalizedAnalog.h, 190);
 
 const freeLayoutBounds = loadTsModule('shared/utils/freeLayoutBounds.ts');
 assert.equal(freeLayoutBounds.clampFreeLayoutAxis(-80, 1000, 200), -50);

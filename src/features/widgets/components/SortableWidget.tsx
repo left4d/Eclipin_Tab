@@ -103,18 +103,6 @@ export const SortableWidget = (props: SortableWidgetProps) => {
           el.style.transition = 'none';
 
           const clampSize = (width: number, height: number) => {
-            if (widget.type === 'analogClock') {
-              const startSide = Math.max(startW, startH);
-              const widthScale = width / Math.max(1, startW);
-              const heightScale = height / Math.max(1, startH);
-              const requestedScale = Math.abs(widthScale - 1) >= Math.abs(heightScale - 1)
-                ? widthScale
-                : heightScale;
-              const minSide = Math.max(min.w, min.h);
-              const maxSide = Math.min(maxW, maxH);
-              const nextSide = Math.min(maxSide, Math.max(minSide, startSide * requestedScale));
-              return [nextSide, nextSide] as const;
-            }
             if (widget.lockAspectRatio) {
               const startRatio = startW / Math.max(1, startH);
               const widthScale = width / Math.max(1, startW);
