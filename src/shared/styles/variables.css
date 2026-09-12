@@ -601,7 +601,12 @@ body {
   --ui-menu-radius: 16px;
   --ui-menu-item-radius: 10px;
 
-  /* 大面板 / Modal */
+  /* 大面板 / Modal
+   * 面板前景色跟随真正的 light/dark 主题，而不是默认玻璃主题的壁纸亮度。
+   * 因此 default(玻璃) 即使遇到深色背景，浅色玻璃面板内仍保持深色文字。 */
+  --ui-panel-text-primary: var(--color-text);
+  --ui-panel-text-secondary: var(--color-text-muted);
+  --ui-panel-text-tertiary: var(--color-text-subtle);
   --ui-panel-bg: color-mix(in srgb, var(--color-bg-primary) 94%, transparent);
   --ui-panel-inner-bg: color-mix(in srgb, var(--color-bg-secondary) 96%, transparent);
   --ui-panel-card-bg: color-mix(in srgb, var(--color-bg-primary) 86%, transparent);

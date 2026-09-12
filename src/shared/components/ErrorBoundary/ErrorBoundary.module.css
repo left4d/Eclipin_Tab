@@ -8,6 +8,9 @@
 }
 
 .card {
+  --color-text-primary: var(--ui-panel-text-primary, var(--color-text));
+  --color-text-secondary: var(--ui-panel-text-secondary, var(--color-text-muted));
+  --color-text-tertiary: var(--ui-panel-text-tertiary, var(--color-text-subtle));
   --card-border: 1px solid var(--ui-panel-border, var(--color-border, rgba(0, 0, 0, 0.1)));
   --card-radius: var(--ui-panel-radius, var(--radius-xl));
   --card-bg: var(--ui-panel-bg, var(--color-bg-primary, rgba(255, 255, 255, 0.92)));

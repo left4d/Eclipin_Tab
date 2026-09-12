@@ -102,6 +102,12 @@
   -webkit-backdrop-filter: blur(var(--ui-overlay-blur)) saturate(var(--ui-overlay-saturate));
 }
 
+.container:not(.popover) {
+  --color-text-primary: var(--ui-panel-text-primary);
+  --color-text-secondary: var(--ui-panel-text-secondary);
+  --color-text-tertiary: var(--ui-panel-text-tertiary);
+}
+
 .container {
   border-color: var(--ui-panel-border);
   border-radius: var(--ui-panel-radius);

@@ -12,6 +12,9 @@
 }
 
 .modal {
+  --color-text-primary: var(--ui-panel-text-primary);
+  --color-text-secondary: var(--ui-panel-text-secondary);
+  --color-text-tertiary: var(--ui-panel-text-tertiary);
   position: relative;
   z-index: 2147483601;
   display: flex;

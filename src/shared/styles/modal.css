@@ -346,6 +346,9 @@
 }
 
 .modalContainer {
+    --color-text-primary: var(--ui-panel-text-primary);
+    --color-text-secondary: var(--ui-panel-text-secondary);
+    --color-text-tertiary: var(--ui-panel-text-tertiary);
     border-color: var(--ui-panel-border);
     border-radius: var(--ui-panel-radius);
     background: var(--ui-panel-bg);
