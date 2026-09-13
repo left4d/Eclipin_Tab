@@ -1,7 +1,7 @@
 import type { WeSceneWallpaperItem } from '@/shared/utils/db';
 import { createId } from '@/shared/utils/id';
 import { saveWallpaperEngineScenePackage } from '@/features/theme/services/wallpaperEngineSceneDb';
-import { importWallpaperEngineZip } from '@/features/theme/utils/wallpaperEngineZipImport';
+import { importWallpaperEngineArchive } from '@/features/theme/utils/wallpaperEngineZipImport';
 import {
   buildWallpaperEngineSceneResources,
   getWallpaperEngineScenePreviewPath,
@@ -14,14 +14,22 @@ type GenerateThumbnail = (blob: Blob) => Promise<Blob | undefined>;
  * Heavy Wallpaper Engine import path.
  *
  * This module must only be reached through dynamic import from useWallpaperStorage.
- * Keeping the ZIP parser, resource graph, capability analyzer and scene converter
- * behind this boundary prevents them from entering the normal new-tab startup graph.
+ * Keeping the archive readers (scene.pkg / RePKG ZIP), resource graph, capability
+ * analyzer and scene converter behind this boundary prevents them from entering
+ * the normal new-tab startup graph.
  */
 export const importAndPersistWallpaperEngineZip = async (
   file: File,
   generateThumbnail: GenerateThumbnail,
 ): Promise<string[]> => {
-  const { entries, archive } = await importWallpaperEngineZip(file);
+  const { entries, archive, source, textureIssues } = await importWallpaperEngineArchive(file);
+  if (textureIssues.length) {
+    // Non-fatal: the scene still imports, but the affected layers may be missing.
+    console.warn(
+      `[Wallpaper Engine] ${source} 导入：${textureIssues.length} 个纹理未能解码为可显示图片。`,
+      textureIssues,
+    );
+  }
   const importedAt = Date.now();
   const ids: string[] = [];
 
@@ -60,7 +68,7 @@ export const importAndPersistWallpaperEngineZip = async (
   }
 
   if (!ids.length) {
-    throw new Error('ZIP 中没有可保存的 Wallpaper Engine 图片图层。');
+    throw new Error('导入内容中没有可保存的 Wallpaper Engine 图片图层。');
   }
 
   return ids;

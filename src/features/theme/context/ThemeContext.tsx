@@ -270,7 +270,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // 上传壁纸文件
     const uploadWallpaper = useCallback(async (file: File) => {
         const kind = classifyWallpaperUpload(file);
-        if (!kind) throw new Error('请选择图片、视频或 Wallpaper Engine RePKG 解包后的 ZIP 文件');
+        if (!kind) throw new Error('请选择图片、视频、Wallpaper Engine scene.pkg 或 RePKG 解包后的 ZIP 文件');
 
         const maxSize = maxWallpaperUploadSize(kind);
         if (file.size > maxSize) throw new Error(`文件大小不能超过 ${maxSize / 1024 / 1024}MB`);

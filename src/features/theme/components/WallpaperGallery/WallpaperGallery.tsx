@@ -99,7 +99,7 @@ export const WallpaperGallery: React.FC<WallpaperGalleryProps> = React.memo(({
                 <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*,video/*,.zip,application/zip,application/x-zip-compressed"
+                    accept="image/*,video/*,.zip,.pkg,application/zip,application/x-zip-compressed"
                     onChange={handleFileChange}
                     style={{ display: 'none' }}
                 />
