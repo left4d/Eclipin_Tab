@@ -246,8 +246,28 @@ const countRelativeOriginAnimations = (objects: JsonObject[]): number => objects
   return count + (object.origin.animation.relative === true ? 1 : 0);
 }, 0);
 
-const PUPPET_ATLAS_TEXTURE_EFFECTS = new Set([
-  'opacity',
+/**
+ * Texture effects rendered by `WeImageEffectLayer` as a single surface pass.
+ * Listed here so `passIsSupported` can accept them without enumerating each one
+ * in the per-key chain above.
+ */
+const SURFACE_EFFECT_KEYS = new Set([
+  'iris',
+  'cloudmotion',
+  'skew',
+  'swing',
+  'filmgrain',
+  'pulse',
+  'clouds',
+  'blurradial',
+  'lightshafts',
+  'glitter',
+  'watercaustics',
+  'depthparallax',
+  'blur',
+]);
+
+const PUPPET_ATLAS_TEXTURE_EFFECTS = new Set([  'opacity',
   'scroll',
   'transform',
   'spin',
@@ -260,6 +280,22 @@ const PUPPET_ATLAS_TEXTURE_EFFECTS = new Set([
   'godrays',
   'waterripple',
   'waterwaves',
+  // Puppet and text layers run the same atlas-space effect chain through
+  // WePuppetTextureEffectLayer -> WeImageEffectLayer, so UV-space effects apply
+  // there too.
+  'iris',
+  'cloudmotion',
+  'skew',
+  'swing',
+  'filmgrain',
+  'pulse',
+  'clouds',
+  'blurradial',
+  'lightshafts',
+  'glitter',
+  'watercaustics',
+  'depthparallax',
+  'blur',
 ]);
 
 const knownCapabilitySupport = (key: string, context: WeCapabilityEffectContext): WeCapabilitySupport => {
@@ -277,6 +313,27 @@ const knownCapabilitySupport = (key: string, context: WeCapabilityEffectContext)
   if (key === 'godrays' && context === 'image') return 'partial';
   if (key === 'waterripple' && context === 'image') return 'partial';
   if (key === 'waterwaves' && context === 'image') return 'partial';
+  // Iris renders the authored displacement; the `BACKGROUND` eye-colour mix is
+  // still unimplemented, so the effect is partial rather than supported.
+  if (key === 'iris' && context === 'image') return 'partial';
+  // Cloud motion renders, but WE's built-in `util/perlin_256` is approximated by
+  // the shared built-in noise texture.
+  if (key === 'cloudmotion' && context === 'image') return 'partial';
+  if (key === 'skew' && context === 'image') return 'partial';
+  if (key === 'swing' && context === 'image') return 'partial';
+  if (key === 'filmgrain' && context === 'image') return 'partial';
+  if (key === 'pulse' && context === 'image') return 'partial';
+  if (key === 'clouds' && context === 'image') return 'partial';
+  if (key === 'blurradial' && context === 'image') return 'partial';
+  if (key === 'lightshafts' && context === 'image') return 'partial';
+  if (key === 'glitter' && context === 'image') return 'partial';
+  // Water caustics renders, but WE's `pattern/voronoi*` assets are engine-shipped
+  // and stand in as generated approximations.
+  if (key === 'watercaustics' && context === 'image') return 'partial';
+  // Depth parallax renders the neutral centred pose; interactive pointer feed and
+  // the engine's parallax position are not wired.
+  if (key === 'depthparallax' && context === 'image') return 'partial';
+  if (key === 'blur' && context === 'image') return 'partial';
   if (key === 'chromaticaberration' && context === 'fullscreen') return 'partial';
   if (context === 'composition' && (key === 'tint' || key === 'blend' || key === 'transform')) return 'partial';
   if (context === 'composition' && key === 'fisheye') return 'supported';
@@ -602,6 +659,27 @@ const passIsSupported = (
     const perspective = ['point0', 'point1', 'point2', 'point3'].some((name) => shaderValues[name] !== undefined);
     const dual = ['direction2', 'speed2', 'scale2', 'offset2', 'exponent2'].some((name) => shaderValues[name] !== undefined);
     return !perspective && !dual;
+  }
+  // A workshop override of a built-in effect key is never rendered with the
+  // built-in shader, even when the canonical keys collide (`pulse_` -> `pulse`),
+  // so it must not be reported as supported.
+  if (SURFACE_EFFECT_KEYS.has(key)) {
+    const descriptorPasses = isObject(descriptor) && Array.isArray(descriptor.passes)
+      ? descriptor.passes
+      : [];
+    const firstPass = descriptorPasses.find((item) => isObject(item));
+    const material = isObject(firstPass) ? firstPass.material : null;
+    if (typeof material === 'string' && /[/\\]workshop[/\\]/i.test(material)) return false;
+  }
+  // Single-pass surface effects implemented by WeImageEffectLayer. Authored
+  // variants the renderer deliberately does not model are rejected here, so the
+  // capability report never claims more than the renderer actually draws.
+  if (surfaceContext === 'image' && SURFACE_EFFECT_KEYS.has(key)) {
+    const combos = isObject(pass.combos) ? pass.combos : {};
+    if (key === 'iris') return (parseNumber(propertyBaseValue(combos.BACKGROUND)) ?? 0) === 0;
+    if (key === 'pulse') return (parseNumber(propertyBaseValue(combos.AUDIOPROCESSING)) ?? 0) === 0;
+    if (key === 'skew') return (parseNumber(propertyBaseValue(combos.MODE)) ?? 0) === 0;
+    return true;
   }
   if (context !== 'composition') return false;
   const combos = isObject(pass.combos) ? pass.combos : {};

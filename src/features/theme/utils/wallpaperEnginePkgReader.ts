@@ -291,7 +291,17 @@ const probeCompressedEntry = (data: Uint8Array, abs: number, length: number): nu
   return total === originalSize && pos === abs + length ? originalSize : null;
 };
 
-/** True when the buffer starts with a PKGV container magic. */
+/**
+ * True when the buffer starts with a PKGV container magic.
+ *
+ * The version digits are deliberately not whitelisted. Wallpaper Engine bumps
+ * this field across releases and third-party packers emit values that never
+ * appear upstream (a seen-in-the-wild `PKGV0022` archive is otherwise a
+ * perfectly ordinary container). Tools that enumerate known versions reject
+ * such archives — RePKG-style extractors report "unsupported package version"
+ * and leave the user with an empty directory tree. Accepting any four digits and
+ * validating the structure instead keeps those archives importable.
+ */
 export const isWallpaperEnginePkg = (data: Uint8Array): boolean => {
   if (data.length < 12) return false;
   try {
@@ -547,13 +557,19 @@ export const parseWallpaperEngineTex = (data: Uint8Array): WeTexContainer => {
   const width = imageWidth > 0 ? imageWidth : textureWidth > 0 ? textureWidth : first.width;
   const height = imageHeight > 0 ? imageHeight : textureHeight > 0 ? textureHeight : first.height;
 
+  // Video textures normally announce themselves through the TEXB0004 header,
+  // but some scenes only reveal it in the payload: an MP4 'ftyp' box sitting
+  // where pixel data would be. Detect that here so callers classify the texture
+  // as video instead of attempting (and failing) a pixel decode.
+  const resolvedIsVideoMp4 = isVideoMp4 || isMp4Payload(first.bytes);
+
   return {
     format,
     flags,
     width,
     height,
     isAnimatedGif,
-    isVideoMp4,
+    isVideoMp4: resolvedIsVideoMp4,
     frames,
     images,
   };

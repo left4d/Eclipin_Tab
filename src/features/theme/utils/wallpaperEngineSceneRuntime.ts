@@ -518,6 +518,194 @@ const isWaterRippleEffect = (value: unknown): boolean => (
   && value.strength >= 0
 );
 
+const isIrisEffect = (value: unknown): boolean => (
+  isRecord(value)
+  && value.kind === 'iris'
+  && (value.maskPath === null || isNonEmptyString(value.maskPath))
+  && isPoint(value.scale)
+  && isFiniteNumber(value.speed)
+  && isFiniteNumber(value.rough)
+  && value.rough >= 0
+  && value.rough <= 1
+  && isFiniteNumber(value.noiseAmount)
+  && isFiniteNumber(value.phase)
+  && typeof value.background === 'boolean'
+);
+
+const isCloudMotionEffect = (value: unknown): boolean => (
+  isRecord(value)
+  && value.kind === 'cloudMotion'
+  && (value.maskPath === null || isNonEmptyString(value.maskPath))
+  && (value.noisePath === null || isNonEmptyString(value.noisePath))
+  && isFiniteNumber(value.amount)
+  && isFiniteNumber(value.direction)
+  && isFiniteNumber(value.speed)
+  && isFiniteNumber(value.scale)
+  && isFiniteNumber(value.scaleX)
+);
+
+const isSkewEffect = (value: unknown): boolean => (
+  isRecord(value)
+  && value.kind === 'skew'
+  && isFiniteNumber(value.top)
+  && isFiniteNumber(value.bottom)
+  && isFiniteNumber(value.left)
+  && isFiniteNumber(value.right)
+  && typeof value.repeat === 'boolean'
+);
+
+const isSwingEffect = (value: unknown): boolean => (
+  isRecord(value)
+  && value.kind === 'swing'
+  && (value.maskPath === null || isNonEmptyString(value.maskPath))
+  && (value.noisePath === null || isNonEmptyString(value.noisePath))
+  && isPoint(value.point0)
+  && isPoint(value.point1)
+  && isFiniteNumber(value.size)
+  && isFiniteNumber(value.center)
+  && isFiniteNumber(value.feather)
+  && isFiniteNumber(value.amount)
+  && isFiniteNumber(value.speed)
+  && isFiniteNumber(value.phase)
+  && isFiniteNumber(value.noiseSpeed)
+  && isFiniteNumber(value.noiseAmount)
+  && typeof value.doubleSided === 'boolean'
+  && typeof value.noiseEnabled === 'boolean'
+);
+
+const isFilmGrainEffect = (value: unknown): boolean => (
+  isRecord(value)
+  && value.kind === 'filmGrain'
+  && (value.maskPath === null || isNonEmptyString(value.maskPath))
+  && (value.noisePath === null || isNonEmptyString(value.noisePath))
+  && isFiniteNumber(value.strength)
+  && isFiniteNumber(value.power)
+  && isFiniteNumber(value.scale)
+  && typeof value.greyscale === 'boolean'
+  && isNonNegativeInteger(value.blendMode)
+);
+
+const isPulseEffect = (value: unknown): boolean => (
+  isRecord(value)
+  && value.kind === 'pulse'
+  && (value.maskPath === null || isNonEmptyString(value.maskPath))
+  && isFiniteNumber(value.speed)
+  && isFiniteNumber(value.phase)
+  && isFiniteNumber(value.amount)
+  && isPoint(value.bounds)
+  && isFiniteNumber(value.noiseSpeed)
+  && isFiniteNumber(value.noiseAmount)
+  && isFiniteNumber(value.power)
+  && isColorRgb(value.tintLow)
+  && isColorRgb(value.tintHigh)
+  && isNonNegativeInteger(value.blendMode)
+  && typeof value.pulseAlpha === 'boolean'
+  && typeof value.pulseColor === 'boolean'
+);
+
+const isCloudsEffect = (value: unknown): boolean => (
+  isRecord(value)
+  && value.kind === 'clouds'
+  && (value.cloudPath === null || isNonEmptyString(value.cloudPath))
+  && (value.maskPath === null || isNonEmptyString(value.maskPath))
+  && isFiniteNumber(value.alpha)
+  && isFiniteNumber(value.threshold)
+  && isFiniteNumber(value.feather)
+  && isColorRgb(value.colorStart)
+  && isColorRgb(value.colorEnd)
+  && isFiniteNumberArray(value.speed) && value.speed.length === 4
+  && isFiniteNumberArray(value.scale) && value.scale.length === 4
+  && typeof value.shading === 'boolean'
+  && isNonNegativeInteger(value.blendMode)
+  && typeof value.writeAlpha === 'boolean'
+);
+
+const isBlurRadialEffect = (value: unknown): boolean => (
+  isRecord(value)
+  && value.kind === 'blurRadial'
+  && (value.maskPath === null || isNonEmptyString(value.maskPath))
+  && isFiniteNumber(value.scale)
+  && isPoint(value.center)
+  && (value.kernel === 0 || value.kernel === 1 || value.kernel === 2)
+  && typeof value.keepAlpha === 'boolean'
+);
+
+const isLightShaftsEffect = (value: unknown): boolean => (
+  isRecord(value)
+  && value.kind === 'lightShafts'
+  && (value.noisePath === null || isNonEmptyString(value.noisePath))
+  && isFiniteNumberArray(value.transform) && value.transform.length === 9
+  && isFiniteNumber(value.speed)
+  && isPoint(value.scale)
+  && isFiniteNumber(value.smoothness)
+  && isPoint(value.feather)
+  && isFiniteNumber(value.exponent)
+  && isFiniteNumber(value.intensity)
+  && isColorRgb(value.colorStart)
+  && isColorRgb(value.colorEnd)
+  && isNonNegativeInteger(value.blendMode)
+);
+
+const isGlitterEffect = (value: unknown): boolean => (
+  isRecord(value)
+  && value.kind === 'glitter'
+  && (value.maskPath === null || isNonEmptyString(value.maskPath))
+  && isFiniteNumber(value.speed)
+  && isFiniteNumber(value.density)
+  && isFiniteNumber(value.scale)
+  && isFiniteNumber(value.alpha)
+  && isColorRgb(value.color)
+  && isNonNegativeInteger(value.blendMode)
+);
+
+const isWaterCausticsEffect = (value: unknown): boolean => (
+  isRecord(value)
+  && value.kind === 'waterCaustics'
+  && (value.maskPath === null || isNonEmptyString(value.maskPath))
+  && (value.causticPath === null || isNonEmptyString(value.causticPath))
+  && (value.uniformPath === null || isNonEmptyString(value.uniformPath))
+  && (value.perlinPath === null || isNonEmptyString(value.perlinPath))
+  && (value.glowPath === null || isNonEmptyString(value.glowPath))
+  && isFiniteNumber(value.brightness)
+  && isFiniteNumber(value.glow)
+  && isFiniteNumber(value.granularity)
+  && isFiniteNumber(value.speed)
+  && isFiniteNumber(value.timeOffset)
+  && isFiniteNumber(value.distortion)
+  && isFiniteNumber(value.chromatic)
+  && isFiniteNumber(value.blur)
+  && isColorRgb(value.colorStart)
+  && isColorRgb(value.colorEnd)
+  && (value.mode === 0 || value.mode === 1)
+  && isNonNegativeInteger(value.blendMode)
+);
+
+const isDepthParallaxEffect = (value: unknown): boolean => (
+  isRecord(value)
+  && value.kind === 'depthParallax'
+  && (value.depthPath === null || isNonEmptyString(value.depthPath))
+  && (value.maskPath === null || isNonEmptyString(value.maskPath))
+  && isPoint(value.scale)
+  && isFiniteNumber(value.sens)
+  && isFiniteNumber(value.center)
+  && (value.quality === 0 || value.quality === 1 || value.quality === 2)
+);
+
+const isBlurEffect = (value: unknown): boolean => (
+  isRecord(value)
+  && value.kind === 'blur'
+  && (value.maskPath === null || isNonEmptyString(value.maskPath))
+  && (value.kernel === 0 || value.kernel === 1 || value.kernel === 2)
+  && isPoint(value.scale)
+  && (value.composite === 0 || value.composite === 1 || value.composite === 2 || value.composite === 3)
+  && isNonNegativeInteger(value.blendMode)
+  && typeof value.compositeMono === 'boolean'
+  && isFiniteNumber(value.compositeAlpha)
+  && isPoint(value.compositeOffset)
+  && isColorRgb(value.compositeColor)
+  && typeof value.keepAlpha === 'boolean'
+);
+
 const isTextureEffect = (value: unknown): boolean => (
   (isRecord(value) && value.kind === 'opacity' && isOpacityEffect(value))
   || isScrollEffect(value)
@@ -532,6 +720,19 @@ const isTextureEffect = (value: unknown): boolean => (
   || isShineEffect(value)
   || isGodRaysEffect(value)
   || isWaterRippleEffect(value)
+  || isIrisEffect(value)
+  || isCloudMotionEffect(value)
+  || isSkewEffect(value)
+  || isSwingEffect(value)
+  || isFilmGrainEffect(value)
+  || isPulseEffect(value)
+  || isCloudsEffect(value)
+  || isBlurRadialEffect(value)
+  || isLightShaftsEffect(value)
+  || isGlitterEffect(value)
+  || isWaterCausticsEffect(value)
+  || isDepthParallaxEffect(value)
+  || isBlurEffect(value)
   || (isRecord(value) && value.kind === 'waterWaves' && isWaterWavesEffect(value))
 );
 

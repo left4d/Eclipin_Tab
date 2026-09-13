@@ -463,6 +463,87 @@ const resolveRuntimeTextureEffects = (
             normalUrl: resourceUrls.get(effect.normalPath) ?? null,
         };
     }
+    if (effect.kind === 'iris') {
+        return {
+            ...effect,
+            maskUrl: effect.maskPath ? resourceUrls.get(effect.maskPath) ?? null : null,
+        };
+    }
+    if (effect.kind === 'cloudMotion') {
+        return {
+            ...effect,
+            maskUrl: effect.maskPath ? resourceUrls.get(effect.maskPath) ?? null : null,
+            noiseUrl: effect.noisePath ? resourceUrls.get(effect.noisePath) ?? null : null,
+        };
+    }
+    if (effect.kind === 'swing') {
+        return {
+            ...effect,
+            maskUrl: effect.maskPath ? resourceUrls.get(effect.maskPath) ?? null : null,
+            noiseUrl: effect.noisePath ? resourceUrls.get(effect.noisePath) ?? null : null,
+        };
+    }
+    if (effect.kind === 'filmGrain') {
+        return {
+            ...effect,
+            maskUrl: effect.maskPath ? resourceUrls.get(effect.maskPath) ?? null : null,
+            noiseUrl: effect.noisePath ? resourceUrls.get(effect.noisePath) ?? null : null,
+        };
+    }
+    if (effect.kind === 'pulse') {
+        return {
+            ...effect,
+            maskUrl: effect.maskPath ? resourceUrls.get(effect.maskPath) ?? null : null,
+        };
+    }
+    if (effect.kind === 'clouds') {
+        return {
+            ...effect,
+            cloudUrl: effect.cloudPath ? resourceUrls.get(effect.cloudPath) ?? null : null,
+            maskUrl: effect.maskPath ? resourceUrls.get(effect.maskPath) ?? null : null,
+        };
+    }
+    if (effect.kind === 'blurRadial') {
+        return {
+            ...effect,
+            maskUrl: effect.maskPath ? resourceUrls.get(effect.maskPath) ?? null : null,
+        };
+    }
+    if (effect.kind === 'lightShafts') {
+        return {
+            ...effect,
+            noiseUrl: effect.noisePath ? resourceUrls.get(effect.noisePath) ?? null : null,
+        };
+    }
+    if (effect.kind === 'glitter') {
+        return {
+            ...effect,
+            maskUrl: effect.maskPath ? resourceUrls.get(effect.maskPath) ?? null : null,
+        };
+    }
+    if (effect.kind === 'waterCaustics') {
+        return {
+            ...effect,
+            maskUrl: effect.maskPath ? resourceUrls.get(effect.maskPath) ?? null : null,
+            causticUrl: effect.causticPath ? resourceUrls.get(effect.causticPath) ?? null : null,
+            uniformUrl: effect.uniformPath ? resourceUrls.get(effect.uniformPath) ?? null : null,
+            perlinUrl: effect.perlinPath ? resourceUrls.get(effect.perlinPath) ?? null : null,
+            glowUrl: effect.glowPath ? resourceUrls.get(effect.glowPath) ?? null : null,
+        };
+    }
+    if (effect.kind === 'depthParallax') {
+        return {
+            ...effect,
+            depthUrl: effect.depthPath ? resourceUrls.get(effect.depthPath) ?? null : null,
+            maskUrl: effect.maskPath ? resourceUrls.get(effect.maskPath) ?? null : null,
+        };
+    }
+    if (effect.kind === 'blur') {
+        return {
+            ...effect,
+            maskUrl: effect.maskPath ? resourceUrls.get(effect.maskPath) ?? null : null,
+        };
+    }
     return effect;
 });
 
@@ -489,6 +570,31 @@ const areRuntimeTextureEffectResourcesReady = (effects: RuntimeTextureEffect[]):
     if (effect.kind === 'waterRipple') {
         return (!effect.maskPath || Boolean(effect.maskUrl)) && Boolean(effect.normalUrl);
     }
+    if (effect.kind === 'iris') return !effect.maskPath || Boolean(effect.maskUrl);
+    if (effect.kind === 'cloudMotion') return !effect.maskPath || Boolean(effect.maskUrl);
+    if (effect.kind === 'skew') return true;
+    if (effect.kind === 'swing') {
+        return (!effect.maskPath || Boolean(effect.maskUrl))
+            && (!effect.noisePath || Boolean(effect.noiseUrl));
+    }
+    if (effect.kind === 'filmGrain') {
+        return (!effect.maskPath || Boolean(effect.maskUrl))
+            && (!effect.noisePath || Boolean(effect.noiseUrl));
+    }
+    if (effect.kind === 'pulse') return !effect.maskPath || Boolean(effect.maskUrl);
+    if (effect.kind === 'clouds') return !effect.cloudPath || Boolean(effect.cloudUrl);
+    if (effect.kind === 'blurRadial') return !effect.maskPath || Boolean(effect.maskUrl);
+    if (effect.kind === 'lightShafts') return !effect.noisePath || Boolean(effect.noiseUrl);
+    if (effect.kind === 'glitter') return !effect.maskPath || Boolean(effect.maskUrl);
+    if (effect.kind === 'waterCaustics') {
+        return (!effect.maskPath || Boolean(effect.maskUrl))
+            && (!effect.causticPath || Boolean(effect.causticUrl));
+    }
+    if (effect.kind === 'depthParallax') {
+        return (!effect.depthPath || Boolean(effect.depthUrl))
+            && (!effect.maskPath || Boolean(effect.maskUrl));
+    }
+    if (effect.kind === 'blur') return !effect.maskPath || Boolean(effect.maskUrl);
     return true;
 });
 

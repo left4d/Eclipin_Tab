@@ -351,6 +351,177 @@ export interface ImportedWeWaterRippleEffect {
   strength: number;
 }
 
+export interface ImportedWeIrisEffect {
+  maskPath: string | null;
+  scale: ImportedWePoint;
+  speed: number;
+  rough: number;
+  noiseAmount: number;
+  phase: number;
+  /** `BACKGROUND` combo; recorded but not rendered yet. */
+  background: boolean;
+}
+
+export interface ImportedWeCloudMotionEffect {
+  maskPath: string | null;
+  /** Null selects WE's built-in perlin noise. */
+  noisePath: string | null;
+  amount: number;
+  direction: number;
+  speed: number;
+  scale: number;
+  scaleX: number;
+}
+
+export interface ImportedWeSkewEffect {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  repeat: boolean;
+}
+
+export interface ImportedWeSwingEffect {
+  maskPath: string | null;
+  /** Null selects WE's built-in noise. */
+  noisePath: string | null;
+  point0: ImportedWePoint;
+  point1: ImportedWePoint;
+  size: number;
+  center: number;
+  feather: number;
+  amount: number;
+  speed: number;
+  phase: number;
+  noiseSpeed: number;
+  noiseAmount: number;
+  doubleSided: boolean;
+  noiseEnabled: boolean;
+}
+
+export interface ImportedWeFilmGrainEffect {
+  maskPath: string | null;
+  /** Null selects WE's built-in noise. */
+  noisePath: string | null;
+  strength: number;
+  power: number;
+  scale: number;
+  greyscale: boolean;
+  blendMode: number;
+}
+
+export interface ImportedWePulseEffect {
+  maskPath: string | null;
+  speed: number;
+  phase: number;
+  amount: number;
+  bounds: ImportedWePoint;
+  noiseSpeed: number;
+  noiseAmount: number;
+  power: number;
+  tintLow: ImportedWeColorRgb;
+  tintHigh: ImportedWeColorRgb;
+  blendMode: number;
+  pulseAlpha: boolean;
+  pulseColor: boolean;
+}
+
+export interface ImportedWeCloudsEffect {
+  /** Null selects WE's built-in cloud noise. */
+  cloudPath: string | null;
+  maskPath: string | null;
+  alpha: number;
+  threshold: number;
+  feather: number;
+  colorStart: ImportedWeColorRgb;
+  colorEnd: ImportedWeColorRgb;
+  speed: number[];
+  scale: number[];
+  shading: boolean;
+  blendMode: number;
+  writeAlpha: boolean;
+}
+
+export interface ImportedWeBlurRadialEffect {
+  maskPath: string | null;
+  scale: number;
+  center: ImportedWePoint;
+  kernel: 0 | 1 | 2;
+  keepAlpha: boolean;
+}
+
+export interface ImportedWeLightShaftsEffect {
+  /** Null selects WE's built-in noise. */
+  noisePath: string | null;
+  /** Inverse square-to-quad matrix, flattened as three columns. */
+  transform: number[];
+  speed: number;
+  scale: ImportedWePoint;
+  smoothness: number;
+  feather: ImportedWePoint;
+  exponent: number;
+  intensity: number;
+  colorStart: ImportedWeColorRgb;
+  colorEnd: ImportedWeColorRgb;
+  blendMode: number;
+}
+
+export interface ImportedWeGlitterEffect {
+  maskPath: string | null;
+  speed: number;
+  density: number;
+  scale: number;
+  alpha: number;
+  color: ImportedWeColorRgb;
+  blendMode: number;
+}
+
+export interface ImportedWeWaterCausticsEffect {
+  maskPath: string | null;
+  /** Null selects WE's built-in Voronoi border pattern. */
+  causticPath: string | null;
+  /** Null selects WE's built-in uniform noise. */
+  uniformPath: string | null;
+  /** Null selects WE's built-in perlin noise. */
+  perlinPath: string | null;
+  /** Null selects WE's built-in Voronoi interior pattern. */
+  glowPath: string | null;
+  brightness: number;
+  glow: number;
+  granularity: number;
+  speed: number;
+  timeOffset: number;
+  distortion: number;
+  chromatic: number;
+  blur: number;
+  colorStart: ImportedWeColorRgb;
+  colorEnd: ImportedWeColorRgb;
+  mode: 0 | 1;
+  blendMode: number;
+}
+
+export interface ImportedWeDepthParallaxEffect {
+  depthPath: string | null;
+  maskPath: string | null;
+  scale: ImportedWePoint;
+  sens: number;
+  center: number;
+  quality: 0 | 1 | 2;
+}
+
+export interface ImportedWeBlurEffect {
+  maskPath: string | null;
+  kernel: 0 | 1 | 2;
+  scale: ImportedWePoint;
+  composite: 0 | 1 | 2 | 3;
+  blendMode: number;
+  compositeMono: boolean;
+  compositeAlpha: number;
+  compositeOffset: ImportedWePoint;
+  compositeColor: ImportedWeColorRgb;
+  keepAlpha: boolean;
+}
+
 /**
  * Ordered surface/image-space effects. New passes should extend this renderer-neutral
  * union instead of adding sample-specific component branches.
@@ -369,6 +540,19 @@ export type ImportedWeTextureEffect =
   | ({ kind: 'shine' } & ImportedWeShineEffect)
   | ({ kind: 'godRays' } & ImportedWeGodRaysEffect)
   | ({ kind: 'waterRipple' } & ImportedWeWaterRippleEffect)
+  | ({ kind: 'iris' } & ImportedWeIrisEffect)
+  | ({ kind: 'cloudMotion' } & ImportedWeCloudMotionEffect)
+  | ({ kind: 'skew' } & ImportedWeSkewEffect)
+  | ({ kind: 'swing' } & ImportedWeSwingEffect)
+  | ({ kind: 'filmGrain' } & ImportedWeFilmGrainEffect)
+  | ({ kind: 'pulse' } & ImportedWePulseEffect)
+  | ({ kind: 'clouds' } & ImportedWeCloudsEffect)
+  | ({ kind: 'blurRadial' } & ImportedWeBlurRadialEffect)
+  | ({ kind: 'lightShafts' } & ImportedWeLightShaftsEffect)
+  | ({ kind: 'glitter' } & ImportedWeGlitterEffect)
+  | ({ kind: 'waterCaustics' } & ImportedWeWaterCausticsEffect)
+  | ({ kind: 'depthParallax' } & ImportedWeDepthParallaxEffect)
+  | ({ kind: 'blur' } & ImportedWeBlurEffect)
   | ({ kind: 'waterWaves' } & ImportedWeWaterWavesEffect);
 
 export interface ImportedWeAffine2d {

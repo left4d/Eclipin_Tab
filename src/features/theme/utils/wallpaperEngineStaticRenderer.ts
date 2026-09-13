@@ -287,6 +287,39 @@ export const createWeStaticRenderPlan = (value: unknown): WeStaticRenderPlan | n
       } else if (effect.kind === 'waterRipple') {
         if (effect.maskPath) paths.add(effect.maskPath);
         paths.add(effect.normalPath);
+      } else if (effect.kind === 'iris') {
+        if (effect.maskPath) paths.add(effect.maskPath);
+      } else if (effect.kind === 'cloudMotion') {
+        if (effect.maskPath) paths.add(effect.maskPath);
+        if (effect.noisePath) paths.add(effect.noisePath);
+      } else if (effect.kind === 'swing') {
+        if (effect.maskPath) paths.add(effect.maskPath);
+        if (effect.noisePath) paths.add(effect.noisePath);
+      } else if (effect.kind === 'filmGrain') {
+        if (effect.maskPath) paths.add(effect.maskPath);
+        if (effect.noisePath) paths.add(effect.noisePath);
+      } else if (effect.kind === 'pulse') {
+        if (effect.maskPath) paths.add(effect.maskPath);
+      } else if (effect.kind === 'clouds') {
+        if (effect.cloudPath) paths.add(effect.cloudPath);
+        if (effect.maskPath) paths.add(effect.maskPath);
+      } else if (effect.kind === 'blurRadial') {
+        if (effect.maskPath) paths.add(effect.maskPath);
+      } else if (effect.kind === 'lightShafts') {
+        if (effect.noisePath) paths.add(effect.noisePath);
+      } else if (effect.kind === 'glitter') {
+        if (effect.maskPath) paths.add(effect.maskPath);
+      } else if (effect.kind === 'waterCaustics') {
+        if (effect.maskPath) paths.add(effect.maskPath);
+        if (effect.causticPath) paths.add(effect.causticPath);
+        if (effect.uniformPath) paths.add(effect.uniformPath);
+        if (effect.perlinPath) paths.add(effect.perlinPath);
+        if (effect.glowPath) paths.add(effect.glowPath);
+      } else if (effect.kind === 'depthParallax') {
+        if (effect.depthPath) paths.add(effect.depthPath);
+        if (effect.maskPath) paths.add(effect.maskPath);
+      } else if (effect.kind === 'blur') {
+        if (effect.maskPath) paths.add(effect.maskPath);
       }
     }
     if (source.frozenAnimation) frozenAnimationLayerCount += 1;

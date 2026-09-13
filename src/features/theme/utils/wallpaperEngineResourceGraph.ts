@@ -22,14 +22,27 @@ import type {
   WeResolvedCompositionLayer,
   WeResolvedEffect,
   WeResolvedBlurPreciseEffect,
+  WeResolvedCloudMotionEffect,
   WeResolvedFoliageSwayEffect,
   WeResolvedGodRaysEffect,
   WeResolvedImageLayer,
+  WeResolvedIrisEffect,
   WeResolvedPuppetAnimationLayer,
   WeResolvedOpacityEffect,
   WeResolvedPostProcessEffect,
   WeResolvedShakeEffect,
   WeResolvedShineEffect,
+  WeResolvedSkewEffect,
+  WeResolvedSwingEffect,
+  WeResolvedFilmGrainEffect,
+  WeResolvedPulseEffect,
+  WeResolvedCloudsEffect,
+  WeResolvedBlurRadialEffect,
+  WeResolvedLightShaftsEffect,
+  WeResolvedGlitterEffect,
+  WeResolvedWaterCausticsEffect,
+  WeResolvedDepthParallaxEffect,
+  WeResolvedBlurEffect,
   WeResolvedWaterFlowEffect,
   WeResolvedWaterWavesEffect,
   WeResolvedSolidLayer,
@@ -62,14 +75,27 @@ export type {
   WeResolvedCompositionLayer,
   WeResolvedEffect,
   WeResolvedBlurPreciseEffect,
+  WeResolvedCloudMotionEffect,
   WeResolvedFoliageSwayEffect,
   WeResolvedGodRaysEffect,
   WeResolvedImageLayer,
+  WeResolvedIrisEffect,
   WeResolvedPuppetAnimationLayer,
   WeResolvedOpacityEffect,
   WeResolvedPostProcessEffect,
   WeResolvedShakeEffect,
   WeResolvedShineEffect,
+  WeResolvedSkewEffect,
+  WeResolvedSwingEffect,
+  WeResolvedFilmGrainEffect,
+  WeResolvedPulseEffect,
+  WeResolvedCloudsEffect,
+  WeResolvedBlurRadialEffect,
+  WeResolvedLightShaftsEffect,
+  WeResolvedGlitterEffect,
+  WeResolvedWaterCausticsEffect,
+  WeResolvedDepthParallaxEffect,
+  WeResolvedBlurEffect,
   WeResolvedWaterFlowEffect,
   WeResolvedWaterWavesEffect,
   WeResolvedSolidLayer,
@@ -214,6 +240,18 @@ const vec2 = (value: unknown): WeVec2 | null => {
 const vec3 = (value: unknown, fallback: WeVec3): WeVec3 => {
   const parsed = parseVector(value, 3);
   return parsed ? [parsed[0], parsed[1], parsed[2]] : fallback;
+};
+
+/** Four-component vector from an "a b c d" string or a numeric array. */
+const parseVec4 = (value: unknown): number[] | null => {
+  const baseValue = propertyBaseValue(value);
+  if (Array.isArray(baseValue)) {
+    const parsed = baseValue.slice(0, 4).map(parseNumber);
+    return parsed.length === 4 && parsed.every((item): item is number => item !== null) ? parsed : null;
+  }
+  if (typeof baseValue !== 'string') return null;
+  const parsed = baseValue.trim().split(/\s+/).slice(0, 4).map((part) => Number(part));
+  return parsed.length === 4 && parsed.every(Number.isFinite) ? parsed : null;
 };
 
 const booleanValue = (value: unknown, fallback: boolean): boolean => {
@@ -437,6 +475,23 @@ const getSceneSize = (scene: JsonObject): WeSceneSize => {
 const nonNegativeNumber = (value: unknown, fallback = 0): number => {
   const parsed = parseNumber(value);
   return parsed !== null && parsed >= 0 ? parsed : fallback;
+};
+
+/**
+ * Scene camera eye (`scene.json` -> `camera.eye`), or null when the scene does
+ * not declare one.
+ *
+ * Wallpaper Engine folds this into a horizontal view shift: every layer except a
+ * full-viewport backdrop is drawn at `-eye.x`, and the Y component is
+ * deliberately ignored (an orthographic scene has no vertical view shift).
+ * Scenes routinely author large X values, so ignoring it leaves the whole
+ * composition offset against its own background.
+ */
+const getCameraEye = (scene: JsonObject): WeVec3 | null => {
+  const camera = isObject(scene.camera) ? scene.camera : null;
+  if (!camera) return null;
+  const parsed = parseVector(camera.eye, 3);
+  return parsed ? [parsed[0], parsed[1], parsed[2]] : null;
 };
 
 const getCameraParallaxSettings = (scene: JsonObject): WeCameraParallaxSettings => {
@@ -761,6 +816,159 @@ const parseCompositionEffects = (
   return { effects, hasUnsupportedEffects };
 };
 
+/** Combo value of a pass, matched by canonical semantic key. */
+const comboValueFor = (
+  pass: WeResolvedEffect['passes'][number],
+  semanticKey: string,
+): number | string | boolean | undefined => (
+  Object.entries(pass.combos).find(([key]) => (
+    canonicalWallpaperEngineEffectParameterKey(key) === semanticKey
+  ))?.[1]
+);
+
+/**
+ * WE persists combos as numbers, strings or booleans depending on age and
+ * authoring tool, so every form has to collapse to one truth value.
+ */
+const comboIsEnabled = (
+  pass: WeResolvedEffect['passes'][number],
+  semanticKey: string,
+  fallback = false,
+): boolean => {
+  const value = comboValueFor(pass, semanticKey);
+  if (value === undefined) return fallback;
+  if (typeof value === 'boolean') return value;
+  const numeric = parseNumber(value);
+  return numeric === null ? fallback : numeric !== 0;
+};
+
+const comboNumberFor = (
+  pass: WeResolvedEffect['passes'][number],
+  semanticKey: string,
+  fallback: number,
+): number => parseNumber(comboValueFor(pass, semanticKey)) ?? fallback;
+
+/**
+ * Resolve a texture slot that may name one of WE's engine-shipped assets.
+ *
+ * Those assets live in the Wallpaper Engine installation, not inside a scene
+ * archive, so a reference to one means "use the built-in": the slot resolves to
+ * null and the renderer substitutes its own generated texture. Returns
+ * `undefined` only when a genuinely custom texture could not be resolved.
+ */
+const resolveBuiltinBackedTexture = (
+  index: ArchiveIndex,
+  basePath: string,
+  materialPath: string,
+  reference: unknown,
+  builtinReference: string,
+): string | null | undefined => {
+  if (typeof reference !== 'string' || !reference.trim()) return null;
+  const normalized = normalizePath(reference).toLowerCase().replace(/\.[^/.]+$/, '');
+  if (normalized === builtinReference) return null;
+  const texture = resolveTexture(index, basePath, materialPath, reference, false);
+  return texture?.paths[0];
+};
+
+/**
+ * WE's `common_perspective.h` squareToQuad, inverted.
+ *
+ * `lightshafts` maps the unit square onto the authored quad and inverts that in
+ * its vertex stage. Reproducing it here means the shader only has to apply the
+ * finished matrix, and the inverse never has to be computed in GLSL.
+ *
+ * Returns the matrix flattened as three column vectors, matching how WE
+ * multiplies with a row vector: `f_i = dot(column_i, vec3(uv, 1))`.
+ */
+const buildLightShaftsTransform = (
+  p0: WeVec2,
+  p1: WeVec2,
+  p2: WeVec2,
+  p3: WeVec2,
+): number[] => {
+  const [dx0, dy0] = p0;
+  const [dx1, dy1] = p1;
+  const [dx2, dy2] = p3;
+  const [dx3, dy3] = p2;
+
+  const diffx1 = dx1 - dx3;
+  const diffy1 = dy1 - dy3;
+  const diffx2 = dx2 - dx3;
+  const diffy2 = dy2 - dy3;
+  const det = diffx1 * diffy2 - diffx2 * diffy1;
+  const sumx = dx0 - dx1 + dx3 - dx2;
+  const sumy = dy0 - dy1 + dy3 - dy2;
+
+  let m: number[][];
+  if (det === 0 || (sumx === 0 && sumy === 0)) {
+    // Degenerate quad: fall back to the affine mapping (no perspective term).
+    m = [
+      [dx1 - dx0, dy1 - dy0, 0],
+      [dx3 - dx1, dy3 - dy1, 0],
+      [dx0, dy0, 1],
+    ];
+  } else {
+    const ovdet = 1 / det;
+    const g = (sumx * diffy2 - diffx2 * sumy) * ovdet;
+    const h = (diffx1 * sumy - sumx * diffy1) * ovdet;
+    m = [
+      [dx1 - dx0 + g * dx1, dy1 - dy0 + g * dy1, g],
+      [dx2 - dx0 + h * dx2, dy2 - dy0 + h * dy2, h],
+      [dx0, dy0, 1],
+    ];
+  }
+
+  const a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
+  const a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
+  const a20 = m[2][0], a21 = m[2][1], a22 = m[2][2];
+  const b01 = a22 * a11 - a12 * a21;
+  const b11 = -a22 * a10 + a12 * a20;
+  const b21 = a21 * a10 - a11 * a20;
+  const invDet = a00 * b01 + a01 * b11 + a02 * b21;
+  if (invDet === 0) return [1, 0, 0, 0, 1, 0, 0, 0, 1];
+  const d = 1 / invDet;
+
+  const inverse = [
+    [b01 * d, (-a22 * a01 + a02 * a21) * d, (a12 * a01 - a02 * a11) * d],
+    [b11 * d, (a22 * a00 - a02 * a20) * d, (-a12 * a00 + a02 * a10) * d],
+    [b21 * d, (-a21 * a00 + a01 * a20) * d, (a11 * a00 - a01 * a10) * d],
+  ];
+
+  return [
+    inverse[0][0], inverse[1][0], inverse[2][0],
+    inverse[0][1], inverse[1][1], inverse[2][1],
+    inverse[0][2], inverse[1][2], inverse[2][2],
+  ];
+};
+
+/**
+ * Texture effects this renderer implements from Wallpaper Engine's own shaders.
+ *
+ * A third-party descriptor may reuse one of these keys while shipping a
+ * different shader: WE's own `pulse_` ("Pulse+") canonicalises to `pulse`, yet
+ * its fragment shader adds a per-texel `flowPhase` and omits the built-in
+ * `- pi/2` phase term. Substituting the built-in maths there renders something
+ * the author never authored, so such descriptors are left unsupported instead.
+ */
+const BUILTIN_ONLY_EFFECT_KEYS = new Set([
+  'iris',
+  'cloudmotion',
+  'skew',
+  'swing',
+  'filmgrain',
+  'pulse',
+  'clouds',
+  'blurradial',
+  'lightshafts',
+  'glitter',
+  'watercaustics',
+  'depthparallax',
+  'blur',
+]);
+
+/** Workshop/third-party material paths mark a descriptor as a custom effect. */
+const WORKSHOP_MATERIAL_RE = /[/\\]workshop[/\\]/i;
+
 /**
  * Normalize supported Wallpaper Engine image/surface effects in authored order.
  * Opacity is retained both in its historical parser side-list and in the ordered
@@ -825,6 +1033,15 @@ const parseImageEffects = (
       continue;
     }
 
+    // Never route a workshop override of a built-in effect through the built-in
+    // shader, even when the canonical keys collide (see BUILTIN_ONLY_EFFECT_KEYS).
+    if (BUILTIN_ONLY_EFFECT_KEYS.has(replacementKey) && passes.some((pass) => (
+      pass.materialReference !== null && WORKSHOP_MATERIAL_RE.test(pass.materialReference)
+    ))) {
+      hasUnsupportedEffects = true;
+      continue;
+    }
+
     if (replacementKey === 'opacity') {
       for (const pass of passes) {
         const shaderValues = Object.fromEntries(Object.entries(pass.constants).map(([key, parameter]) => [key, parameter.value]));
@@ -850,6 +1067,730 @@ const parseImageEffects = (
         const opacityEffect: WeResolvedOpacityEffect = { maskPath, alpha };
         opacityEffects.push(opacityEffect);
         textureEffects.push({ kind: 'opacity', ...opacityEffect });
+      }
+      continue;
+    }
+
+    if (replacementKey === 'iris') {
+      // Canonical `effects/iris/effect.json`: an iris/eye breathing displacement
+      // driven purely by time, so one pass reproduces the authored motion.
+      for (const pass of passes) {
+        const maskReference = typeof pass.textures[1] === 'string' && pass.textures[1].trim()
+          ? pass.textures[1]
+          : null;
+        let maskPath: string | null = null;
+        if (comboIsEnabled(pass, 'mask') || maskReference) {
+          if (!maskReference) {
+            hasUnsupportedEffects = true;
+            continue;
+          }
+          const maskTexture = resolveTexture(index, basePath, materialPath, maskReference, false);
+          maskPath = maskTexture?.paths[0] ?? null;
+          if (!maskPath) {
+            hasUnsupportedEffects = true;
+            continue;
+          }
+        }
+
+        const scaleParameter = parameterFor(pass, 'scale');
+        const speedParameter = parameterFor(pass, 'speed');
+        const roughParameter = parameterFor(pass, 'rough');
+        const noiseAmountParameter = parameterFor(pass, 'noiseamount');
+        const phaseParameter = parameterFor(pass, 'phase');
+        const background = comboIsEnabled(pass, 'background');
+
+        const irisEffect: WeResolvedIrisEffect = {
+          maskPath,
+          scale: vec2(scaleParameter?.value) ?? [1, 1],
+          speed: parseNumber(speedParameter?.value) ?? 1,
+          rough: Math.min(1, Math.max(0, parseNumber(roughParameter?.value) ?? 0.2)),
+          noiseAmount: parseNumber(noiseAmountParameter?.value) ?? 0.5,
+          phase: parseNumber(phaseParameter?.value) ?? 0,
+          background,
+        };
+        textureEffects.push({ kind: 'iris', ...irisEffect });
+
+        // `BACKGROUND` additionally mixes the displaced result toward the
+        // authored eye colour, which the renderer does not model yet.
+        if (background) hasUnsupportedEffects = true;
+
+        if ([scaleParameter, speedParameter, roughParameter, noiseAmountParameter, phaseParameter]
+          .some((parameter) => parameter && (parameter.hasAnimation || parameter.hasScript))) {
+          hasUnsupportedEffects = true;
+        }
+      }
+      continue;
+    }
+
+    if (replacementKey === 'cloudmotion') {
+      // Canonical `effects/cloudmotion/effect.json`: perlin-driven UV drift.
+      for (const pass of passes) {
+        const maskReference = typeof pass.textures[1] === 'string' && pass.textures[1].trim()
+          ? pass.textures[1]
+          : null;
+        const wantsMask = comboIsEnabled(pass, 'mask') || maskReference !== null;
+        let maskPath: string | null = null;
+        if (wantsMask) {
+          if (!maskReference) {
+            hasUnsupportedEffects = true;
+            continue;
+          }
+          const maskTexture = resolveTexture(index, basePath, materialPath, maskReference, false);
+          maskPath = maskTexture?.paths[0] ?? null;
+          if (!maskPath) {
+            hasUnsupportedEffects = true;
+            continue;
+          }
+        }
+
+        // Slot 2 defaults to WE's built-in perlin sampler, which RePKG archives
+        // do not contain; a null path therefore means "use the built-in noise".
+        let noisePath: string | null = null;
+        const noiseReference = pass.textures[2];
+        if (typeof noiseReference === 'string' && noiseReference.trim()) {
+          const normalizedNoiseReference = normalizePath(noiseReference)
+            .toLowerCase()
+            .replace(/\.[^/.]+$/, '');
+          if (normalizedNoiseReference !== 'util/perlin_256') {
+            const noiseTexture = resolveTexture(index, basePath, materialPath, noiseReference, false);
+            noisePath = noiseTexture?.paths[0] ?? null;
+            if (!noisePath) {
+              hasUnsupportedEffects = true;
+              continue;
+            }
+          }
+        }
+
+        const amountParameter = parameterFor(pass, 'amount');
+        const directionParameter = parameterFor(pass, 'direction');
+        const speedParameter = parameterFor(pass, 'speed');
+        const scaleParameter = parameterFor(pass, 'scale');
+        const scaleXParameter = parameterFor(pass, 'scalex');
+
+        const cloudMotionEffect: WeResolvedCloudMotionEffect = {
+          maskPath,
+          noisePath,
+          amount: parseNumber(amountParameter?.value) ?? 0.1,
+          direction: parseNumber(directionParameter?.value) ?? Math.PI / 2,
+          speed: parseNumber(speedParameter?.value) ?? 0.02,
+          scale: parseNumber(scaleParameter?.value) ?? 2,
+          scaleX: parseNumber(scaleXParameter?.value) ?? 0.5,
+        };
+        textureEffects.push({ kind: 'cloudMotion', ...cloudMotionEffect });
+
+        if ([amountParameter, directionParameter, speedParameter, scaleParameter, scaleXParameter]
+          .some((parameter) => parameter && (parameter.hasAnimation || parameter.hasScript))) {
+          hasUnsupportedEffects = true;
+        }
+      }
+      continue;
+    }
+
+    if (replacementKey === 'skew') {
+      // `effects/skew/effect.json`: quadrant UV shear. MODE=1 moves the geometry
+      // in the vertex shader and is deliberately not modelled.
+      for (const pass of passes) {
+        if (comboNumberFor(pass, 'mode', 0) !== 0) {
+          hasUnsupportedEffects = true;
+          continue;
+        }
+        const topParameter = parameterFor(pass, 'top');
+        const bottomParameter = parameterFor(pass, 'bottom');
+        const leftParameter = parameterFor(pass, 'left');
+        const rightParameter = parameterFor(pass, 'right');
+
+        const skewEffect: WeResolvedSkewEffect = {
+          top: parseNumber(topParameter?.value) ?? 0,
+          bottom: parseNumber(bottomParameter?.value) ?? 0,
+          left: parseNumber(leftParameter?.value) ?? 0,
+          right: parseNumber(rightParameter?.value) ?? 0,
+          repeat: comboIsEnabled(pass, 'repeat', true),
+        };
+        textureEffects.push({ kind: 'skew', ...skewEffect });
+
+        if ([topParameter, bottomParameter, leftParameter, rightParameter]
+          .some((parameter) => parameter && (parameter.hasAnimation || parameter.hasScript))) {
+          hasUnsupportedEffects = true;
+        }
+      }
+      continue;
+    }
+
+    if (replacementKey === 'swing') {
+      // `effects/swing/effect.json`: page-turn rotation about the p0-p1 axis.
+      for (const pass of passes) {
+        const maskReference = typeof pass.textures[1] === 'string' && pass.textures[1].trim()
+          ? pass.textures[1]
+          : null;
+        let maskPath: string | null = null;
+        if (comboIsEnabled(pass, 'mask') || maskReference) {
+          if (!maskReference) {
+            hasUnsupportedEffects = true;
+            continue;
+          }
+          const maskTexture = resolveTexture(index, basePath, materialPath, maskReference, false);
+          maskPath = maskTexture?.paths[0] ?? null;
+          if (!maskPath) {
+            hasUnsupportedEffects = true;
+            continue;
+          }
+        }
+
+        // Slot 2 defaults to WE's built-in noise sampler.
+        let noisePath: string | null = null;
+        const noiseReference = pass.textures[2];
+        if (typeof noiseReference === 'string' && noiseReference.trim()) {
+          const normalizedNoiseReference = normalizePath(noiseReference)
+            .toLowerCase()
+            .replace(/\.[^/.]+$/, '');
+          if (normalizedNoiseReference !== 'util/noise') {
+            const noiseTexture = resolveTexture(index, basePath, materialPath, noiseReference, false);
+            noisePath = noiseTexture?.paths[0] ?? null;
+            if (!noisePath) {
+              hasUnsupportedEffects = true;
+              continue;
+            }
+          }
+        }
+
+        const point0Parameter = parameterFor(pass, 'point0');
+        const point1Parameter = parameterFor(pass, 'point1');
+        const sizeParameter = parameterFor(pass, 'size');
+        const centerParameter = parameterFor(pass, 'center');
+        const featherParameter = parameterFor(pass, 'feather');
+        const amountParameter = parameterFor(pass, 'amount');
+        const speedParameter = parameterFor(pass, 'speed');
+        const phaseParameter = parameterFor(pass, 'phase');
+        const noiseSpeedParameter = parameterFor(pass, 'noisespeed');
+        const noiseAmountParameter = parameterFor(pass, 'noiseamount');
+
+        const swingEffect: WeResolvedSwingEffect = {
+          maskPath,
+          noisePath,
+          point0: vec2(point0Parameter?.value) ?? [0.25, 0.5],
+          point1: vec2(point1Parameter?.value) ?? [0.75, 0.5],
+          size: parseNumber(sizeParameter?.value) ?? 0.4,
+          center: parseNumber(centerParameter?.value) ?? 0.5,
+          feather: parseNumber(featherParameter?.value) ?? 0.01,
+          amount: parseNumber(amountParameter?.value) ?? 0.2,
+          speed: parseNumber(speedParameter?.value) ?? 2,
+          phase: parseNumber(phaseParameter?.value) ?? 0,
+          noiseSpeed: parseNumber(noiseSpeedParameter?.value) ?? 0.15,
+          noiseAmount: parseNumber(noiseAmountParameter?.value) ?? 0.2,
+          doubleSided: comboIsEnabled(pass, 'doublesided'),
+          noiseEnabled: comboIsEnabled(pass, 'noise'),
+        };
+        textureEffects.push({ kind: 'swing', ...swingEffect });
+
+        if ([
+          point0Parameter, point1Parameter, sizeParameter, centerParameter, featherParameter,
+          amountParameter, speedParameter, phaseParameter, noiseSpeedParameter, noiseAmountParameter,
+        ].some((parameter) => parameter && (parameter.hasAnimation || parameter.hasScript))) {
+          hasUnsupportedEffects = true;
+        }
+      }
+      continue;
+    }
+
+    if (replacementKey === 'filmgrain') {
+      // `effects/filmgrain/effect.json`: two scrolling noise samples combined via
+      // ApplyBlending (default mode 12, soft light).
+      for (const pass of passes) {
+        let maskPath: string | null = null;
+        const maskReference = pass.textures[2];
+        if (comboIsEnabled(pass, 'mask') || (typeof maskReference === 'string' && maskReference.trim())) {
+          if (typeof maskReference !== 'string' || !maskReference.trim()) {
+            hasUnsupportedEffects = true;
+            continue;
+          }
+          const maskTexture = resolveTexture(index, basePath, materialPath, maskReference, false);
+          maskPath = maskTexture?.paths[0] ?? null;
+          if (!maskPath) {
+            hasUnsupportedEffects = true;
+            continue;
+          }
+        }
+
+        let noisePath: string | null = null;
+        const noiseReference = pass.textures[1];
+        if (typeof noiseReference === 'string' && noiseReference.trim()) {
+          const normalizedNoiseReference = normalizePath(noiseReference)
+            .toLowerCase()
+            .replace(/\.[^/.]+$/, '');
+          if (normalizedNoiseReference !== 'util/noise') {
+            const noiseTexture = resolveTexture(index, basePath, materialPath, noiseReference, false);
+            noisePath = noiseTexture?.paths[0] ?? null;
+            if (!noisePath) {
+              hasUnsupportedEffects = true;
+              continue;
+            }
+          }
+        }
+
+        const strengthParameter = parameterFor(pass, 'strength');
+        const powerParameter = parameterFor(pass, 'power');
+        const scaleParameter = parameterFor(pass, 'scale');
+
+        const filmGrainEffect: WeResolvedFilmGrainEffect = {
+          maskPath,
+          noisePath,
+          strength: parseNumber(strengthParameter?.value) ?? 2,
+          power: parseNumber(powerParameter?.value) ?? 0.5,
+          scale: parseNumber(scaleParameter?.value) ?? 10,
+          greyscale: comboIsEnabled(pass, 'greyscale', true),
+          blendMode: comboNumberFor(pass, 'blendmode', 12),
+        };
+        textureEffects.push({ kind: 'filmGrain', ...filmGrainEffect });
+
+        if ([strengthParameter, powerParameter, scaleParameter]
+          .some((parameter) => parameter && (parameter.hasAnimation || parameter.hasScript))) {
+          hasUnsupportedEffects = true;
+        }
+      }
+      continue;
+    }
+
+    if (replacementKey === 'pulse') {
+      // `effects/pulse/effect.json`: time-driven sine pulse with tint endpoints.
+      // Audio response is an engine feature outside this renderer's scope, so an
+      // authored AUDIOPROCESSING mode falls back to the unsupported bucket
+      // rather than silently rendering a wrong pulse.
+      for (const pass of passes) {
+        if (comboNumberFor(pass, 'audioprocessing', 0) !== 0) {
+          hasUnsupportedEffects = true;
+          continue;
+        }
+
+        const maskReference = pass.textures[2];
+        let maskPath: string | null = null;
+        if (comboIsEnabled(pass, 'mask') || (typeof maskReference === 'string' && maskReference.trim())) {
+          if (typeof maskReference !== 'string' || !maskReference.trim()) {
+            hasUnsupportedEffects = true;
+            continue;
+          }
+          const maskTexture = resolveTexture(index, basePath, materialPath, maskReference, false);
+          maskPath = maskTexture?.paths[0] ?? null;
+          if (!maskPath) {
+            hasUnsupportedEffects = true;
+            continue;
+          }
+        }
+
+        const speedParameter = parameterFor(pass, 'speed');
+        const phaseParameter = parameterFor(pass, 'phase');
+        const amountParameter = parameterFor(pass, 'amount');
+        const boundsParameter = parameterFor(pass, 'bounds');
+        const noiseSpeedParameter = parameterFor(pass, 'noisespeed');
+        const noiseAmountParameter = parameterFor(pass, 'noiseamount');
+        const powerParameter = parameterFor(pass, 'power');
+        const tintLowParameter = parameterFor(pass, 'tintlow');
+        const tintHighParameter = parameterFor(pass, 'tinthigh');
+
+        const pulseEffect: WeResolvedPulseEffect = {
+          maskPath,
+          speed: parseNumber(speedParameter?.value) ?? 3,
+          phase: parseNumber(phaseParameter?.value) ?? 0,
+          amount: parseNumber(amountParameter?.value) ?? 1,
+          bounds: vec2(boundsParameter?.value) ?? [0, 1],
+          noiseSpeed: parseNumber(noiseSpeedParameter?.value) ?? 0.5,
+          noiseAmount: parseNumber(noiseAmountParameter?.value) ?? 0,
+          power: parseNumber(powerParameter?.value) ?? 1,
+          tintLow: colorRgb(tintLowParameter?.value),
+          tintHigh: colorRgb(tintHighParameter?.value),
+          blendMode: comboNumberFor(pass, 'blendmode', 9),
+          pulseAlpha: comboIsEnabled(pass, 'pulsealpha'),
+          pulseColor: comboIsEnabled(pass, 'pulsecolor', true),
+        };
+        textureEffects.push({ kind: 'pulse', ...pulseEffect });
+
+        if ([
+          speedParameter, phaseParameter, amountParameter, boundsParameter,
+          noiseSpeedParameter, noiseAmountParameter, powerParameter,
+          tintLowParameter, tintHighParameter,
+        ].some((parameter) => parameter && (parameter.hasAnimation || parameter.hasScript))) {
+          hasUnsupportedEffects = true;
+        }
+      }
+      continue;
+    }
+
+    if (replacementKey === 'clouds') {
+      // `effects/clouds/effect.json`: two scrolling samples of one cloud texture,
+      // thresholded and composited over the layer.
+      for (const pass of passes) {
+        let cloudPath: string | null = null;
+        const cloudReference = pass.textures[1];
+        if (typeof cloudReference === 'string' && cloudReference.trim()) {
+          const normalizedCloudReference = normalizePath(cloudReference)
+            .toLowerCase()
+            .replace(/\.[^/.]+$/, '');
+          if (normalizedCloudReference !== 'util/clouds_256') {
+            const cloudTexture = resolveTexture(index, basePath, materialPath, cloudReference, false);
+            cloudPath = cloudTexture?.paths[0] ?? null;
+            if (!cloudPath) {
+              hasUnsupportedEffects = true;
+              continue;
+            }
+          }
+        }
+
+        let maskPath: string | null = null;
+        const maskReference = pass.textures[2];
+        if (comboIsEnabled(pass, 'mask') || (typeof maskReference === 'string' && maskReference.trim())) {
+          if (typeof maskReference !== 'string' || !maskReference.trim()) {
+            hasUnsupportedEffects = true;
+            continue;
+          }
+          const maskTexture = resolveTexture(index, basePath, materialPath, maskReference, false);
+          maskPath = maskTexture?.paths[0] ?? null;
+          if (!maskPath) {
+            hasUnsupportedEffects = true;
+            continue;
+          }
+        }
+
+        const alphaParameter = parameterFor(pass, 'alpha');
+        const thresholdParameter = parameterFor(pass, 'threshold');
+        const featherParameter = parameterFor(pass, 'feather');
+        const colorStartParameter = parameterFor(pass, 'colorstart');
+        const colorEndParameter = parameterFor(pass, 'colorend');
+        const speedParameter = parameterFor(pass, 'speed');
+        const scaleParameter = parameterFor(pass, 'scale');
+
+        const cloudsEffect: WeResolvedCloudsEffect = {
+          cloudPath,
+          maskPath,
+          alpha: parseNumber(alphaParameter?.value) ?? 1,
+          threshold: parseNumber(thresholdParameter?.value) ?? 0,
+          feather: parseNumber(featherParameter?.value) ?? 0.5,
+          colorStart: colorRgb(colorStartParameter?.value),
+          colorEnd: colorRgb(colorEndParameter?.value),
+          speed: parseVec4(speedParameter?.value) ?? [0.01, 0.01, -0.02, -0.02],
+          scale: parseVec4(scaleParameter?.value) ?? [1.3, 1.3, 0.5, 0.5],
+          shading: comboNumberFor(pass, 'shading', 7) !== 0,
+          blendMode: comboNumberFor(pass, 'blendmode', 0),
+          writeAlpha: comboIsEnabled(pass, 'writealpha'),
+        };
+        textureEffects.push({ kind: 'clouds', ...cloudsEffect });
+
+        if ([alphaParameter, thresholdParameter, featherParameter, speedParameter, scaleParameter]
+          .some((parameter) => parameter && (parameter.hasAnimation || parameter.hasScript))) {
+          hasUnsupportedEffects = true;
+        }
+      }
+      continue;
+    }
+
+    if (replacementKey === 'blurradial') {
+      // `effects/blur_radial_gaussian/effect.json`: rotationally-symmetric blur.
+      for (const pass of passes) {
+        let maskPath: string | null = null;
+        const maskReference = pass.textures[1];
+        if (comboIsEnabled(pass, 'mask') || (typeof maskReference === 'string' && maskReference.trim())) {
+          if (typeof maskReference !== 'string' || !maskReference.trim()) {
+            hasUnsupportedEffects = true;
+            continue;
+          }
+          const maskTexture = resolveTexture(index, basePath, materialPath, maskReference, false);
+          maskPath = maskTexture?.paths[0] ?? null;
+          if (!maskPath) {
+            hasUnsupportedEffects = true;
+            continue;
+          }
+        }
+
+        const kernelValue = comboNumberFor(pass, 'kernel', 0);
+        const scaleParameter = parameterFor(pass, 'scale');
+        const centerParameter = parameterFor(pass, 'center');
+
+        const blurRadialEffect: WeResolvedBlurRadialEffect = {
+          maskPath,
+          scale: parseNumber(scaleParameter?.value) ?? 1,
+          center: vec2(centerParameter?.value) ?? [0.5, 0.5],
+          kernel: kernelValue === 1 ? 1 : kernelValue === 2 ? 2 : 0,
+          // WE keeps the source alpha only when BLURALPHA is explicitly 0.
+          keepAlpha: comboNumberFor(pass, 'bluralpha', 1) === 0,
+        };
+        textureEffects.push({ kind: 'blurRadial', ...blurRadialEffect });
+
+        if ([scaleParameter, centerParameter]
+          .some((parameter) => parameter && (parameter.hasAnimation || parameter.hasScript))) {
+          hasUnsupportedEffects = true;
+        }
+      }
+      continue;
+    }
+
+    if (replacementKey === 'lightshafts') {
+      // `effects/lightshafts/effect.json`: a projective light-shaft gradient.
+      for (const pass of passes) {
+        // Only the linear ray mode (RAYMODE=0), colour rendering (RENDERING=0)
+        // and the unmasked variant are modelled; the others are separate shader
+        // paths and stay in the unsupported bucket rather than being approximated.
+        if (comboNumberFor(pass, 'raymode', 0) !== 0
+          || comboNumberFor(pass, 'rendering', 0) !== 0
+          || comboIsEnabled(pass, 'mask')) {
+          hasUnsupportedEffects = true;
+          continue;
+        }
+
+        let noisePath: string | null = null;
+        const noiseReference = pass.textures[1];
+        if (typeof noiseReference === 'string' && noiseReference.trim()) {
+          const normalizedNoiseReference = normalizePath(noiseReference)
+            .toLowerCase()
+            .replace(/\.[^/.]+$/, '');
+          if (normalizedNoiseReference !== 'util/noise') {
+            const noiseTexture = resolveTexture(index, basePath, materialPath, noiseReference, false);
+            noisePath = noiseTexture?.paths[0] ?? null;
+            if (!noisePath) {
+              hasUnsupportedEffects = true;
+              continue;
+            }
+          }
+        }
+
+        const point0Parameter = parameterFor(pass, 'point0');
+        const point1Parameter = parameterFor(pass, 'point1');
+        const point2Parameter = parameterFor(pass, 'point2');
+        const point3Parameter = parameterFor(pass, 'point3');
+        const point0 = vec2(point0Parameter?.value) ?? [0.67728, 0.01297];
+        const point1 = vec2(point1Parameter?.value) ?? [0.76007, 0.14043];
+        const point2 = vec2(point2Parameter?.value) ?? [0.46654, 1.09592];
+        const point3 = vec2(point3Parameter?.value) ?? [0.16363, 0.44881];
+
+        const speedParameter = parameterFor(pass, 'rayspeed');
+        const scaleParameter = parameterFor(pass, 'rayscale');
+        const smoothnessParameter = parameterFor(pass, 'raysmoothness');
+        const featherParameter = parameterFor(pass, 'rayfeather');
+        const exponentParameter = parameterFor(pass, 'colorwexponent');
+        const intensityParameter = parameterFor(pass, 'colorwintensity');
+        const colorStartParameter = parameterFor(pass, 'colorastart');
+        const colorEndParameter = parameterFor(pass, 'colorend');
+
+        const lightShaftsEffect: WeResolvedLightShaftsEffect = {
+          noisePath,
+          transform: buildLightShaftsTransform(point0, point1, point2, point3),
+          speed: parseNumber(speedParameter?.value) ?? 0.2,
+          scale: vec2(scaleParameter?.value) ?? [0.5, 0.1],
+          smoothness: parseNumber(smoothnessParameter?.value) ?? 0.75,
+          feather: vec2(featherParameter?.value) ?? [0.05, 0.2],
+          exponent: parseNumber(exponentParameter?.value) ?? 1,
+          intensity: parseNumber(intensityParameter?.value) ?? 1,
+          colorStart: colorRgb(colorStartParameter?.value),
+          colorEnd: colorRgb(colorEndParameter?.value),
+          blendMode: comboNumberFor(pass, 'blendmode', 31),
+        };
+        textureEffects.push({ kind: 'lightShafts', ...lightShaftsEffect });
+
+        // Animated quad corners would change the precomputed transform per frame.
+        if ([point0Parameter, point1Parameter, point2Parameter, point3Parameter]
+          .some((parameter) => parameter && (parameter.hasAnimation || parameter.hasScript))) {
+          hasUnsupportedEffects = true;
+        }
+      }
+      continue;
+    }
+
+    if (replacementKey === 'glitter') {
+      // `effects/glitter/effect.json` is a two-pass descriptor, but pass 0 only
+      // synthesises a sparkle pattern from a noise sample. Reproducing that
+      // synthesis inline collapses the effect into a single surface pass.
+      const patternPass = passes[0];
+      const combinePass = passes[1];
+      if (!patternPass || !combinePass) {
+        hasUnsupportedEffects = true;
+        continue;
+      }
+
+      let maskPath: string | null = null;
+      const maskReference = combinePass.textures[2];
+      if (comboIsEnabled(combinePass, 'mask') || (typeof maskReference === 'string' && maskReference.trim())) {
+        if (typeof maskReference !== 'string' || !maskReference.trim()) {
+          hasUnsupportedEffects = true;
+          continue;
+        }
+        const maskTexture = resolveTexture(index, basePath, materialPath, maskReference, false);
+        maskPath = maskTexture?.paths[0] ?? null;
+        if (!maskPath) {
+          hasUnsupportedEffects = true;
+          continue;
+        }
+      }
+
+      const speedParameter = parameterFor(patternPass, 'speed');
+      const densityParameter = parameterFor(patternPass, 'density');
+      const scaleParameter = parameterFor(combinePass, 'scale');
+      const alphaParameter = parameterFor(combinePass, 'alpha');
+      const colorParameter = parameterFor(combinePass, 'color');
+
+      const glitterEffect: WeResolvedGlitterEffect = {
+        maskPath,
+        speed: parseNumber(speedParameter?.value) ?? 1,
+        density: parseNumber(densityParameter?.value) ?? 0.5,
+        scale: parseNumber(scaleParameter?.value) ?? 1,
+        alpha: parseNumber(alphaParameter?.value) ?? 1,
+        color: colorRgb(colorParameter?.value),
+        blendMode: comboNumberFor(combinePass, 'blendmode', 32),
+      };
+      textureEffects.push({ kind: 'glitter', ...glitterEffect });
+
+      if ([speedParameter, densityParameter, scaleParameter, alphaParameter]
+        .some((parameter) => parameter && (parameter.hasAnimation || parameter.hasScript))) {
+        hasUnsupportedEffects = true;
+      }
+      continue;
+    }
+
+    if (replacementKey === 'watercaustics') {
+      // `effects/watercaustics/caustics.frag`: noise-distorted Voronoi sampled
+      // per colour channel, thresholded into a caustic web.
+      for (const pass of passes) {
+        const maskPath = resolveBuiltinBackedTexture(index, basePath, materialPath, pass.textures[1], '');
+        if (maskPath === undefined) {
+          hasUnsupportedEffects = true;
+          continue;
+        }
+        const causticPath = resolveBuiltinBackedTexture(index, basePath, materialPath, pass.textures[2], 'pattern/voronoi_local');
+        const uniformPath = resolveBuiltinBackedTexture(index, basePath, materialPath, pass.textures[3], 'util/uniform_256');
+        const perlinPath = resolveBuiltinBackedTexture(index, basePath, materialPath, pass.textures[4], 'util/perlin_256');
+        const glowPath = resolveBuiltinBackedTexture(index, basePath, materialPath, pass.textures[5], 'pattern/voronoi');
+        if (causticPath === undefined || uniformPath === undefined
+          || perlinPath === undefined || glowPath === undefined) {
+          hasUnsupportedEffects = true;
+          continue;
+        }
+
+        const brightnessParameter = parameterFor(pass, 'brightness');
+        const glowParameter = parameterFor(pass, 'glow');
+        const granularityParameter = parameterFor(pass, 'granularity');
+        const speedParameter = parameterFor(pass, 'speed');
+        const timeOffsetParameter = parameterFor(pass, 'timeoffset');
+        const distortionParameter = parameterFor(pass, 'distortion');
+        const chromaticParameter = parameterFor(pass, 'chromaticaberration');
+        const blurParameter = parameterFor(pass, 'blur');
+        const colorStartParameter = parameterFor(pass, 'colorstart');
+        const colorEndParameter = parameterFor(pass, 'colorend');
+        const modeValue = comboNumberFor(pass, 'mode', 0);
+
+        const waterCausticsEffect: WeResolvedWaterCausticsEffect = {
+          maskPath,
+          causticPath,
+          uniformPath,
+          perlinPath,
+          glowPath,
+          brightness: parseNumber(brightnessParameter?.value) ?? 1,
+          glow: parseNumber(glowParameter?.value) ?? 0.5,
+          granularity: parseNumber(granularityParameter?.value) ?? 2,
+          speed: parseNumber(speedParameter?.value) ?? 1,
+          timeOffset: parseNumber(timeOffsetParameter?.value) ?? 0,
+          distortion: parseNumber(distortionParameter?.value) ?? 1,
+          chromatic: parseNumber(chromaticParameter?.value) ?? 1,
+          blur: parseNumber(blurParameter?.value) ?? 0,
+          colorStart: colorRgb(colorStartParameter?.value),
+          colorEnd: colorRgb(colorEndParameter?.value),
+          mode: modeValue === 1 ? 1 : 0,
+          blendMode: comboNumberFor(pass, 'blendmode', 32),
+        };
+        textureEffects.push({ kind: 'waterCaustics', ...waterCausticsEffect });
+
+        if ([
+          brightnessParameter, glowParameter, granularityParameter, speedParameter,
+          timeOffsetParameter, distortionParameter, chromaticParameter, blurParameter,
+        ].some((parameter) => parameter && (parameter.hasAnimation || parameter.hasScript))) {
+          hasUnsupportedEffects = true;
+        }
+      }
+      continue;
+    }
+
+    if (replacementKey === 'depthparallax') {
+      // `effects/depthparallax/effect.json`: a height-map parallax offset. The
+      // pointer position is engine-driven (`g_ParallaxPosition`); with no pointer
+      // feed this renders the neutral centred pose.
+      for (const pass of passes) {
+        const depthPath = resolveBuiltinBackedTexture(index, basePath, materialPath, pass.textures[1], '');
+        const maskPath = resolveBuiltinBackedTexture(index, basePath, materialPath, pass.textures[2], '');
+        if (depthPath === undefined || maskPath === undefined) {
+          hasUnsupportedEffects = true;
+          continue;
+        }
+
+        const scaleParameter = parameterFor(pass, 'scale');
+        const sensParameter = parameterFor(pass, 'sens');
+        const centerParameter = parameterFor(pass, 'center');
+        const qualityValue = comboNumberFor(pass, 'quality', 1);
+
+        const depthParallaxEffect: WeResolvedDepthParallaxEffect = {
+          depthPath,
+          maskPath,
+          scale: vec2(scaleParameter?.value) ?? [1, 1],
+          sens: parseNumber(sensParameter?.value) ?? 1,
+          center: parseNumber(centerParameter?.value) ?? 0.3,
+          quality: qualityValue === 0 ? 0 : qualityValue === 2 ? 2 : 1,
+        };
+        textureEffects.push({ kind: 'depthParallax', ...depthParallaxEffect });
+
+        if ([scaleParameter, sensParameter, centerParameter]
+          .some((parameter) => parameter && (parameter.hasAnimation || parameter.hasScript))) {
+          hasUnsupportedEffects = true;
+        }
+      }
+      continue;
+    }
+
+    if (replacementKey === 'blur') {
+      // `effects/blur/effect.json` is a four-pass chain whose parameters live on
+      // different passes: gaussian settings on pass 1, composite settings on
+      // pass 3. The renderer reproduces the chain in one effect slot.
+      const gaussianPass = passes[1] ?? passes[0];
+      const combinePass = passes[3] ?? passes[1] ?? passes[0];
+      if (!gaussianPass || !combinePass) {
+        hasUnsupportedEffects = true;
+        continue;
+      }
+
+      let maskPath: string | null = null;
+      const maskReference = combinePass.textures[1];
+      if (comboIsEnabled(combinePass, 'mask') || (typeof maskReference === 'string' && maskReference.trim())) {
+        if (typeof maskReference !== 'string' || !maskReference.trim()) {
+          hasUnsupportedEffects = true;
+          continue;
+        }
+        const maskTexture = resolveTexture(index, basePath, materialPath, maskReference, false);
+        maskPath = maskTexture?.paths[0] ?? null;
+        if (!maskPath) {
+          hasUnsupportedEffects = true;
+          continue;
+        }
+      }
+
+      const kernelValue = comboNumberFor(gaussianPass, 'kernel', 0);
+      const scaleParameter = parameterFor(gaussianPass, 'scale') ?? parameterFor(combinePass, 'scale');
+      const compositeParameter = parameterFor(combinePass, 'compositealpha');
+      const offsetParameter = parameterFor(combinePass, 'compositeoffset');
+      const colorParameter = parameterFor(combinePass, 'compositecolor');
+      const compositeValue = comboNumberFor(combinePass, 'composite', 0);
+
+      const blurEffect: WeResolvedBlurEffect = {
+        maskPath,
+        kernel: kernelValue === 1 ? 1 : kernelValue === 2 ? 2 : 0,
+        scale: vec2(scaleParameter?.value) ?? [1, 1],
+        composite: compositeValue === 1 ? 1 : compositeValue === 2 ? 2 : compositeValue === 3 ? 3 : 0,
+        blendMode: comboNumberFor(combinePass, 'blendmode', 0),
+        compositeMono: comboIsEnabled(combinePass, 'compositemono'),
+        compositeAlpha: parseNumber(compositeParameter?.value) ?? 1,
+        // WE divides the authored offset by the blurred texture resolution, which
+        // is a quarter of the layer size; that division happens at draw time.
+        compositeOffset: vec2(offsetParameter?.value) ?? [0, 0],
+        compositeColor: colorRgb(colorParameter?.value),
+        keepAlpha: comboNumberFor(combinePass, 'bluralpha', 1) === 0,
+      };
+      textureEffects.push({ kind: 'blur', ...blurEffect });
+
+      if ([scaleParameter, compositeParameter, offsetParameter, colorParameter]
+        .some((parameter) => parameter && (parameter.hasAnimation || parameter.hasScript))) {
+        hasUnsupportedEffects = true;
       }
       continue;
     }
@@ -2420,6 +3361,7 @@ const parseScene = (index: ArchiveIndex, descriptorPath: string): WeSceneResourc
     descriptorPath,
     basePath,
     size: sceneSize,
+    cameraEye: getCameraEye(scene),
     cameraParallax: getCameraParallaxSettings(scene),
     postProcessEffects,
     imageLayers,

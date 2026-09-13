@@ -363,6 +363,81 @@ const toImportedTextureEffects = (effects: WeResolvedTextureEffect[]): ImportedW
       blurScale: { x: effect.blurScale[0], y: effect.blurScale[1] },
     };
   }
+  if (effect.kind === 'iris') {
+    return {
+      ...effect,
+      scale: { x: effect.scale[0], y: effect.scale[1] },
+    };
+  }
+  if (effect.kind === 'swing') {
+    return {
+      ...effect,
+      point0: { x: effect.point0[0], y: effect.point0[1] },
+      point1: { x: effect.point1[0], y: effect.point1[1] },
+    };
+  }
+  if (effect.kind === 'pulse') {
+    return {
+      ...effect,
+      bounds: { x: effect.bounds[0], y: effect.bounds[1] },
+      tintLow: { r: effect.tintLow[0], g: effect.tintLow[1], b: effect.tintLow[2] },
+      tintHigh: { r: effect.tintHigh[0], g: effect.tintHigh[1], b: effect.tintHigh[2] },
+    };
+  }
+  if (effect.kind === 'clouds') {
+    return {
+      ...effect,
+      colorStart: { r: effect.colorStart[0], g: effect.colorStart[1], b: effect.colorStart[2] },
+      colorEnd: { r: effect.colorEnd[0], g: effect.colorEnd[1], b: effect.colorEnd[2] },
+      speed: [...effect.speed],
+      scale: [...effect.scale],
+    };
+  }
+  if (effect.kind === 'blurRadial') {
+    return {
+      ...effect,
+      center: { x: effect.center[0], y: effect.center[1] },
+    };
+  }
+  if (effect.kind === 'lightShafts') {
+    return {
+      ...effect,
+      transform: [...effect.transform],
+      scale: { x: effect.scale[0], y: effect.scale[1] },
+      feather: { x: effect.feather[0], y: effect.feather[1] },
+      colorStart: { r: effect.colorStart[0], g: effect.colorStart[1], b: effect.colorStart[2] },
+      colorEnd: { r: effect.colorEnd[0], g: effect.colorEnd[1], b: effect.colorEnd[2] },
+    };
+  }
+  if (effect.kind === 'glitter') {
+    return {
+      ...effect,
+      color: { r: effect.color[0], g: effect.color[1], b: effect.color[2] },
+    };
+  }
+  if (effect.kind === 'waterCaustics') {
+    return {
+      ...effect,
+      colorStart: { r: effect.colorStart[0], g: effect.colorStart[1], b: effect.colorStart[2] },
+      colorEnd: { r: effect.colorEnd[0], g: effect.colorEnd[1], b: effect.colorEnd[2] },
+    };
+  }
+  if (effect.kind === 'depthParallax') {
+    return {
+      ...effect,
+      scale: { x: effect.scale[0], y: effect.scale[1] },
+    };
+  }
+  if (effect.kind === 'blur') {
+    return {
+      ...effect,
+      scale: { x: effect.scale[0], y: effect.scale[1] },
+      compositeOffset: { x: effect.compositeOffset[0], y: effect.compositeOffset[1] },
+      compositeColor: { r: effect.compositeColor[0], g: effect.compositeColor[1], b: effect.compositeColor[2] },
+    };
+  }
+  // `cloudMotion`, `skew` and `filmGrain` are all scalars and nullable paths, so
+  // the shared spread below already produces the persisted shape.
   return { ...effect };
 });
 
@@ -850,8 +925,24 @@ const unionBounds = (layers: ImportedWeLayer[]): Bounds | null => {
   }, first);
 };
 
-const convertScene = (lookup: EntryLookup, scene: WeSceneResourceGraph): ImportedWeScene => {
-  const diagnostics: ImportedWeDiagnostic[] = [];
+/**
+ * Wallpaper Engine exempts layers that already span the scene's orthographic
+ * viewport from the camera view shift (`_viewShift`'s background check), so a
+ * full-canvas backdrop stays pinned while the rest of the composition follows
+ * the authored camera eye.
+ */
+const isFullViewportLayer = (
+  layer: ImportedWeLayer,
+  sceneWidth: number | null,
+  sceneHeight: number | null,
+): boolean => {
+  if (sceneWidth === null || sceneHeight === null || !layer.size) return false;
+  const drawnWidth = Math.abs(layer.size.width * layer.scale.x);
+  const drawnHeight = Math.abs(layer.size.height * layer.scale.y);
+  return drawnWidth >= sceneWidth * 0.999 && drawnHeight >= sceneHeight * 0.999;
+};
+
+const convertScene = (lookup: EntryLookup, scene: WeSceneResourceGraph): ImportedWeScene => {  const diagnostics: ImportedWeDiagnostic[] = [];
   const buildContext: WeLayerBuildContext = {
     imageLayersById: new Map(scene.imageLayers.map((layer) => [layer.id, layer])),
     puppetModels: new Map(),
@@ -909,6 +1000,25 @@ const convertScene = (lookup: EntryLookup, scene: WeSceneResourceGraph): Importe
     ...effect,
     center: { x: effect.center[0], y: effect.center[1] },
   }));
+
+  // Wallpaper Engine's camera view shift. Its `_viewShift` returns
+  // `[-eye.x, 0]` — the Y component is intentionally never applied to an
+  // orthographic scene — and full-viewport backdrops are exempt so the base
+  // image keeps its pixel alignment.
+  //
+  // Only applied when the scene declares an orthographic viewport: an
+  // auto-sized canvas is derived from layer bounds, so shifting there would push
+  // content out of the very rectangle that was just measured from it.
+  const cameraEyeShiftReported = sizing === 'explicit'
+    && scene.cameraEye !== null
+    && scene.cameraEye[0] !== 0;
+  if (cameraEyeShiftReported && scene.cameraEye) {
+    const shiftX = -scene.cameraEye[0];
+    for (const layer of layers) {
+      if (isFullViewportLayer(layer, scene.size.width, scene.size.height)) continue;
+      layer.center.x += shiftX;
+    }
+  }
 
   return {
     format: 'tablab-we-scene',

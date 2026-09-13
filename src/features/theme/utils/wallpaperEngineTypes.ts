@@ -124,6 +124,194 @@ export interface WeResolvedBlurPreciseEffect {
   blurAlpha: boolean;
 }
 
+export interface WeResolvedIrisEffect {
+  /** Optional `MASK` texture: displacement is scaled by its red channel. */
+  maskPath: string | null;
+  scale: WeVec2;
+  speed: number;
+  rough: number;
+  noiseAmount: number;
+  phase: number;
+  /**
+   * `BACKGROUND` combo: mixes the displaced result toward the authored eye
+   * colour. Recorded so the capability report stays honest, but only the plain
+   * displacement is rendered today.
+   */
+  background: boolean;
+}
+
+export interface WeResolvedCloudMotionEffect {
+  maskPath: string | null;
+  /** Null selects WE's built-in perlin noise (`util/perlin_256`). */
+  noisePath: string | null;
+  amount: number;
+  direction: number;
+  speed: number;
+  scale: number;
+  scaleX: number;
+}
+
+export interface WeResolvedSkewEffect {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  repeat: boolean;
+}
+
+export interface WeResolvedSwingEffect {
+  maskPath: string | null;
+  /** Null selects WE's built-in noise. */
+  noisePath: string | null;
+  point0: WeVec2;
+  point1: WeVec2;
+  size: number;
+  center: number;
+  feather: number;
+  amount: number;
+  speed: number;
+  phase: number;
+  noiseSpeed: number;
+  noiseAmount: number;
+  doubleSided: boolean;
+  noiseEnabled: boolean;
+}
+
+export interface WeResolvedFilmGrainEffect {
+  maskPath: string | null;
+  /** Null selects WE's built-in noise. */
+  noisePath: string | null;
+  strength: number;
+  power: number;
+  scale: number;
+  greyscale: boolean;
+  blendMode: number;
+}
+
+export interface WeResolvedPulseEffect {
+  maskPath: string | null;
+  speed: number;
+  phase: number;
+  amount: number;
+  bounds: WeVec2;
+  noiseSpeed: number;
+  noiseAmount: number;
+  power: number;
+  tintLow: WeColorRgb;
+  tintHigh: WeColorRgb;
+  blendMode: number;
+  pulseAlpha: boolean;
+  pulseColor: boolean;
+}
+
+export interface WeResolvedCloudsEffect {
+  /** Null selects WE's built-in cloud noise (`util/clouds_256`). */
+  cloudPath: string | null;
+  maskPath: string | null;
+  alpha: number;
+  threshold: number;
+  feather: number;
+  colorStart: WeColorRgb;
+  colorEnd: WeColorRgb;
+  /** Four scroll speeds: layer A (xy) and layer B (zw). */
+  speed: number[];
+  /** Four tile scales: layer A (xy) and layer B (zw). */
+  scale: number[];
+  shading: boolean;
+  blendMode: number;
+  writeAlpha: boolean;
+}
+
+export interface WeResolvedBlurRadialEffect {
+  maskPath: string | null;
+  scale: number;
+  center: WeVec2;
+  kernel: 0 | 1 | 2;
+  /** `BLURALPHA=0`: keep the source alpha instead of the blurred alpha. */
+  keepAlpha: boolean;
+}
+
+export interface WeResolvedLightShaftsEffect {
+  /** Null selects WE's built-in noise. */
+  noisePath: string | null;
+  /**
+   * Column vectors of `inverse(squareToQuad(point0..point3))`, flattened as
+   * [c0x,c0y,c0z, c1x,c1y,c1z, c2x,c2y,c2z]. WE applies this in the vertex
+   * stage; precomputing it on the CPU keeps the shader to a dot product.
+   */
+  transform: number[];
+  speed: number;
+  scale: WeVec2;
+  smoothness: number;
+  feather: WeVec2;
+  exponent: number;
+  intensity: number;
+  colorStart: WeColorRgb;
+  colorEnd: WeColorRgb;
+  blendMode: number;
+}
+
+export interface WeResolvedGlitterEffect {
+  maskPath: string | null;
+  speed: number;
+  density: number;
+  scale: number;
+  alpha: number;
+  color: WeColorRgb;
+  blendMode: number;
+}
+
+export interface WeResolvedWaterCausticsEffect {
+  maskPath: string | null;
+  /** Null selects WE's built-in `pattern/voronoi_local` (cell borders). */
+  causticPath: string | null;
+  /** Null selects WE's built-in `util/uniform_256`. */
+  uniformPath: string | null;
+  /** Null selects WE's built-in `util/perlin_256`. */
+  perlinPath: string | null;
+  /** Null selects WE's built-in `pattern/voronoi` (cell interiors). */
+  glowPath: string | null;
+  brightness: number;
+  glow: number;
+  granularity: number;
+  speed: number;
+  timeOffset: number;
+  distortion: number;
+  chromatic: number;
+  blur: number;
+  colorStart: WeColorRgb;
+  colorEnd: WeColorRgb;
+  mode: 0 | 1;
+  blendMode: number;
+}
+
+export interface WeResolvedDepthParallaxEffect {
+  /** Height/depth map; null renders with a flat depth of zero. */
+  depthPath: string | null;
+  maskPath: string | null;
+  scale: WeVec2;
+  sens: number;
+  center: number;
+  /** 0 = single-tap offset, 1 = 24-layer march, 2 = 64-layer march. */
+  quality: 0 | 1 | 2;
+}
+
+export interface WeResolvedBlurEffect {
+  maskPath: string | null;
+  /** Gaussian kernel size: 0 = 13-tap, 1 = 7-tap, 2 = 3-tap. */
+  kernel: 0 | 1 | 2;
+  scale: WeVec2;
+  /** 0 = effect only, 1 = blended, 2 = under, 3 = over. */
+  composite: 0 | 1 | 2 | 3;
+  blendMode: number;
+  compositeMono: boolean;
+  compositeAlpha: number;
+  /** In blurred-texel units, matching WE's ApplyCompositeOffset. */
+  compositeOffset: WeVec2;
+  compositeColor: WeColorRgb;
+  keepAlpha: boolean;
+}
+
 export interface WeResolvedFoliageSwayEffect {
   maskPath: string | null;
   noisePath: string | null;
@@ -218,6 +406,19 @@ export type WeResolvedTextureEffect =
   | ({ kind: 'shine' } & WeResolvedShineEffect)
   | ({ kind: 'godRays' } & WeResolvedGodRaysEffect)
   | ({ kind: 'waterRipple'; maskPath: string | null; normalPath: string; animationSpeed: number; scale: number; scrollSpeed: number; direction: number; ratio: number; strength: number })
+  | ({ kind: 'iris' } & WeResolvedIrisEffect)
+  | ({ kind: 'cloudMotion' } & WeResolvedCloudMotionEffect)
+  | ({ kind: 'skew' } & WeResolvedSkewEffect)
+  | ({ kind: 'swing' } & WeResolvedSwingEffect)
+  | ({ kind: 'filmGrain' } & WeResolvedFilmGrainEffect)
+  | ({ kind: 'pulse' } & WeResolvedPulseEffect)
+  | ({ kind: 'clouds' } & WeResolvedCloudsEffect)
+  | ({ kind: 'blurRadial' } & WeResolvedBlurRadialEffect)
+  | ({ kind: 'lightShafts' } & WeResolvedLightShaftsEffect)
+  | ({ kind: 'glitter' } & WeResolvedGlitterEffect)
+  | ({ kind: 'waterCaustics' } & WeResolvedWaterCausticsEffect)
+  | ({ kind: 'depthParallax' } & WeResolvedDepthParallaxEffect)
+  | ({ kind: 'blur' } & WeResolvedBlurEffect)
   | ({ kind: 'waterWaves' } & WeResolvedWaterWavesEffect);
 
 export type WeResolvedCompositionEffect =
@@ -420,6 +621,12 @@ export interface WeSceneResourceGraph {
   descriptorPath: string;
   basePath: string;
   size: WeSceneSize;
+  /**
+   * Scene camera eye from `scene.json`'s `camera` object. Wallpaper Engine uses
+   * its X component as a horizontal view shift for every layer except full-
+   * viewport backdrops; the Y component is deliberately not applied.
+   */
+  cameraEye: WeVec3 | null;
   cameraParallax: WeCameraParallaxSettings;
   postProcessEffects: WeResolvedPostProcessEffect[];
   imageLayers: WeResolvedImageLayer[];
