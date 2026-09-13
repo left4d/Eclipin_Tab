@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ImportedWeTextureEffect } from '@/features/theme/utils/wallpaperEngineImportedScene';
 import { createPerspectiveQuadToSquareMatrix } from '@/features/theme/utils/wallpaperEnginePerspectiveRenderer';
+import { acquireWebGlContextSlot } from '@/features/theme/utils/wallpaperEngineWebGlBudget';
 
 export type RuntimeTextureEffect =
     | (Extract<ImportedWeTextureEffect, { kind: 'opacity' }> & {
@@ -2662,6 +2663,9 @@ export const WeImageEffectLayer: React.FC<WeImageEffectLayerProps> = ({
     const sourceUpdateRef = React.useRef<((url: string) => void) | null>(null);
     const frameCallbackRef = React.useRef<((canvas: HTMLCanvasElement) => void) | undefined>(onFrame);
     const [ready, setReady] = React.useState(false);
+    // Bumped when the browser restores an evicted WebGL context so the setup
+    // effect below re-runs and rebuilds this layer's programs and textures.
+    const [contextGeneration, setContextGeneration] = React.useState(0);
     const signature = effectSignature(effects);
 
     React.useEffect(() => {
@@ -2683,6 +2687,7 @@ export const WeImageEffectLayer: React.FC<WeImageEffectLayerProps> = ({
         const deleteFramebuffers: WebGLFramebuffer[] = [];
         const deletePrograms: WebGLProgram[] = [];
         let gl: WebGLRenderingContext | null = null;
+        let releaseContextSlot: (() => void) | null = null;
         let buffer: WebGLBuffer | null = null;
         let hasDrawn = false;
         let sourceRevision = 0;
@@ -2712,6 +2717,45 @@ export const WeImageEffectLayer: React.FC<WeImageEffectLayerProps> = ({
                 },
             );
         };
+
+        /*
+         * Chrome caps a page at a small number of live WebGL contexts and
+         * evicts the oldest once a scene exceeds it; a scene with ~22 effect
+         * layers goes over that budget on its own. A canvas whose context was
+         * lost paints as an opaque blank slab, which is what produced the huge
+         * white rectangles drifting across the wallpaper.
+         *
+         * Dropping back to the source <img> keeps the layer visually correct,
+         * and preventDefault() opts into restoration: once earlier layers
+         * release their contexts the browser fires `webglcontextrestored` and
+         * the setup effect rebuilds the effect chain.
+         */
+        const canvasElement = canvasRef.current;
+
+        const handleContextLost = (event: Event) => {
+            event.preventDefault();
+            if (disposed) return;
+            if (rafId) {
+                window.cancelAnimationFrame(rafId);
+                rafId = 0;
+            }
+            sourceUpdateRef.current = null;
+            hasDrawn = false;
+            setReady(false);
+            console.warn(
+                'Wallpaper Engine image-effect WebGL context was lost; showing the source image instead.',
+                { effects: effects.map((effect) => effect.kind), source: dataSource },
+            );
+        };
+
+        const handleContextRestored = () => {
+            if (disposed) return;
+            console.info('Wallpaper Engine image-effect WebGL context was restored; rebuilding the effect chain.');
+            setContextGeneration((value) => value + 1);
+        };
+
+        canvasElement?.addEventListener('webglcontextlost', handleContextLost);
+        canvasElement?.addEventListener('webglcontextrestored', handleContextRestored);
 
         const run = async () => {
             const initialSrc = latestSrcRef.current;
@@ -2755,6 +2799,16 @@ export const WeImageEffectLayer: React.FC<WeImageEffectLayerProps> = ({
             const renderHeight = Math.max(1, Math.round(sourceImage.naturalHeight * renderScale));
             canvas.width = renderWidth;
             canvas.height = renderHeight;
+
+            // Chrome keeps only a handful of WebGL contexts alive per page and
+            // silently loses the oldest beyond that, and a lost canvas paints as
+            // an opaque slab. Claim a slot first and degrade to the plain source
+            // image when the scene asks for more contexts than the page holds:
+            // losing a subtle animation beats a white rectangle.
+            releaseContextSlot = acquireWebGlContextSlot();
+            if (!releaseContextSlot) {
+                throw new Error('WebGL context budget for this scene is exhausted.');
+            }
 
             gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true });
             if (!gl) throw new Error('WebGL is unavailable for Wallpaper Engine image-effect rendering.');
@@ -4543,15 +4597,25 @@ export const WeImageEffectLayer: React.FC<WeImageEffectLayerProps> = ({
             disposed = true;
             sourceRevision += 1;
             sourceUpdateRef.current = null;
+            canvasElement?.removeEventListener('webglcontextlost', handleContextLost);
+            canvasElement?.removeEventListener('webglcontextrestored', handleContextRestored);
             if (rafId) window.cancelAnimationFrame(rafId);
             if (gl) {
                 deleteTextures.forEach((texture) => gl!.deleteTexture(texture));
                 deleteFramebuffers.forEach((framebuffer) => gl!.deleteFramebuffer(framebuffer));
                 deletePrograms.forEach((program) => gl!.deleteProgram(program));
                 if (buffer) gl.deleteBuffer(buffer);
+                // Deleting GL objects does not free the context slot: a canvas
+                // holds its WebGL context until it is explicitly lost or
+                // collected. Without this every remount (wallpaper switch, React
+                // strict mode) leaked one context per layer, which exhausted
+                // Chrome's per-page budget and started evicting live contexts.
+                gl.getExtension('WEBGL_lose_context')?.loseContext();
             }
+            releaseContextSlot?.();
+            releaseContextSlot = null;
         };
-    }, [signature, timeOriginMs]);
+    }, [signature, timeOriginMs, contextGeneration]);
 
     return (
         <>

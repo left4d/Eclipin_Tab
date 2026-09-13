@@ -2788,7 +2788,16 @@ const parseImageEffects = (
   return { opacityEffects, waterWavesEffects, textureEffects, hasUnsupportedEffects };
 };
 
+/** WE authors `angles` in degrees; every downstream consumer wants radians. */
+const degreesToRadians = (value: number) => value * (Math.PI / 180);
+
 const transformFromObject = (object: JsonObject): WeLayerTransform => {
+  // `scene.json` stores `angles` in DEGREES. The reference implementation
+  // converts with `* Math.PI / 180` when it builds the transform matrix, and
+  // the converter below turns `transform.angles[2]` back into CSS degrees with
+  // `* 180 / Math.PI`, so radians is the unit this field must carry. Reading
+  // the raw value rotated every authored layer by ~57x: `Nuage 2 arriere`
+  // (`angles "0 -0 0.39527"`) rendered as 22.65 degrees instead of 0.4.
   const angles = vec3(object.angles, [0, 0, 0]);
   return {
     origin: vec3(object.origin, [0, 0, 0]),
@@ -2798,7 +2807,11 @@ const transformFromObject = (object: JsonObject): WeLayerTransform => {
     // coordinate system changes the handedness, so Z rotation must reverse
     // direction as well. Keep X/Y untouched because the current renderer only
     // applies the 2D Z angle.
-    angles: [angles[0], angles[1], angles[2] === 0 ? 0 : -angles[2]],
+    angles: [
+      degreesToRadians(angles[0]),
+      degreesToRadians(angles[1]),
+      angles[2] === 0 ? 0 : -degreesToRadians(angles[2]),
+    ],
     size: vec2(object.size),
     parallaxDepth: vec2(object.parallaxDepth),
     opacity: Math.min(1, Math.max(0, parseNumber(object.alpha) ?? 1)),

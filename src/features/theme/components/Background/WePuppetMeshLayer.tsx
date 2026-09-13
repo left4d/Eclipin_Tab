@@ -378,6 +378,11 @@ export const WePuppetMeshLayer = React.forwardRef<WePuppetMeshLayerHandle, WePup
             gl.deleteBuffer(uvBuffer);
             gl.deleteBuffer(indexBuffer);
             gl.deleteProgram(program);
+            // Releasing the objects above does not free the canvas's context
+            // slot; a canvas keeps its WebGL context until it is explicitly
+            // lost. Leaking one slot per layer per remount exhausts Chrome's
+            // per-page budget and starts evicting live contexts mid-render.
+            gl.getExtension('WEBGL_lose_context')?.loseContext();
         };
     }, [animationLayers, animationMode, animationSignature, mesh, modelSrc, renderBounds, renderHeight, renderWidth, src, timeOriginMs]);
 

@@ -1,6 +1,6 @@
 {
   "name": "eclipin-tab",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Eclipin Tab - 个性化新标签页浏览器扩展",
   "scripts": {
     "dev": "vite",

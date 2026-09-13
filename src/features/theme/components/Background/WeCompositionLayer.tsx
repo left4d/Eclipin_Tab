@@ -396,6 +396,11 @@ export const WeCompositionLayer: React.FC<WeCompositionLayerProps> = ({
                 deleteFramebuffers.forEach((framebuffer) => gl!.deleteFramebuffer(framebuffer));
                 if (buffer) gl.deleteBuffer(buffer);
                 if (program) gl.deleteProgram(program);
+                // Releasing the objects above does not free the canvas's context
+                // slot; a canvas keeps its WebGL context until it is explicitly
+                // lost. Leaking one slot per layer per remount exhausts Chrome's
+                // per-page budget and starts evicting live contexts mid-render.
+                gl.getExtension('WEBGL_lose_context')?.loseContext();
             }
         };
     }, [effectSignature, logicalSize.height, logicalSize.width]);
